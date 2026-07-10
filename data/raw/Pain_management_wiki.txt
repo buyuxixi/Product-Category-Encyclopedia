@@ -1,0 +1,80 @@
+Pain management is an aspect of medicine and health care involving relief of pain (pain relief, analgesia, pain control) in various dimensions, from acute and simple to chronic and challenging. Most physicians and other health professionals provide some pain control in the normal course of their practice, and for the more complex instances of pain, they also call on additional help from a specific medical specialty devoted to pain, which is called pain medicine.
+Pain management often uses a interdisciplinary approach for easing the suffering and improving the quality of life of anyone experiencing pain, whether acute pain or chronic pain. Relieving pain (analgesia) is typically an acute process, while managing chronic pain involves additional complexities and ideally an interdisciplinary approach.
+A typical multidisciplinary pain management team may include: medical practitioners, pharmacists, clinical psychologists, physiotherapists, occupational therapists, recreational therapists, physician assistants, nurses, and dentists. The team may also include other mental health specialists and massage therapists. Pain sometimes resolves quickly once the underlying trauma or pathology has healed, and is treated by one practitioner, with drugs such as pain relievers (analgesics) and occasionally also anxiolytics.
+Effective management of chronic (long-term) pain, however, frequently requires the coordinated efforts of the pain management team. Effective pain management does not always mean total eradication of all pain. Rather, it often means achieving an adequate quality of life in the presence of pain, through any combination of lessening the pain/or better understanding it, and living happily despite it. Medicine treats injuries and diseases to support and speed healing. It treats distressing symptoms such as pain and discomfort to reduce any suffering during treatment, healing, and dying.
+The task of medicine is to relieve suffering under three circumstances. The first is when a painful injury or pathology is resistant to treatment and persists. The second is when pain persists after the injury or pathology has healed. Finally, the third circumstance is when medical science cannot identify the cause of pain. Treatment approaches to chronic pain include pharmacological measures, such as analgesics (pain killer drugs), antidepressants, and anticonvulsants; interventional procedures, physical therapy, physical exercise, application of ice or heat; and psychological measures, such as biofeedback and cognitive behavioral therapy.
+
+
+Defining pain
+
+In the nursing profession, one common definition of pain is any problem that is "whatever the experiencing person says it is, existing whenever the experiencing person says it does".
+Pain management includes patient and communication about the pain problem. To define the pain problem, a health care provider will likely ask questions such as:
+
+How intense is the pain?
+How does the pain feel?
+Where is the pain?
+What, if anything, makes the pain lessen?
+What, if anything, makes the pain increase?
+When did the pain start?
+After asking such questions, the health care provider will have a description of the pain. Pain is often rated on a scale from 1 to 10, known as the Numeric Rating Scale (NRS);
+
+Zero equaling no pain
+One to three equaling mild pain (nagging, annoying, interfering little with activities of daily living)
+Four to six equaling moderate pain (interferes significantly with ADLs)
+Seven to 10 equaling severe pain (disabling; unable to perform ADLs)
+This pain scale is based on a person reporting their pain intensity, with zero representing no pain experienced and 10 indicating the worst possible pain. The NRS is a common tool used by clinicians and in research to understand personal pain levels and monitor changes over time. In the clinical context, pain management will then be used to address that pain.
+
+
+Adverse effects
+There are many types of pain management. Each have their own benefits, drawbacks, and limits.
+A common challenge in pain management is communication between the health care provider and the person experiencing pain. People experiencing pain may have difficulty recognizing or describing what they feel and how intense it is. Health care providers and patients may have difficulty communicating with each other about how pain responds to treatments. There is a risk in many types of pain management for the patient to take treatment that is less effective than needed or which causes other difficulties and side effects. Some treatments for pain can be harmful if overused. A goal of pain management for the patient and their health care provider is to identify the amount of treatment needed to address the pain without going beyond that limit.
+Another problem with pain management is that pain is the body's natural way of communicating a problem. Pain is supposed to resolve as the body heals itself with time and pain management. Sometimes pain management covers a problem, and the patient might be less aware that they need treatment for a deeper problem.
+
+
+Physical approaches
+
+
+Physical medicine and rehabilitation
+Physical medicine and rehabilitation (PM&R), a medical specialty, uses a range of physical techniques, such as heat therapy and electrotherapy, as well as therapeutic exercises and behavioral therapy in the management of pain. PM&R techniques are usually part of an interdisciplinary program that might also include pharmaceuticals. Spa therapy has shown positive effects in reducing pain among patients with chronic low back pain, but its evidence base is limited. Studies have shown that elastic therapeutic tape can be used to reduce chronic low back pain. The Centers for Disease Control and Prevention recommended that physical therapy and exercise be prescribed as first-line treatments (rather than opioids) for multiple causes of chronic pain in 2016 guidelines. Applicable disorders include chronic low back pain, osteoarthritis of the hip and knee, and fibromyalgia. Exercise alone or with other rehabilitation disciplines (including psychotherapeutic approaches) can have a positive effect on pain. Besides improving the experience of pain itself, exercise can also improve individuals' well-being and general health.
+Manual and joint mobilization therapies are considered safe interventions for low back pain, with manual therapy potentially offering a larger therapeutic effect.
+Specifically in chronic low back pain, education about how the brain processes pain, in conjunction with routine physiotherapy interventions, may provide short-term relief of disability and pain.
+
+
+Exercise interventions
+
+Physical activity interventions, such as tai chi, yoga, and pilates, promote harmony between the mind and body through total-body awareness. These practices incorporate breathing techniques, meditation, and a wide variety of movements while training the body to perform functionally by increasing strength, flexibility, and range of motion. Physical activity can also benefit people with chronic pain by reducing inflammation and sensitivity and boosting overall energy. Physical activity and exercise may improve chronic pain, and overall quality of life, while minimizing the need for pain medications. More specifically, walking has been effective in improving pain management in chronic low back pain.
+
+
+Transcutaneous electrical nerve stimulation
+
+Transcutaneous electrical nerve stimulation (TENS) is a self-operated, portable device intended to help manage chronic pain through electrical impulses. Limited research has explored the effectiveness of TENS in relation to pain management of multiple sclerosis (MS). MS is a chronic autoimmune neurological disorder that involves demyelination of nerve axons and disruption of nerve conduction velocity and efficiency. In one study, electrodes were placed over the lumbar spine, and participants received treatment twice a day and at any time when they experienced a painful episode. This study found that TENS would benefit MS patients with localized or limited symptoms in one limb. The research is mixed on whether or not TENS helps manage pain in MS patients.
+Transcutaneous electrical nerve stimulation is ineffective for lower back pain, but it may help with diabetic neuropathy.
+
+
+Transcranial direct current stimulation
+
+Transcranial direct current stimulation (tDCS) is a non-invasive technique of brain stimulation that can modulate activity in specific brain cortex regions, and it involves the application of low-intensity (up to 2 mA) constant direct current to the scalp through electrodes in order to modulate the excitability of large cortical areas. tDCS may have a role in pain assessment by contributing to efforts in distinguishing between somatic and affective aspects of pain experience. Zaghi and colleagues (2011) found that the motor cortex, when stimulated with tDCS, increases the threshold for both the perception of non-painful and painful stimuli. Although there is a greater need for research examining the mechanism of electrical stimulation in pain treatment, one theory suggests that the changes in thalamic activity may be due to the influence of motor cortex stimulation on the decrease in pain sensations.
+Concerning MS, a study found that daily tDCS sessions resulted in an individual's subjective report of pain decreased when compared to a sham condition. In addition, the study found a similar improvement at 1 to 3 days before and after each tDCS session.
+Research examining tDCS for pain treatment in fibromyalgia has found initial evidence for pain decreases. Specifically, the stimulation of the primary motor cortex resulted in significantly greater pain improvement in comparison to the control group (e.g., sham stimulation, stimulation of the DLPFC). However, this effect decreased after treatment ended, but remained significant for three weeks following the extinction of treatment.
+
+
+Acupuncture
+
+Acupuncture involves the insertion and manipulation of needles into specific points on the body to relieve pain or for therapeutic purposes. An analysis of the 13 highest quality studies of pain treatment with acupuncture, published in January 2009 in the British Medical Journal, was unable to quantify the difference in the effect on pain of real, sham, and no acupuncture. A systematic review in 2019 reported that acupuncture injection therapy was an effective treatment for patients with nonspecific chronic low back pain, and is widely used in Southeast Asian countries.
+
+
+Light therapy
+
+Research has found that light therapy, such as low-level laser therapy, is effective in relieving low back pain. Instead of thermal therapy, where energy is originated through heat, low-level light therapy (LLLT) utilizes photochemical reactions requiring light to function. One study conducted by Stausholm et al. showed that at certain infrared wavelengths, LLLT reduced pain in participants with knee osteoarthritis.
+
+
+Sound therapy
+
+Audioanalgesia and music therapy are both examples of the use of auditory stimuli to manage pain or other distress. They are generally viewed as insufficient when used alone but also as helpful adjuncts to other forms of therapy.
+
+
+Interventional procedures
+
+Interventional radiology procedures for pain control, typically used for chronic back pain, include epidural steroid injections, facet joint injections, neurolytic blocks, spinal cord stimulators and intrathecal drug delivery system implants.
+Pulsed radiofrequency, neuromodulation, direct introduction of medication, and nerve ablation may be used to target either the tissue structures and organs or systems responsible for persistent nociception or the nociceptors from the structures implicated as the source of chronic pain. Radiofrequency treatment has been seen to improve pain in patients with facet joint low back pain. However, continuous radiofrequency is more effective in managing pain than pulsed radiofrequency.
+An intratheca

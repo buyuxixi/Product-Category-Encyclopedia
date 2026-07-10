@@ -1,0 +1,118 @@
+A lighting control system is intelligent network-based lighting control that incorporates communication between various system inputs and outputs related to lighting control with the use of one or more central computing devices.  Lighting control systems are widely used on  both indoor and outdoor lighting of commercial, industrial, and residential spaces. Lighting control systems are sometimes referred to under the term smart lighting. Lighting control systems serve to provide the right amount of light where and when it is needed.
+Lighting control systems are employed to maximize the energy savings from the lighting system, satisfy building codes, or comply with green building and energy conservation programs. Lighting control systems may include a lighting technology designed for energy efficiency, convenience and security. This may include high efficiency fixtures and automated controls that make adjustments based on conditions such as occupancy or daylight availability. Lighting is the deliberate application of light to achieve some aesthetic or practical effect (e.g. illumination of a security breach). It includes task lighting, accent lighting, and general lighting.
+
+
+== Lighting controls ==
+The term lighting controls is typically used to indicate stand-alone control of the lighting within a space. This may include occupancy sensors, timeclocks, and photocells that are hard-wired to control fixed groups of lights independently. Adjustment occurs manually at each devices location. The efficiency of and market for residential lighting controls has been characterized by the Consortium for Energy Efficiency.
+The term lighting control system refers to an intelligent networked system of devices related to lighting control. These devices may include relays, occupancy sensors, photocells, light control switches or touchscreens, and signals from other building systems (such as fire alarm or HVAC). Adjustment of the system occurs both at device locations and at central computer locations via software programs or other interface devices.
+
+
+=== Advantages ===
+The major advantage of a lighting control system over stand-alone lighting controls or conventional manual switching is the ability to control individual lights or groups of lights from a single user interface device. This ability to control multiple light sources from a user device allows complex lighting scenes to be created. A room may have multiple scenes pre-set, each one created for different activities in the room. A major benefit of lighting control systems is reduced energy consumption. Longer lamp life is also gained when dimming and switching off lights when not in use. Wireless lighting control systems provide additional benefits including reduced installation costs and increased flexibility over where switches and sensors may be placed.
+
+
+=== Minimizing energy usage ===
+Lighting applications represents 19% of the world's energy use and 6% of all greenhouse emissions. In the United States, 65 percent of energy consumption is used by commercial and industrial sectors, and 22 percent of this is used for lighting.
+Smart lighting enables households and users to remotely control cooling, heating, lighting and appliances, minimizing unnecessary light and energy use. This ability saves energy and provides a level of comfort and convenience. From outside the traditional lighting industry, the future success of lighting will require involvement of a number of stakeholders and stakeholder communities. The concept of smart lighting also involves utilizing natural light from the sun to reduce the use of man-made lighting, and the simple concept of people turning off lighting when they leave a room.
+
+
+=== Convenience ===
+A smart lighting system can ensure that dark areas are illuminated when in use. The lights actively respond to the activities of the occupants based on sensors and intelligence (logic) that anticipates the lighting needs of an occupant. This can enhance comfort, improve safety, reduce manual effort, and improve energy efficiency.
+
+
+=== Security ===
+Lights can be used to dissuade those from areas they should not be. A security breach, for example, is an event that could trigger floodlights at the breach point. Preventative measures include illuminating key access points (such as walkways) at night and automatically adjusting the lighting when a household is away to make it appear as though there are occupants.
+
+
+== Automated control ==
+Lighting control systems typically provide the ability to automatically adjust a lighting device's output based on:
+
+Chronological time (time of day)
+Solar time (sunrise/sunset)
+Occupancy using occupancy sensors
+Daylight availability using photocells
+Alarm conditions
+Program logic (combination of events)
+
+
+=== Chronological time ===
+Chronological time schedules incorporate specific times of the day, week, month or year.
+
+
+=== Solar time ===
+Solar time schedules incorporate sunrise and sunset times, often used to switch outdoor lighting. Solar time scheduling requires that the location of the building be set. This is accomplished using the building's geographic location via either latitude and longitude or by picking the nearest city in a given database giving the approximate location and corresponding solar times.
+
+
+=== Occupancy ===
+Space occupancy is primarily determined with occupancy sensors. Smart lighting that utilizes occupancy sensors can work in unison with other lighting connected to the same network to adjust lighting per various conditions. The table below shows potential electricity savings from using occupancy sensors to control lighting in various types of spaces.
+
+
+==== Ultrasonic ====
+The advantages of ultrasonic devices are that they are sensitive to all types of motion and generally there are zero coverage gaps, since they can detect movements not within the line of sight.
+
+
+=== Daylight availability ===
+Electric lighting energy use can be adjusted by automatically dimming and/or switching electric lights in response to the level of available daylight. Reducing the amount of electric lighting used when daylight is available is known as daylight harvesting.
+
+
+==== Daylight sensing ====
+In response to daylighting technology, daylight-linked automated response systems have been developed to further reduce energy consumption. These technologies are helpful, but they do have their downfalls. Many times, rapid and frequent switching of the lights on and off can occur, particularly during unstable weather conditions or when daylight levels are changing around the switching illuminance. Not only does this disturb occupants, it can also reduce lamp life. A variation of this technology is the 'differential switching' or 'dead-band' photoelectric control which has multiple illuminances it switches from to reduce occupants being disturbed.
+
+
+=== Alarm conditions ===
+Alarm conditions typically include inputs from other building systems such as the fire alarm or HVAC system, which may trigger an emergency 'all lights on' or ' all lights flashing' command for example.
+
+
+=== Program logic ===
+Program logic can tie all of the above elements together using constructs such as if-then-else statements and logical operators. Digital Addressable Lighting Interface (DALI) is specified in the IEC 62386 standard.
+
+
+=== Automatic dimming ===
+The use of automatic light dimming is an aspect of smart lighting that serves to reduce energy consumption. Manual light dimming also has the same effect of reducing energy use.
+
+
+=== Use of sensors ===
+In the paper "Energy savings due to occupancy sensors and personal controls: a pilot field study", Galasiu, A.D. and Newsham, G.R have confirmed that automatic lighting systems including occupancy sensors and individual (personal) controls are suitable for open-plan office environments and can save a significant amount of energy (about 32%) when compared to a conventional lighting system, even when the installed lighting power density of the automatic lighting system is ~50% higher than that of the conventional system.
+
+
+==== Components ====
+A complete sensor consists of a motion detector, an electronic control unit, and a controllable switch/relay. The detector senses motion and determines whether there are occupants in the space. It also has a timer that signals the electronic control unit after a set period of inactivity. The control unit uses this signal to activate the switch/relay to turn equipment on or off. For lighting applications, there are three main sensor types: passive infrared, ultrasonic, and hybrid.
+
+
+==== Others ====
+Motion-detecting (microwave), heating-sensing (infrared), and sound-sensing; optical cameras, infrared motion, optical trip wires, door contact sensors, thermal cameras, micro radars, daylight sensors.
+
+
+== Standards and protocols ==
+In the 1980s there was a strong requirement to make commercial lighting more controllable so that it could become more energy efficient. Initially this was done with analog control, allowing fluorescent ballasts and dimmers to be controlled from a central source. This was a step in the right direction, but cabling was complicated and therefore not cost effective.
+Tridonic was an early company to go digital with their broadcast protocols, DSI, in 1991. DSI was a basic protocol as it transmitted one control value to change the brightness of all the fixtures attached to the line. What made this protocol more attractive, and able to compete with the established analog option, was the simple wiring.
+There are two types of lighting control systems which are:
+
+Analog lighting control
+Digital lighting control
+Examples for analog lighting control systems are:
+
+0-10V based system.
+AMX192 based systems (often referred to as AMX) (USA standard).
+D54 based systems (European standard).
+In production lighting 0-10V system was replaced by analog multiplexed systems such as D54 and AMX192, which themselves have been almost completely replaced by DMX512. For dimmable fluorescent lamps (where it operates instead at 1-10 V, where 1 V is minimum and 0 V is off) the system is being replaced by DSI, which itself is in the process of being replaced by DALI.
+Examples for digital lighting control systems are:
+
+DALI based system.
+DSI based system
+KNX based systems
+Those are all wired lighting control systems.
+There are also wireless lighting control systems that are based on some standard protocols like MIDI, ZigBee, Bluetooth Mesh, and others. The standard for digital addressable lighting interface, mostly in professional and commercial deployments, is IEC 62386-104. This standard specifies the underlying technologies, which in wireless are VEmesh, which operates in the industrial Sub-1 GHz frequency band and Bluetooth Mesh, which operates in the 2.4 GHz frequency band.
+Other notable protocols, standards and systems include:
+
+
+=== Bluetooth lighting control ===
+The new type of control for lighting system is using Bluetooth connection directly to the lighting system. It is recently introduced by Philips HUE and company new name as Signify formerly known as Philips Lighting. This system will need a smartphone or tablet where the user can install a special Philips Hue Bluetooth app. The Bluetooth bulbs don't need a Philips Hue bridge to function. There is no need to have a Wi-Fi or data connection for controlling the lights with that system.
+
+
+=== Smart lighting ecosystem ===
+Smart lighting systems can be controlled using the internet to adjust lighting brightness and schedules. One technology involves a smart lighting network that assigns IP addresses to light bulbs.
+
+
+=== Information transmitting with smart light ===
+Schubert predicts that revolutionary lighting systems will provide an entirely new means of sensing and broadcasting information. By blinking far too rapidly for any human to notice, the light will pick up data from sensors and carry it from room to room, reporting such information as the location o

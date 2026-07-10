@@ -1,0 +1,15 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+backend/.venv/
+backend/alembic/versions/__pycache__/
+frontend/node_modules/
+frontend/dist/
+*.tsbuildinfo
+*.log
+.DS_Store

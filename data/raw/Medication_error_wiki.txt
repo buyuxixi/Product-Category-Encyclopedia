@@ -1,0 +1,68 @@
+A medical error is a preventable adverse effect of care ("iatrogenesis"), whether or not it is evident or harmful to the patient. This might include an inaccurate or incomplete diagnosis or treatment of a disease, injury, syndrome, behavior, infection, or other ailments.
+The incidence of medical errors varies depending on the setting. The World Health Organization has named adverse outcomes due to patient care that is unsafe as the 14th causes of disability and death in the world, with an estimated 1/300 people being potentially harmed by healthcare practices around the world.
+
+
+Definitions
+A medical error occurs when a health-care provider chooses an inappropriate method of care or improperly executes an appropriate method of care. Medical errors are often described as "human errors in healthcare".
+There are many types of medical error, from minor to major, and causality is often poorly determined.
+There are many taxonomies for classifying medical errors.
+
+
+Definitions of diagnostic error
+Defining diagnostic error is important for measuring its frequency, identifying its causes, and implementing strategies to reduce harm, steps that are essential for improving patient safety. The complexity of diagnosis as both a process (the act of arriving at a diagnosis) and a label (the name of the assigned disease) has led to multiple, overlapping definitions and there is no single definition of diagnostic error.
+Diagnostic error with regard to labels has been defined by Graber et al. as a diagnosis that is wrong, egregiously delayed, or missed altogether. This error can only be applied in retrospect, using some gold standard (for example, autopsy findings or a definitive laboratory test) to confirm the correct diagnosis.
+Diagnostic error with regard to processes has been defined by Schiff et al. as any breakdown in the diagnostic process, including both errors of omission and errors of commission, and by Singh et al. as a "missed opportunity" in the diagnostic process, based on retrospective review.
+In its landmark report, Improving Diagnosis in Health Care, The National Academy of Medicine proposed a new, hybrid definition that includes both label- and process-related aspects: "A diagnostic error is failure to establish an accurate and timely explanation of the patient's health problem(s) or to communicate that explanation to the patient." This is the only definition that specifically includes the patient in the definition wording.
+
+
+Definition of prescription error
+A prescription or medication error, as defined by the National Coordinating Council for Medication Error Reporting and Prevention, is an event that is preventable that leads to or has led to unsuitable use of medication or has led to harm to the person during the period of time that the medicine is controlled by a clinician, the person, or the consumer. Some adverse drug events can also be related to medication errors.
+
+
+Impact
+One study suggests that 180,000 people die each year partly as a result of iatrogenic injury. This appears to be increasing - for example, the World Health Organization registered 14 million new cases and 8.2 million cancer-related deaths in 2012, and estimated that the number of cases could increase by 70% through 2032. As the number of cancer patients receiving treatment increases, hospitals around the world are seeking ways to improve patient safety, to emphasize traceability and raise efficiency in their cancer treatment processes.
+Children are often more vulnerable to a negative outcome when a medication error occurs as they have age-related differences in how their bodies absorb, metabolize, and excrete pharmaceutical agents.
+One study reported that approximately 6.9% to 14.5% of pediatric patients were prescribed inappropriate medications secondary to diagnostic inaccuracies. 
+A 2019 study reported that pediatric emergency departments are susceptible to medication errors due to weight-based dosing calculations, prescribing inaccuracies, and challenges within communication which contributed to inappropriate mediation administration in children. 
+
+
+UK
+In the UK, an estimated 850,000 medical errors occur each year, costing over £2 billion (estimated in the year 2000). The accuracy of this estimate is not clear. Criticism has included the statistical handling of measurement errors in the report, significant subjectivity in determining which deaths were "avoidable" or due to medical error, and an erroneous assumption that 100% of patients would have survived if optimal care had been provided.
+
+
+US
+Estimated numbers of medical errors occurring in the US have varied. A 2000 Institute of Medicine report estimated that medical errors result in between 44,000 and 98,000 preventable deaths and 1,000,000 excess injuries each year in U.S. hospitals. A 2001 study in the Journal of the American Medical Association of seven Department of Veterans Affairs medical centers estimated that, for roughly every 10,000 patients admitted to the select hospitals, one patient died who would have lived for three months or more in good cognitive health had "optimal" care been provided. Another 2001 study estimated that 1% of hospital admissions result in an adverse event due to negligence. According to a 2002 Agency for Healthcare Research and Quality report, about 7,000 people were estimated to die each year from medication errors – about 16 percent more deaths than the number attributable to work-related injuries (6,000 deaths). Another 2002 report stated that one in five Americans (22%) report that they or a family member have experienced a medical error of some kind. A 2008 literature review in The American Journal of Medicine estimated that between 10 and 15% of physician diagnoses are erroneous. 
+A 2006 study by the National Academy of Science found that medication errors are among the most common medical mistakes, harming at least 1.5 million people every year. According to the study, 400,000 preventable drug-related injuries occur each year in hospitals, 800,000 in long-term care settings, and roughly 530,000 among Medicare recipients in outpatient clinics. The report stated that these are likely to be conservative estimates. 
+Medical errors can also have a major financial impact. In 2000 alone, the extra medical costs incurred by preventable drug-related injuries sustained by Medicare recipients approximated $887 million. None of these figures take into account lost wages and productivity or other costs. in 2010, the projected cost of medical errors to the U.S. economy was approximately $20 billion, 87% of which was direct increases in medical costs of providing services to patient affected by medical errors. Medical errors can increase average hospital costs by as much as $4,769 per patient.
+
+
+Canada
+A study reported that in Canada, the medication errors morbidity and mortality has been estimated to cost $11 billion annually, which is comparable to the United States at $8.9 billion. Canadian data demonstrated that 28% of emergency department visits were drug related events and 70% have been preventable. 
+
+
+Outpatient vs. inpatient
+Misdiagnosis is the leading cause of medical error in outpatient facilities. Since the National Institute of Medicine's 1999 report, "To Err is Human," found that up to 98,000 hospital patients die from preventable medical errors in the U.S. each year, government and private sector efforts have focused on inpatient safety.
+
+
+Difficulties in studying medical errors
+The identification of errors may be a challenge in these studies, and mistakes may be more common than reported. Studies tend to identify only mistakes that led to measurable adverse events occurring soon after the errors. Independent review of doctors' treatment plans suggests that decision-making could be improved in 14% of admissions; many of the benefits would have delayed manifestations. 
+One study in 2003 suggested that adults in the United States receive only 55% of recommended care. At the same time, a second study found that 30% of care in the United States may be unnecessary. If a doctor failed to order a mammogram that is past due, this mistake would not show up in the first type of study. In addition, because no adverse event occurred during the short follow-up of the study, the mistake also would not show up in the second type of study because only the principal treatment plans were critiqued. However, the mistake would be recorded in the third type of study. If a doctor recommends an unnecessary treatment or test, it may not show in any of these types of studies.
+Another difficulty is that causes of death on United States death certificates, statistically compiled by the Centers for Disease Control and Prevention (CDC), are coded in the International Classification of Disease (ICD), which does not include codes for human and system factors.
+
+
+Causes
+
+The research literature has shown that medical errors are caused by errors of commission and errors of omission. Errors of omission are made when providers did not take action when they should have, while errors of commission occur when decisions and action are delayed. Medical errors of both types can be attributed to a number of causes including inexperienced physicians and nurses, new procedures, extremes of age, and complex or urgent care. A special form of an error of commission occurs when health care professionals commit to unnecessary treatment in the case of Medical child abuse.
+Many medical errors have been attributed to communication failures. For example, a study of data covering 67,826 patients found that poor communication contributed to 24% of patient safety incidents, and was the only identifiable cause in 13.2% of patient safety incidents. Communication failures may include translation issues (as may be the case for medical tourists), improper documentation, illegible handwriting, spelling errors, inadequate nurse-to-patient ratios, and confusion about similarly named medications. 
+Misdiagnosis may be associated with individual characteristics of the patient or due to the patient multimorbidity.
+Patient actions or inactions may also contribute significantly to medical errors.
+
+
+Medication error
+A study conducted of prescribing and prescriptions-related errors revealed prevalence rates ranging from 1% to 11% of all prescriptions. These were recognized as significant threats to patient safety. The most reported medication errors involved incorrect medication dosing, followed by potential adverse drug interaction. 
+
+
+Healthcare complexity
+Complicated technologies, powerful drugs, intensive care, rare and multiple diseases, and prolonged hospital stay can contribute to medical errors. In turn, medical errors from carelessness or improper use of medical devices often lead to severe injuries or death. For example, since 2015, 60 injuries and 23 deaths have been caused by misplaced feeding tubes while using the Cortrak2 EAS system, leading to FDA recalling Avanos Medical's Cortrak system in 2022 due to its severity and the high toll associated with the medical error.
+Complexity makes diagnosis especially challenging. There are less than 200 symptoms listed in Wikipedia, but there are probably more than 10,000 known diseases and the World Health Organization's system for the International Classification of Disease, 9th Edition from 1979 listed over 14,000 diagnosis codes. Textbooks of medicine often describe the most typical presentations of a disease, but in many conditions patients may have variable presentations instead of the classical signs and symptoms. To add complexity, the signs and symptoms of a given condition change over time; in the early stages the signs and symptoms may be absent or minimal, and then these evolve as the condition progresses. Diagnosis is often challenging in infants and children who can't clearly communicate their symptoms, and in the elderly, where signs and symptoms may be muted or absent.
+There are more than 7000 rar

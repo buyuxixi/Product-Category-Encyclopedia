@@ -1,0 +1,87 @@
+Chronic pain is pain that persists or recurs for longer than 3 months. It is also described as burning, electrical, throbbing, or nauseating pain. This type of pain contrasts with acute pain, which is associated with a specific cause, typically resolves when the cause is treated, and decreases over time. Chronic pain can last for years. Persistent pain often serves no apparent useful purpose. 
+The most common types of chronic pain include back pain, severe headache, migraine, and facial pain.  Chronic pain can lead to severe psychological and physical effects that may persist for a lifetime.  Physical complications can include damage to brain neurons (grey matter loss), insomnia and sleep deprivation, metabolic disorders, chronic stress, obesity, and heart attack. Mental health consequences may include depression and neurocognitive disorders.
+A wide range of treatments are  used for chronic pain; drug therapy including opioid and non-opioid drugs, cognitive behavioral therapy and physical therapy are the most  common interventions. Medications such as aspirin and ibuprofen are used for mild pain whereas morphine and codeine are prescribed for severe pain.  Non-pharmacological treatments, such as behavioral therapy and physiotherapy, are often used as complementary approaches due to their limited effectiveness when used alone. There is currently no definitive cure for chronic pain, and research continues into new management and therapeutic options, such as nerve blocks and radiation therapy.
+An average of 8% to 11.2% of people in different countries experience severe chronic pain, with higher incidence in industrialized countries. Epidemiological studies show prevalence in countries varying from 8% to 55.2% (for example 30-40% in the US and 10-20% in Iran and Canada). Chronic pain affects more people than diabetes, cancer, and heart disease. According to the estimates of the American Medical Association, the costs related to chronic pain in the US are about US$560-635b. 
+
+
+Classification
+
+
+In medical classification systems
+
+
+ICD-11
+In ICD-11 chronic pain is classified under MG30. It is described as pain that persists or recurs for longer than 3 months. Contributing factors can be multiple, and can include biological, psychological and social factors.
+Subcategories of MG30 are:
+
+primary (MG 30.0)
+cancer related
+postsurgical or post traumatic
+secondary musculoskeletal
+secondary visceral
+neuropathic
+secondary headache or orofacial
+Other specified
+Unspecified
+
+Primary chronic pain (MG30.0) has subcategories:
+
+widespread (diffuse pain in at least 4 of 5 body regions, and is associated with emotional distress or functional disability. This subcategory is an inclusion for fibromyalgia.)
+primary musculoskeletal
+primary headache or orofacial
+Complex regional pain syndrome
+Painful bruising syndrome
+Other specified
+Unspecified
+Specific pain syndromes can be placed in these categories.
+
+
+DSM-5
+According to the DSM-5 index, a complication is chronic when the resulting complication (pain, disorder, and illness) lasts for a period of more than six months (this type of classification does not have any prerequisites such as physical or mental injury).
+
+
+IASP
+The International Association for the Study of Pain (IASP) describes pain as chronic if it persists for months or even years, beyond the usual recovery time from an injury or illness. The IASP uses the terms nociceptive, neuropathic and nociplastic (see below).
+
+
+Other classification approaches
+
+
+Nociceptive/Neuropathic/Nociplastic
+In many cases pain fits into 3 categories;
+
+"nociceptive"; pain caused by inflamed or damaged tissue that activates special pain sensors called nociceptors. Nociceptive pain can be divided into "superficial," "deep physical" and "deep visceral" pain.
+"neuropathic"; pain caused by damage or malfunction of parts of parts of the nervous system. This can be the peripheral nervous system, the central nervous system or the somatosensory nervous system. Peripheral neuropathic pain is often described as "burning", "tingling", "electrical", "stabbing", or "pins and needles".
+"nociplastic"; pain that arises despite no clear evidence of tissue or somatosensory system damage causing the pain.
+
+
+By originating body area
+Chronic pain can be classified by origin area as neuropathic, musculoskeletal, visceral, inflammatory or central sensitisation.
+
+
+Primary or secondary
+Chronic pain syndromes can be divided between primary and secondary. Secondary pain results from another disease.
+
+
+Etiology
+Chronic pain has many pathophysiological and environmental causes and can occur in cases such as neuropathy of the central nervous system, after cerebral hemorrhage, tissue damage such as extensive burns, inflammation, autoimmune disorders such as rheumatoid arthritis, psychological stress such as headache, migraine or abdominal pain (caused by emotional, psychological or behavioral) and mechanical pain caused by tissue wear and tear such as arthritis. In some cases, chronic pain can be caused by genetic factors which interfere with neuronal differentiation, leading to a permanently lowered threshold for pain.
+The pathophysiological etiology of chronic pain remains unclear. Many theories of chronic pain fail to clearly explain why the same pathological conditions do not invariably result in chronic pain. Patients' anatomical predisposition to proximal neural compression (in particular of peripheral nerves) may be the answer to this conundrum. Proximal neural lesion at the level of the dorsal root ganglion (DRG) may drive a vicious cycle of chronic pain by causing postural protection of the painful site and consequent neural compression in the same spinal region. Difficulties in diagnosing proximal neural lesion may account for the theoretical perplexity of chronic pain.
+
+
+Pathophysiology
+
+The mechanism of continuous activation and transmission of pain messages, leads the body to an activity to relieve pain (a mechanism to prevent damage in the body), this action causes the release of prostaglandin and increase the sensitivity of that part to stimulation; Prostaglandin secretion causes unbearable and chronic pain. Under persistent activation, the transmission of pain signals to the dorsal horn may produce a pain wind-up phenomenon. This triggers changes that lower the threshold for pain signals to be transmitted. In addition, it may cause non-nociceptive nerve fibers to respond to, generate, and transmit pain signals. Researchers believe that the nerve fibers that cause this type of pain are group C nerve fibers; these fibers are not myelinated (have low transmission speed) and cause long-term pain.
+These changes in neural structure can be explained by neuroplasticity. When there is chronic pain, the somatotopic arrangement of the body (the distribution view of nerve cells) is abnormally changed due to continuous stimulation and can cause allodynia or hyperalgesia. In chronic pain, this process is difficult to reverse or stop once established. EEG of people with chronic pain showed that brain activity and synaptic plasticity change as a result of pain, and specifically, the relative activity of beta wave increases and alpha and theta waves decrease.
+Inefficient management of dopamine secretion in the brain can act as a common mechanism between chronic pain, insomnia and major depressive disorder and cause its unpleasant side effects. Astrocytes, microglia and satellite glial cells also lose their effective function in chronic pain. Increasing the activity of microglia, changing microglia networks, and increasing the production of chemokines and cytokines by microglia may exacerbate chronic pain. It has also been observed that astrocytes lose their ability to regulate the excitability of neurons and increase the spontaneous activity of neurons in pain circuits.
+
+
+Prognosis and outcomes
+Complete, longterm remission of many types of chronic pain is rare. Chronic pain is often difficult to treat.
+Chronic pain can significantly reduce individuals' quality of life, productivity, and wages, worsen existing health issues, and provoke the onset of new conditions like major depression, anxiety disorders, and substance use disorders. 
+Many of the often-used medications for chronic pain carry risks for side effects and complications. For example, chronic use of opioids is associated with decreased life expectancy and increased mortality of patients relative to non-users. Acetaminophen, a frequently used drug in chronic pain management, can cause hepatotoxicity when taken in excess of four grams per day, and even therapeutic doses administered to pain patients with chronic liver disease may cause hepatotoxicity. Long-term risks and side effects of opioids, another class of analgesic, include constipation, drug tolerance and dependence, nausea, indigestion, arrhythmia (e.g., QT prolongation during methadone treatment), endocrine gland disruptions promoting amenorrhea, erectile dysfunction, and gynecomastia, and fatigue. A major public health and clinical concern in and since the 2010s has been opioid overdose, especially in the context of an opioid epidemic in the United States.
+As of 2011, drug treatments for chronic non-cancer pain reduced pain by 30%, although effectiveness varied widely by modality, diagnosis, and population studied. This reduction in pain can significantly improve patients' performance and quality of life. However, the general and long-term prognosis of chronic pain shows decreased function and quality of life. Also, this disease causes many complications and increases the possibility of death of patients and suffering from other chronic diseases and obesity. Similarly, patients with chronic pain who require opioids often develop drug tolerance over time, and this increase in the amount of the dose taken to be effective increases the risk of side effects and death.
+Mental disorders can amplify pain signals and make symptoms more severe. In addition, comorbid psychiatric disorders, such as major depressive disorder, can significantly delay the diagnosis of pain disorders. Major depressive disorder and generalized anxiety disorder are the most common comorbidities associated with chronic pain. Patients with underlying pain and comorbid mental disorders receive twice as much medication from doctors annually as compared to patients who do not have such co-morbidities. Studies have shown that when coexisting diseases exist along with chronic pain, the treatment and improvement of one of these disorders can be effective in the improvement of the other. 
+Patients with chronic pain are at higher risk for suicide and suicidal thoughts. Research has shown approximately 20% of people with suicidal thoughts, and between 5 and 14% of patients with chronic pain commit suicide. Of patients who attempted suicide, 53.6% died of gunshot wounds, and 16.2% died of opioid overdose.
+Sleep disturbance, and insomnia due to medication and illness symptoms are often experienced by those with chronic pain. These conditions can be difficult to treat due to the high potential of medication interactions, especially when the conditions are treated by different doctors.
+Severe chronic pain is associated with increased risk of death over a ten-year period, particularly from heart disease and respiratory disease. Several mechanisms have been proposed for this increase, such as an abnormal stress response in the body's endocrine system. Additionally, chronic stress seems to affect risks to heart and lung (cardiovascular) health by increasing how quickly plaque can build up on artery walls (arteriosclerosis). However, further research is needed to clarify the relationship between severe chronic pain, stress and cardiovascular health.
+People with chronic pain tend to have higher rates of depression and although the exact connection between the comorbidities is unclear, a 2017 study on neuroplasticity found that "injury sensory pathways of body pains have been sh

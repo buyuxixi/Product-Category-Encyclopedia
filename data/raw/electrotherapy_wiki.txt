@@ -1,0 +1,130 @@
+Electrotherapy is the use of electrical energy as a medical treatment. In medicine, the term electrotherapy can apply to a variety of treatments, including the use of electrical devices such as deep brain stimulators for neurological disease. Electrotherapy is a part of neurotherapy aimed at changing the neuronal activity. The term has also been applied specifically to the use of electric current to speed up wound healing. The use of electromagnetic stimulation or EMS is also very wide for dealing with muscular pain. Additionally, the term "electrotherapy" or "electromagnetic therapy" has also been applied to a range of alternative medical devices and treatments. Evidence supporting the effectiveness of electrotherapy is limited (see section Medical uses below).
+
+
+== Medical uses ==
+Electrotherapy is primarily used in physical therapy for:
+
+relaxation of muscle spasms
+prevention and retardation of disuse atrophy
+increase of local blood circulation
+muscle rehabilitation and re-education
+electrical muscle stimulation
+maintaining and increasing range of motion
+management of chronic and intractable pain including diabetic neuropathy
+acute post-traumatic and post-surgical pain
+post-surgical stimulation of muscles to prevent venous thrombosis
+wound healing
+drug delivery
+There is limited evidence supporting electrotherapy, specifically in treating musculoskeletal, osteoarthritis, fibromyalgia, neck pain, lumbopelvic pain, and ulcer conditions. Some of the treatment effectiveness mechanisms are little understood. The natural neurostimulation hypothesis explains the therapeutic effect by the fact that energy stimuli induce mitochondrial stress and microvascular vasodilation. Since healthy neurostimulation should emulate the physical characteristics of a mother's care for her fetus during pregnancy scaled to the treatment parameters of the specific patient, but many techniques of electrotherapy do not consider this, the hypothesis claims that their effectiveness and some practices for their use still anecdotal.
+
+
+=== Musculoskeletal conditions ===
+In general, there is little evidence that electrotherapy is effective in the management of musculoskeletal conditions. In particular, there is no evidence that electrotherapy is effective in the relief of pain arising from osteoarthritis, and little to no evidence available to support electrotherapy for the management of fibromyalgia.
+
+
+==== Neck and back pain ====
+A 2016 review found that, "in evidence of no effectiveness," clinicians should not offer electrotherapy for the treatment of neck pain or associated disorders. Earlier reviews found that no conclusions could be drawn about the effectiveness of electrotherapy for neck pain, and that electrotherapy has limited effect on neck pain as measured by clinical results. A later 2023 review confirmed this conclusion that there is limited high-quality evidence for the use of electromagnetic stimulation for pain relief.
+A 2015 review found that the evidence for electrotherapy in pregnancy-related lower back pain is "very limited".
+
+
+==== Shoulder disorders ====
+A 2014 Cochrane review found insufficient evidence to determine whether electrotherapy was better than exercise at treating adhesive capsulitis. As of 2004, there is insufficient evidence to draw conclusions about any intervention for rotator cuff pathology, including electrotherapy; furthermore, methodological problems precluded drawing conclusions about the efficacy of any rehabilitation method for impingement syndrome.
+
+
+==== Other musculoskeletal disorders ====
+There is limited, low quality evidence for a slight benefit of noxious-level electrotherapy in the treatment of epicondylitis.
+A 2012 review found that "Small, single studies showed that some electrotherapy modalities may be beneficial" in rehabilitating ankle bone fractures, but the 2024 update of this review does not address electrotherapy. However, a 2008 review found it to be ineffective in healing long-bone fractures.
+A 2012 review found that evidence that electrotherapy contributes to recovery from knee conditions is of "limited quality".
+
+
+=== Chronic pain ===
+A 2016 Cochrane review found that supporting evidence for electrotherapy as a treatment for complex regional pain syndrome is "absent or unclear."
+
+
+=== Chronic wounds ===
+A 2015 review found that the evidence supporting the use of electrotherapy in healing pressure ulcers was of low quality, and a 2015 Cochrane review found that no evidence that electromagnetic therapy, a subset of electrotherapy, was effective in healing pressure ulcers. Earlier reviews found that, because of low-quality evidence, it was unclear whether electrotherapy increases healing rates of pressure ulcers. By 2014 the evidence supported electrotherapy's efficacy for ulcer healing.
+Another 2015 Cochrane review found no evidence supporting the user of electrotherapy for venous stasis ulcers.
+
+
+=== Mental health and mood disorders ===
+Since the 1950s, over 150 published articles have found a positive outcome in using cranial electrostimulation (CES) to treat depression, anxiety, and insomnia.
+
+
+== Contraindications ==
+Electrotherapy is contraindicated for people with:
+
+medical implants or stimulators like a cardiac pacemaker
+certain cardiovascular diseases
+women who are pregnant
+deep vein thrombosis
+cognitive impairment
+
+
+== History ==
+
+The first recorded treatment of a patient by electricity was by Johann Gottlob Krüger in 1743. John Wesley promoted electrical treatment as a universal panacea in 1747 but was rejected by mainstream medicine. Giovanni Aldini treated insanity with static electricity 1823–1824.
+The first recorded medical treatments with electricity in London were in 1767 at Middlesex Hospital in London using a special apparatus. The same apparatus was purchased for St. Bartholomew's Hospital ten years later. Guy's Hospital has a published list of cases from the early 19th century. Golding Bird at Guy's brought electrotherapy into the mainstream in the mid-19th century.  In the second half of the 19th century the emphasis moved from delivering large shocks to the whole body to more measured doses, the minimum effective.
+
+
+=== Apparatus ===
+
+Electrotherapy equipment has historically included:
+
+The electric bath for high-voltage static induction
+Oudin coil, a high-voltage induction coil, in use around 1900
+Faradic battery, a device to provide localised electric stimulation
+Pulvermacher's chain, a wearable electrochemical device mostly used by quacks, in use second half of 19th century
+Leyden jars, an early form of capacitor, for storing electricity
+Electrostatic generators of various sorts
+
+
+=== People ===
+Some important people in the history of electrotherapy include:
+
+Luigi Galvani, a pioneer of medical electricity
+Benjamin Franklin, an early proponent of electrotherapy who made it widely known, but mostly taken up by quacks and charlatans
+Golding Bird, mentioned above
+Charles Grafton Page
+Duchenne de Boulogne
+Jacques-Arsène d'Arsonval
+George Miller Beard
+Margaret Cleaves, a promoter of ozone therapy
+Many of the forms of electricity used in electrotherapy were named after scientists
+
+
+==== Notable historic fringe practitioners ====
+James Graham
+Franz Mesmer
+
+
+=== Muscle stimulation ===
+In 1856 Guillaume Duchenne announced that alternating was superior to direct current for electrotherapeutic triggering of muscle contractions. What he called the 'warming effect' of direct currents irritated the skin, since, at voltage strengths needed for muscle contractions, they cause the skin to blister (at the anode) and pit (at the cathode). Furthermore, with DC each contraction required the current to be stopped and restarted. Moreover, alternating current could produce strong muscle contractions regardless of the condition of the muscle, whereas DC-induced contractions were strong if the muscle was strong, and weak if the muscle was weak.
+Since that time almost all rehabilitation involving muscle contraction has been done with a symmetrical rectangular biphasic waveform. During the 1940s, however, the U.S. War Department, investigating the application of electrical stimulation not just to retard and prevent atrophy but to restore muscle mass and strength, employed what was termed galvanic exercise on the atrophied hands of patients who had an ulnar nerve lesion from surgery upon a wound. These galvanic exercises employed a monophasic (single-pulse) direct current waveform.
+The American Physical Therapy Association, a professional organization representing physical therapists, accepts the use of electrotherapy in the field of physical therapy.
+
+
+== See also ==
+A Clinical Lesson at the Salpêtrière – 1887 group tableau portrait by André Brouillet
+Cranial electrotherapy stimulation – Form of neurostimulation
+Electrical brain stimulation – Form of electrotherapy
+Electroanalgesia – Pain relief by electrical means
+Electroconvulsive therapy – Medical procedure in which electrical current is passed through the brain
+Electrotherapy (cosmetic) – Use of electrical energy for cosmetics
+Galvanic bath – Alternative medical treatment
+Microcurrent electrical neuromuscular stimulator – Device for sending small electrical pulses into the body
+Neuromuscular diagnostics – Medical testing for the muscular and nervous systems
+Neurotherapy – Medical treatment
+Pulsed electromagnetic field therapy – Attempted medical therapy using electromagnetic fields
+Transcranial direct-current stimulation – Technique of brain electric stimulation therapy
+Transcranial magnetic stimulation – Brain stimulation using magnetic fields
+Transcutaneous electrical nerve stimulation – Therapeutic technique
+Vagus nerve stimulation – Medical treatment that involves delivering electrical impulses to the vagus nerve
+
+
+== References ==
+
+
+== External links ==
+
+Irmak R (2020). Atlas of Electrotherapy -I: Waveforms and Electrode Placements for Cervical, Thoracic and Lumbosacral Regions. Rafet Irmak. ISBN 978-605-89408-7-1.
+Tim Watson's site

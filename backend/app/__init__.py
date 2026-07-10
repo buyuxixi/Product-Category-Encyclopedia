@@ -1,0 +1,2 @@
+"""Product Category Encyclopedia backend."""
+

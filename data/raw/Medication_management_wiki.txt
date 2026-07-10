@@ -1,0 +1,54 @@
+Medication therapy management, generally called medicine use review in the United Kingdom, is a service provided typically by pharmacists, medical affairs, and RWE scientists that aims to improve outcomes by helping people to better understand their health conditions and the medications used to manage them. This includes providing education on the disease state and medications used to treat the disease state, ensuring that  medicines are taken correctly, reducing waste due to unused medicines, looking for any side effects, and providing education on how to manage any side effects.  The process that can be broken down into five steps: medication therapy review, personal medication record, medication-related action plan, intervention and or referral, and documentation and follow-up.
+The medication therapy review has the pharmacist review all of the prescribed medications, any over the counter medications, and all dietary supplements an individual is taking. This allows the pharmacist to look for any duplications or dangerous drug interactions.  This service can be especially valuable for people who are older, have several chronic conditions, take multiple medications, or are seen by multiple doctors.
+
+
+Effectiveness
+The goal of medication review is to improve health and reduce morbidity and mortality in patients by optimizing the use of their current medications. Different hospital institutions and countries have different policies or approaches to medication review for their inpatients. The effectiveness of a formal medication review program in people who are hospitalized has not been well studied. There is some evidence that a medication review program reduces the number of people re-admitted to hospital and also may decrease the number of times they return to the emergency department. The effects on morbidity and any improvements on the quality of a person's life are not clear.
+
+
+Avoiding common mistakes
+Mistakes occur even when the best intentions are there. The most frequent error? Doses were skipped since life became hectic. Set two reminders to avoid this: one for when you are supposed to take your medication and another for fifteen minutes afterward. Your phone will continue to buzz until you swipe "Taken" or "Snooze" if you have not taken it by then. Cutting tablets or chewing capsules without first verifying is another risk. Since many contemporary drugs are extended-release formulations, which dissolve gradually over several hours, shattering them can release the entire dosage at once, increasing the possibility of adverse consequences. "Can I split or open this capsule?" is a question you should always ask your pharmacist. They will be aware of which medications should remain unchanged and which can be safely altered. Lastly, be mindful of drug interactions. Your prescription drugs may interact with common over-the-counter pain medications, grapefruit juice, and St. John's Wort. Keep a current inventory of all the medications you use, both prescription and over-the-counter, including herbal supplements and allergy pills, and present it to your doctor or pharmacist at every appointment. Use an online interaction checker or just give your pharmacist a call if you are ever worried; they are trained to identify risky combos before they hurt you.
+
+
+United States
+In 2014, the US Centers for Medicare and Medicaid Services required Part D plans to include an MTM program, which led to an expansion of services offered. MTM services are provided free to eligible patients enrolled in a plan. As of 2019, to be eligible a patient must have at least two (or three, for some plans) chronic conditions, take multiple drugs covered by Part D, and are predicted to exceed a preset amount in annual out of pocket costs for their covered Part D drugs (set at $3,967 in 2018 and $4,044 in 2019). Plans are permitted to expand MTM eligibility to patients not meeting the minimum required criteria if they so choose.
+
+
+Comprehensive medication review
+As part of the minimum required services, plans must provide for a comprehensive medication review (CMR) once per year, usually conducted by a pharmacist. Per CMS guidance, the goal of the CMR is to "improve patients' knowledge
+of their prescriptions, over-the-counter (OTC) medications, herbal therapies and dietary supplements, identify and address problems or concerns that patients may have, and empower patients to self manage their medications and their health conditions." The CMR is conducted in an interactive manner either in person or through telehealth. A pharmacist or other provider conducting a CMR will use information from various sources, such as the pharmacy fill records, the patient's pill bottles, a patient interview, and/or discussion with caregivers to identify potential improvements that can be made in the patient's therapy. The pharmacist will then make any appropriate recommendations to the patient's doctor, as well as document their findings in a format similar to a SOAP note. The patient must be provided a medication action plan with a list of their medications, directions, and any steps they need to take to improve their therapy (such as using reminders, organizing, stopping old medications, etc.). Most comprehensive medication reviews result in pharmacist intervention to recommend changes to therapy to a doctor, and/or recommendations to the patient to improve adherence/efficacy of their medications.
+
+
+Targeted medication review
+A targeted medication review (TMR, also called targeted intervention program or TIP) is a required service for eligible patients that focuses on a specific medication or disease state and is conducted once every three months. The goal of a TMR program is to improve adherence to medication and identify and fix drug therapy problems common in chronic diseases such as nonadherence, duplicate therapy, or sub-optimal therapy. The pharmacist or provider will contact the patient to ensure adherence, identify potential problems with the therapy, and make any appropriate recommendations to the prescriber. The provision of TMR services to patients with chronic diseases has been shown to decrease the number of inpatient admissions per 1000 patients by about 50 admissions per 1000 patients.
+
+
+United Kingdom
+A medicine use review (MUR) is an advanced service offered by pharmacies in the United Kingdom. It is part of the current contract pharmacies hold with the National Health Service (NHS). An MUR is an opportunity for patients to discuss their medicines with a qualified pharmacist. An MUR is a free NHS service that is held in a private consultation room at a local pharmacy. It is not meant to replace the role of the general practitioner but rather provide:
+
+A review of all medicines to see if there is any overlapping or interactions
+Give extra information on what medicines are for
+Discuss side effects of medicines
+Identify problems associated with medicines
+Pharmacies in the United kingdom are paid £28 for each Medicines Use Review undertaken, up to a maximum of 400 per pharmacy, per year. At least 70% of patients must be in one of the four target groups:
+
+taking certain high risk medicines on the national list
+recently discharged from hospital with changes to their prescribed medicine
+with a respiratory condition such as asthma or chronic obstructive pulmonary disease
+with cardiovascular disease or risk factors, who are prescribed four or more regular medicines.
+The introduction of pharmacists into GP surgeries means that the practice pharmacists can do more to ensure that reviews are carried out where necessary.
+
+
+Abuse of system
+There have been concerns over abuse of the system, whereby multiple pharmacies are using the system to charge the £28 fee for each 10- to 15-minute MUR, and pressuring pharmacists to meet targets for the number carried out, with the review more of a tick-box exercise than a benefit for the patient. There have also been cases of falsification of figures.
+
+
+Research
+The effectiveness of a medication review program for elderly people who require multiple medications (polypharmacy) is not clear and more research is needed to understand how to optimize medications in elderly inpatients.
+
+
+See also
+Adherence (medicine)
+
+
+References

@@ -1,0 +1,82 @@
+Diabetic neuropathy includes various types of nerve damage associated with diabetes mellitus. The most common form, diabetic peripheral neuropathy, affects 30% of all diabetic patients. Studies suggests that cutaneous nerve branches, such as the sural nerve, are involved in more than half of patients with diabetes 10 years after the diagnosis and can be detected with high-resolution magnetic resonance imaging. Symptoms depend on the site of nerve damage and can include motor changes such as weakness; sensory symptoms such as numbness, tingling, or pain; or autonomic changes such as urinary symptoms. These changes are thought to result from a microvascular injury involving small blood vessels that supply nerves (vasa nervorum).  Relatively common conditions which may be associated with diabetic neuropathy include distal symmetric polyneuropathy; third, fourth, or sixth cranial nerve palsy; mononeuropathy; mononeuropathy multiplex; diabetic amyotrophy; and autonomic neuropathy.
+
+
+Signs and symptoms
+
+Diabetic neuropathy can affect any peripheral nerves including sensory neurons, motor neurons, and the autonomic nervous system. Therefore, diabetic neuropathy has the potential to affect essentially any organ system and can cause a range of symptoms. There are several distinct syndromes based on the organ systems affected.
+
+
+Sensorimotor polyneuropathy
+Longer nerve fibers are affected to a greater degree than shorter ones because nerve conduction velocity is slowed in proportion to a nerve's length. In this syndrome, decreased sensation and loss of reflexes occur first in the toes on each foot, then extend upward. It is usually described as a glove-stocking distribution of numbness, sensory loss, dysesthesia and nighttime pain. The pain can feel like burning, pricking sensation, achy or dull. A pins and needles sensation is common. Loss of proprioception, the sense of where a limb is in space, is affected early. These patients cannot feel when they are stepping on a foreign body, like a splinter, or when they are developing a callus from an ill-fitting shoe. Consequently, they are at risk of developing ulcers and infections on the feet and legs, which can lead to amputation. Similarly, these patients can get multiple fractures of the knee, ankle or foot, and develop a Charcot joint. Loss of motor function results in dorsiflexion, contractures of the toes, and loss of the interosseous muscle function that leads to contraction of the digits, so-called hammer toes. These contractures occur not only in the foot but also in the hand where the loss of the musculature makes the hand appear gaunt and skeletal. The loss of muscular function is progressive.
+
+
+Autonomic neuropathy
+The autonomic nervous system is composed of nerves serving the heart, lungs, blood vessels, bone, adipose tissue, sweat glands, gastrointestinal system and genitourinary system. Autonomic neuropathy can affect any of these organ systems. One commonly recognized autonomic dysfunction in diabetics is orthostatic hypotension, or becoming dizzy and possibly fainting when standing up due to a sudden drop in blood pressure. In the case of diabetic autonomic neuropathy, it is due to the failure of the heart and arteries to appropriately adjust heart rate and vascular tone to keep blood continually and fully flowing to the brain. This symptom is usually accompanied by a loss of respiratory sinus arrhythmia – the usual change in heart rate seen with normal breathing. These two findings suggest autonomic neuropathy.
+Gastrointestinal manifestations include gastroparesis, nausea, bloating, and diarrhea. Because many diabetics take oral medication for their diabetes, absorption of these medicines is greatly affected by the delayed gastric emptying. This can lead to hypoglycemia when an oral diabetic agent is taken before a meal and does not get absorbed until hours, or sometimes days later when there is normal or low blood sugar already. Sluggish movement of the small intestine can cause bacterial overgrowth, made worse by the presence of hyperglycemia. This leads to bloating, gas and diarrhea.
+Urinary symptoms include urinary frequency, urgency, incontinence and retention. Again, because of the retention of urine, urinary tract infections are frequent. Urinary retention can lead to bladder diverticula, kidney stones, and reflux nephropathy.
+
+
+Cranial neuropathy
+When cranial nerves are affected, neuropathies of the oculomotor nerve (cranial nerve #3 or CNIII) are most common. The oculomotor nerve controls all the muscles that move the eye except for the lateral rectus and superior oblique muscles. It also serves to constrict the pupil and open the eyelid. The onset of a diabetic third nerve palsy is usually abrupt, beginning with frontal or pain around the eye and then double vision. All the oculomotor muscles innervated by the third nerve may be affected, but those that control pupil size are usually well-preserved early on. This is because the parasympathetic nerve fibers within CNIII that influence pupillary size are found on the periphery of the nerve (in terms of a cross-sectional view), which makes them less susceptible to ischemic damage (as they are closer to the vascular supply). The sixth nerve, the abducens nerve, which innervates the lateral rectus muscle of the eye (moves the eye laterally), is also commonly affected but fourth nerve, the trochlear nerve,  (innervates the superior oblique muscle, which moves the eye downward) involvement is unusual. Damage to a specific nerve of the thoracic or lumbar spinal nerves can occur and may lead to painful syndromes that mimic a heart attack, gallbladder inflammation, or appendicitis. Diabetics have a higher incidence of entrapment neuropathies, such as carpal tunnel syndrome.
+
+
+Pathogenesis
+The following processes are thought to be involved in the development of diabetic neuropathy:
+
+
+Microvascular disease
+
+Vascular and neural diseases are closely related. Blood vessels depend on normal nerve function, and nerves depend on adequate blood flow. The first pathological change in the small blood vessels is narrowing of the blood vessels. As the disease progresses, neuronal dysfunction correlates closely with the development of blood vessel abnormalities, such as capillary basement membrane thickening and endothelial hyperplasia, which contribute to diminished oxygen tension and hypoxia. Neuronal ischemia is a well-established characteristic of diabetic neuropathy. Blood vessel opening agents (e.g., ACE inhibitors, α1-antagonists) can lead to substantial improvements in neuronal blood flow, with corresponding improvements in nerve conduction velocities. Thus, small blood vessel dysfunction occurs early in diabetes, parallels the progression of neural dysfunction, and may be sufficient to support the severity of structural, functional, and clinical changes observed in diabetic neuropathy.
+
+
+Advanced glycated end products
+
+Elevated levels of glucose within cells cause a non-enzymatic covalent bonding with proteins, which alters their structure and inhibits their function. Some of these glycated proteins have been implicated in the pathology of diabetic neuropathy and other long-term complications of diabetes.
+
+
+Polyol pathway
+
+Also called the sorbitol/aldose reductase pathway, the polyol pathway appears to be implicated in diabetic complications, especially in microvascular damage to the retina, kidney, and nerves.
+
+
+Diagnosis
+Diabetic peripheral neuropathy can be diagnosed with a history and physical examination. The diagnosis is considered in people who develop pain or numbness in a leg or foot with a history of diabetes. Muscle weakness, pain, balance loss, and lower limb dysfunction are the most common clinical manifestations. Physical exam findings may include changes in appearance of the feet, presence of ulceration, and diminished ankle reflexes. The most useful physical examination finding for large fiber neuropathy is an abnormally decreased vibration perception to a 128-Hz tuning fork (likelihood ratio (LR) range, 16–35) or pressure sensation with a 5.07 Semmes-Weinstein monofilament (LR range, 11–16). Normal results on vibration testing (LR range, 0.33–0.51) or monofilament (LR range, 0.09–0.54) make large fiber peripheral neuropathy from diabetes less likely.  Nerve conduction tests may show reduced functioning of the peripheral nerves, but seldom correlate with the severity of diabetic peripheral neuropathy and are not appropriate as routine tests for the condition. Small fiber neuropathy measured by QST and Sudomotor function tests, through electrochemical skin conductance, is more and more indicated to assess early signs of diabetic neuropathy and autonomic neuropathy.
+
+
+Classification
+Diabetic neuropathy encompasses a series of different neuropathic syndromes which can be categorized as follows:
+
+Focal and multifocal neuropathies:
+Mononeuropathy which affects one nerve
+Amyotrophy or radiculopathy such as proximal diabetic neuropathy, affecting a specific pattern of nerves
+Multiple lesions, affecting nerves that don't follow a specific pattern, also called "mononeuritis multiplex"
+Nerve damage from entrapment (e.g. median, ulnar, peroneal)
+Symmetrical neuropathies:
+Sensory
+Autonomic
+Distal symmetrical polyneuropathy (DSPN), the diabetic type of which is also known as diabetic peripheral neuropathy (DPN) (most common presentation)
+
+
+Prevention
+
+Diabetic neuropathy can be largely prevented by maintaining blood glucose levels and lifestyle modifications. Enhanced glucose control methods include more frequent subcutaneous insulin administration, continuous insulin infusion, oral antidiabetic agents, while lifestyle modifications may include exercise alone, or in combination with dietary modifications. Enhanced glucose control prevents the development of clinical neuropathy and reduces nerve abnormalities in type 1 diabetes, and delays the onset of neuropathy in both types of diabetes. However, such methods may increase the likelihood of experiencing a hypoglycemic event, and many of these more aggressive methods require more frequent insulin use which has been associated with excessive risk of falls.
+
+
+Treatment
+
+
+Blood glucose management
+Treatment of early manifestations of sensorimotor polyneuropathy involves improving glycemic control. Tight control of blood glucose can reverse the changes of diabetic neuropathy if the neuropathy and diabetes are recent in onset. This is the primary treatment of diabetic neuropathy that may change the course of the condition as the other treatments focus on reducing pain and other symptoms.
+
+
+Topical agents
+Capsaicin applied to the skin in a 0.075% concentration has not been found to be more effective than placebo for treating pain associated with diabetic neuropathy. There is insufficient evidence to draw conclusions for more concentrated forms of capsaicin, clonidine, or lidocaine applied to the skin. About 10% of people who use capsaicin cream have a large benefit.
+
+
+Medications
+Medication options for pain control include antiepileptic drugs (AEDs), serotonin-norepinephrine reuptake inhibitors (SNRIs), and tricyclic antidepressants (TCAs).
+A systematic review concluded that "tricyclic antidepressants and traditional anticonvulsants are better for short term pain relief than newer generation anticonvulsants."  A further analysis of previous studies showed that the agents carbamazepine, venlafaxine, duloxetine, and amitriptyline were more effective than placebo, but that comparative effectiveness between each agent is unclear.
+The only three medications approved by the United States' Food and Drug Administration for diabetic peripheral neuropathy (DPN) are the antidepressant duloxetine, the anticonvulsant pregabalin, and the long-acting opioid tapentadol ER (extended release). Before trying a systemic medication, some doctors recommend treating localized diabetic peripheral neuropathy with lidocaine patches.
+
+
+Antiepileptic d

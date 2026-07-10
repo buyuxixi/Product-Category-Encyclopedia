@@ -1,0 +1,61 @@
+Neurostimulation is the purposeful modulation of the nervous system's activity using invasive (e.g., microelectrodes) or non-invasive means (e.g., transcranial magnetic stimulation, transcranial electric stimulation such as tDCS or tACS). Neurostimulation usually refers to the electromagnetic approaches to neuromodulation.
+Neurostimulation technology can improve the life quality of those who are severely paralyzed or have profound losses to various sense organs, as well as for permanent reduction of severe, chronic pain which would otherwise require constant (around-the-clock), high-dose opioid therapy (such as neuropathic pain and spinal-cord injury). It serves as the key part of neural prosthetics for hearing aids, artificial vision, artificial limbs, and brain-machine interfaces. In the case of neural stimulation, primarily electrical stimulation is utilized, and charge-balanced biphasic constant current waveforms or capacitively coupled charge injection approaches are adopted. Alternatively, transcranial magnetic stimulation and transcranial electric stimulation have been proposed as non-invasive methods in which either a magnetic field or transcranially applied electric currents cause neurostimulation.
+A recent scientific review (2024) has identified relevant hypotheses on the cellular-level processes underlying non-invasive neurostimulation. Data analysis revealed that mitochondrial activity probably plays a central role in brain stimulation implemented by different approaches. In addition, analysis of the mother-fetus neurocognitive model provided insights into the conditions of natural neurostimulation of the fetal nervous system during pregnancy. Based on these results, the article suggested the hypothesis of the origin of neurostimulation during gestation. According to this position, natural neurostimulation occurs during pregnancy due to the electromagnetic properties of the mother's heart and its interaction with the mother's own and fetal nervous system. Natural neurostimulation ensures the balanced development of the embryo's nervous system and guarantees the development of the correct architecture of the nervous system with the necessary cognitive functions corresponding to the ecological context and the qualities that make human beings unique. According to Latvian prof Igor Val Danilov, natural neurostimulation is the basis of many neurostimulation techniques.
+
+
+Brain stimulation
+Brain stimulation has the potential to treat some disorders such as epilepsy. In this method, scheduled stimulation is applied to specific cortical or subcortical targets. There are available commercial devices that can deliver an electrical pulse at scheduled time intervals. Scheduled stimulation is hypothesized to alter the intrinsic neurophysiologic properties of epileptic networks. According to prof Barbara Jobst and colleagues, the most explored targets for scheduled stimulation are the anterior nucleus of the thalamus and the hippocampus. The anterior nucleus of the thalamus has been studied, which has shown a significant seizure reduction with the stimulator on versus off during several months after stimulator implantation. Moreover, the cluster headache (CH) can be treated by using a temporary stimulating electrode at sphenopalatine ganglion (SPG). Medical Dr. Mehdi Ansarinia and colleagues reported pain relief within several minutes of stimulation in this method. To avoid use of implanted electrodes, researchers have engineered ways to inscribe a "window" made of zirconia that has been modified to be transparent and implanted in mice skulls, to allow optical waves to penetrate more deeply, as in optogenetics, to stimulate or inhibit individual neurons.
+
+
+Deep brain stimulation
+
+Deep brain stimulation (DBS) has shown benefits for movement disorders such as Parkinson's disease, tremor and dystonia and other neuropsychiatric disorders such as depression, obsessive-compulsive disorder, Tourette syndrome, chronic pain and cluster headache. DBS can directly change the brain activity in a controlled manner and is hence used to map fundamental mechanisms of brain functions along with neuroimaging methods.
+A DBS system consists of three components: the implanted pulse generator (IPG), the lead, and an extension. The implantable pulse generator (PG) generates stimulation pulses, which are sent to intracranial leads at the target via an extension. The stimulation pulses interfere with neural activity at the target site.
+The application and effects of DBS, on both normal and diseased brains, involves many parameters. These include the physiological properties of the brain tissue, which may change with disease state. Also important are the stimulation parameters, such as amplitude and temporal characteristics, and the geometric configuration of the electrode and the tissue that surrounds it.
+In spite of a huge number of studies on DBS, its mechanism of action is still not well understood. Developing DBS microelectrodes is still challenging.
+
+
+Non-invasive brain stimulation
+There are five main domains of non-invasive neurostimulation:
+
+Photonic neurostimulation through the image-forming vision pathways and skin irradiation. This technique is also known as Light therapy, or Phototherapy, or Luxtherapy. It refers to the body's exposure to intensive artificial light at controlled wavelengths to treat different diseases.
+Transcranial laser radiation refers to directional low-power and high-fluence monochromatic or quasi monochromatic light radiation, also known as photobiomodulation (PBM).
+Transcranial electric current and magnetic field stimulations (see further sections Transcranial magnetic stimulation and Transcranial electrical stimulation).
+Low-frequency sound stimulations, including vibroacoustic therapy (VAT) and rhythmic auditory stimulation (RAS).
+Acoustic photonic intellectual neurostimulation (APIN). This technique applies features of natural neurostimulation.
+
+
+Acoustic photonic intellectual neurostimulation
+This non-invasive brain stimulation approach simulates the features of natural neurostimulation of the fetal nervous system during pregnancy, scaled to the treatment parameters of the specific patient. The therapeutic effect of the APIN technique relies on the fact that energy stimuli enhance mitochondrial activity and that a pulsed electromagnetic field provides microvascular vasodilation. Three therapeutic agents cause oxygenation of neuronal tissues, release of adenosine-5′-triphosphate proteins, and neuronal plasticity. This method shows significant results in chronic pain management in various conditions.
+
+
+Transcranial magnetic stimulation
+
+Compared to electrical stimulation that utilizes brief, high-voltage electric shock to activate neurons, which can potentially activate pain fibers, transcranial magnetic stimulation (TMS) was developed by Baker in 1985. TMS uses a magnetic wire above the scalp, which carries a sharp and high current pulse. A time variant magnetic field is induced perpendicular to the coil due to the applied pulse which consequently generates an electric field based on Maxwell's law. The electric field provides the necessary current for a non-invasive and much less painful stimulation. There are two TMS devices called single pulse TMS and repetitive pulse TMS (rTMS) while the latter has greater effect but potential to cause seizure. TMS can be used for therapy particularly in psychiatry, as a tool to measure central motor conduction and a research tool to study different aspects of human brain physiology such as motor function, vision, and language. The rTMS method has been used to treat epilepsy with rates of 8–25 Hz for 10 seconds. The other therapeutic uses of rTMS include parkinson diseases, dystonia and mood diseases. Also, TMS can be used to determine the contribution of cortical networks to specific cognitive functions by disrupting activity in the focal brain region. Early, inconclusive, results have been obtained in recovery from coma (persistent vegetative state) by Pape et al. (2009).
+
+
+Transcranial electrical stimulation
+
+Transcranial direct current stimulation (tDCS)
+Transcranial alternating current stimulation (tACS)
+Transcranial pulsed current stimulation (tPCS)
+Transcranial random noise stimulation (tRNS)
+
+
+Spinal cord stimulation
+
+Spinal cord stimulation (SCS) is an effective therapy for the treatment of chronic and intractable pain including diabetic neuropathy, failed back surgery syndrome, complex regional pain syndrome, phantom limb pain, ischemic limb pain, refractory unilateral limb pain syndrome, postherpetic neuralgia and acute herpes zoster pain. Another pain condition that is a potential candidate for SCS treatment is Charcot-Marie-Tooth (CMT) disease, which is associated with moderate to severe chronic extremity pain. SCS therapy consists of the electrical stimulation of the spinal cord to 'mask' pain. The gate theory proposed in 1965 by Prof Ronald Melzack and Prof Wall provided a theoretical construct to attempt SCS as a clinical treatment for chronic pain. This theory postulates that activation of large diameter, myelinated primary afferent fibers suppresses the response of dorsal horn neurons to input from small, unmyelinated primary afferents.
+A simple SCS system consists of three different parts. First, microelectrodes are implanted in the epidural space to deliver stimulation pulses to the tissue. Second, an electrical pulse generator implanted in the lower abdominal area or gluteal region is connected to the electrodes via wires, and third a remote control to adjust the stimulus parameters such as pulse width and pulse rate in the PG. Improvements have been made in both the clinical aspects of SCS such as transition from subdural placement of contacts to epidural placement, which reduces the risk and morbidity of SCS implantation, and also technical aspects of SCS such as improving percutaneous leads, and fully implantable multi-channel stimulators. However, there are many parameters that need to be optimized including number of implanted contacts, contact size and spacing, and electrical sources for stimulation. The stimulus pulse width and pulse rate are important parameters that need to be adjusted in SCS, which are typically 400 us and 8–200 Hz respectively.
+
+
+Spinal cord stimulation for movement disorders
+Spinal cord stimulation has shown promising results in spinal cord injury and other movement disorders, such as multiple sclerosis. The stimulation, applied over the lumbar spinal cord, works by activating large diameter afferent fibers entering the spinal cord, which then transsynaptically activate and engage spinal neuronal networks. The same target structures can also be activated by transcutaneous electrodes placed over the lower thoracic spine and abdomen. Transcutaneous spinal cord stimulation is completely non-invasive and, as it uses TENS electrodes and stimulators, can be applied at low cost. Yet, in comparison to the implanted epidural variant, the efficacy of transcutaneous spinal cord stimulation depends more strongly on the body position and spinal alignment, which could lead to inconsistent result if the body position and posture isn't controlled during the application.
+
+
+Transcutaneous supraorbital nerve stimulation
+Tentative evidence supports transcutaneous supraorbital nerve stimulation. Side effects are few.
+
+
+Cochlear implants
+
+Cochlear implants have provided partial hearing to more than 120,000 persons worldwide as of 2008. The electrical stimulation is used in a cochlear implant to provide functional hearing in totally deafened persons. Cochlear implants include several subsystem components from the external speech processor and radio frequency (RF) transmission link to the internal receiver, stimulator, and electrode arrays. Modern cochlear implant research started in the 1960s and 1970s. In 1961, a crude single electrode device was implanted in two deaf patients and useful hearing 

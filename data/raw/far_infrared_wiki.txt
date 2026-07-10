@@ -1,0 +1,133 @@
+An infrared heater or heat lamp is a heating appliance containing a high-temperature emitter that transfers energy to a cooler object through electromagnetic radiation. Depending on the temperature of the emitter, the wavelength of the peak of the infrared radiation ranges from 750 nm to 1 mm. No contact or medium between the emitter and cool object is needed for the energy transfer. Infrared heaters can be operated in vacuum or atmosphere.
+One classification of infrared heaters is by the wavelength bands of infrared emission.
+
+Short wave or near infrared for the range from 750 nm to 1.4 μm; these emitters are also named "bright" because still some visible light is emitted;
+Medium infrared for the range between 1.4 μm and 3 μm;
+Far infrared or dark emitters for everything above 3 μm.
+
+
+== History ==
+German-British astronomer Sir William Herschel is credited with the discovery of infrared in 1800. He made an instrument called a spectrometer to measure the magnitude of radiant power at different wavelengths. This instrument was made from three pieces. The first was a prism to catch the sunlight and direct and disperse the colors down onto a table, the second was a small panel of cardboard with a slit wide enough for only a single color to pass through it and finally, three mercury-in-glass thermometers. Through his experiment Herschel found that red light had the highest degree of temperature change in the light spectrum, however, infrared heating was not commonly used until World War II. During World War II infrared heating became more widely used and recognized. The main applications were in the metal finishing fields, particularly in the curing and drying of paints and lacquers on military equipment. Banks of lamp bulbs were used very successfully; though by today's standards the power intensities were very low, the technique offered much faster drying times than the fuel convection ovens of the time. After World War II the adoption of infrared heating techniques continued but on a much slower basis. In the mid 1950s the motor vehicle industry began to show interest in the capabilities of infrared for paint curing and a number of production line infrared tunnels came into use.
+
+
+== Elements ==
+The most common filament material used for electrical infrared heaters is tungsten wire, which is coiled to provide more surface area. Low temperature alternatives for tungsten are carbon, or alloys of iron, chromium, and aluminum (FeCrAl, trademark and brand name Kanthal).  While carbon filaments are more fickle to produce, they heat up much more quickly than a comparable medium-wave heater based on a metal alloy filament.
+When light is undesirable or not necessary in a heater, ceramic infrared radiant heaters are the preferred choice. Containing 8 meters (26 ft) of coiled alloy resistance wire, they emit a uniform heat across the entire surface of the heater and the ceramic is 90% absorbent of the radiation. As absorption and emission are based on the same physical causes in each body, ceramic is ideally suited as a material for infrared heaters.
+Industrial infrared heaters sometimes use a gold coating on the quartz tube that reflects the infrared radiation and directs it towards the product to be heated. Consequently, the infrared radiation impinging on the product is virtually doubled. Gold is used because of its oxidation resistance and very high infrared reflectivity of approximately 95%.
+
+
+== Types ==
+Infrared heaters are commonly used in infrared modules (or emitter banks) combining several heaters to achieve larger heated areas.
+Infrared heaters are usually classified by the wavelength they emit:
+Near infrared (NIR) or short-wave infrared heaters operate at high filament temperatures above 1,800 °C (3,270 °F) and when arranged in a field reach high power densities of some hundreds of kW/m2. Their peak wavelength is well below the absorption spectrum for water, making them unsuitable for many drying applications. They are well suited for heating of silica where a deep penetration is needed.
+Medium-wave (MWIR) and carbon infrared heaters operate at filament temperatures of around 1,000 °C (1,830 °F). They reach maximum power densities of up to 60 kW/m2 (5.6 kW/ft2) (medium-wave) and 150 kW/m2 (14 kW/ft2) (carbon).
+Far infrared emitters (FIR) are typically used in the so-called low-temperature far infrared saunas. These constitute only the higher and more expensive range of the market of infrared sauna. Instead of using carbon, quartz or high watt ceramic emitters, which emit near and medium infrared radiation, heat and light, far infrared emitters use low watt ceramic plates that remain cold, while still emitting far infrared radiation.
+The relationship between temperature and peak wavelength is expressed by Wien's displacement law.
+
+
+=== Metal wire element ===
+Metal wire heating elements first appeared in the 1920s. These elements consist of wire made from chromel. Chromel is made from nickel and chrome and it is also known as nichrome. This wire was then coiled into a spiral and wrapped around a ceramic body. When heated to high temperatures it forms a protective layer of chromium oxide which protects the wire from burning and corrosion, and causes the element to glow.
+
+
+=== Heat lamps ===
+
+A heat lamp is an incandescent light bulb that is used for the principal purpose of creating heat. The spectrum of black-body radiation emitted by the lamp can be shifted to produce longer wave-length infrared light by reducing the filament temperature. 
+However, many popular heat lamps for near (short wave) infrared are constructed as flood lamps from glass and an internal reflector and use filament temperatures around 2000 K and a red filter to minimize the amount of visible light emitted. Such often 250 watt heat lamps are commonly packaged in the "R40" (5" reflector lamp) form factor with an intermediate screw base.
+Heat lamps are commonly used in food-preparation areas of restaurants to keep food warm before serving and for animal husbandry. Lights used for poultry are called brooder lamps. Aside from young birds, other types of animals which can benefit from heat lamps include reptiles, amphibians, insects, arachnids, and the young of some mammals. Ordinary household white incandescent bulbs can be used as heat lamps, as was exploited by Heatball in order to circumvent the phase-out of incandescent light bulbs, but these are very bright unless voltage-reduced or filtered and specific lamps with color filters are sold for animal use.
+Heat lamps can be used as a medical treatment to provide dry heat when other treatments are ineffective or impractical.
+
+
+=== Ceramic infrared heat systems ===
+Ceramic infrared heating elements are used in a diverse range of industrial processes where long wave infrared radiation is required. Their useful wavelength range is 2–10 μm. They are often used in the area of animal/pet healthcare too.  The ceramic infrared heaters (emitters) are manufactured with three basic emitter faces: trough (concave), flat, and bulb or Edison screw element for normal installation via an E27 ceramic lamp holder.
+
+
+=== Far-infrared ===
+
+This heating technology is used in some expensive infrared saunas. It is also found in energy efficient space heaters. They are usually fairly big flat panels that are placed on walls, ceilings or integrated in floors. These heaters emit long wave infrared radiation using low watt density ceramic emitters based on carbon fibre technology. More efficient designs use carbon crystals, a combination of carbon fibre, integrated with nanotechnology, transforming carbon into nanometer form. Because the heating elements are at a relatively low temperature, far-infrared heaters do not give emissions and smell from dust, dirt, formaldehyde, toxic fumes from paint-coating, etc. This has made this type of space heating very popular among people with severe allergies and multiple chemical sensitivity in Europe. Because far infrared technology does not heat the air of the room directly, it is important to maximize the exposure of available surfaces which then re-emit the warmth to provide an even all round ambient warmth. This is known as radiant heating.
+
+
+=== Quartz heat lamps ===
+
+Halogen lamps are incandescent lamps filled with highly pressurized inert gas combined with a small amount of  halogen gas (bromine or iodine); this lengthens the life of the filament (see Halogen lamp#Halogen cycle). This leads to a much longer life of halogen lamps than other incandescent lamps. Due to the high pressure and temperature halogen lamps produce, they are relatively small and made out of quartz glass because it has a higher melting point than standard glass. Common uses for halogen lamps are table top heaters.
+Quartz infrared heating elements emit medium wave infrared energy and are particularly effective in systems where rapid heater response is required. Tubular infrared lamps in quartz bulbs produce infrared radiation in wavelengths of 1.5–8 μm. The enclosed filament operates at around 2,500 K (2,230 °C; 4,040 °F), producing more shorter-wavelength radiation than open wire-coil sources. Developed in the 1950s at General Electric, these lamps produce about 100 watts per inch (4 W/mm) and can be combined to radiate 500 watts per square foot (5,400 W/m2). To achieve even higher power densities, halogen lamps were used. Quartz infrared lamps are used in highly polished reflectors to direct radiation in a uniform and concentrated pattern.
+Quartz heat lamps are used in food processing, chemical processing, paint drying, and thawing of frozen materials. They can also be used for comfort heating in cold areas, in incubators, and in other applications for heating, drying, and baking.  During development of space re-entry vehicles, banks of quartz infrared lamps were used to test heat shield materials at power densities as high as 28 kW/ft2 (300 kW/m2). In 2000, General Electric launched the first quartz waterproof lamp alongside British infrared heating manufacturer Tansun.
+Most common designs consist of either a satin milky-white quartz glass tube or clear quartz with an electrically resistant element, usually a tungsten wire, or a thin coil of iron-chromium-aluminum alloy. The atmospheric air is removed and filled with inert gases such as nitrogen and argon then sealed. In quartz halogen lamps, a small amount of halogen gas is added to prolong the heater's operational life.
+The majority of the radiant energy released at operational temperatures is transmitted through the thin quartz tube but some of that energy is absorbed by the silica quartz glass tube causing the temperature of the tube wall to increase, this causes the silicon-oxygen bond to radiate far infrared rays. Quartz glass heating elements were originally designed for lighting applications, but when a lamp is at full power less than 5% of the emitted energy is in the visible spectrum.
+
+
+=== Quartz tungsten ===
+
+Quartz tungsten infrared heaters emit medium wave energy reaching operating temperatures of up to 1,500 °C (2,730 °F) (medium wave) and 2,600 °C (4,710 °F) (short wave). They reach operating temperature within seconds. Peak wavelength emissions of approximately 1.6 μm (medium wave infrared) and 1 μm (short wave infrared).
+
+
+=== Carbon heater ===
+
+Carbon heaters use a carbon fiber heating element capable of producing long, medium and short wave far infrared heat. They need to be accurately specified for the spaces to be heated.
+
+
+=== Gas-fired ===
+
+There are several basic types of infrared radiant heaters.
+
+Luminous or high intensity
+Radiant tube heaters
+Catalytic heaters
+Radiant tube gas-fired heaters used for industrial and commercial building space heating burn natural gas or propane to heat a steel emitter tube. Gas passing through a control valve flows through a cup burner or a venturi. The combustion product gases heat the emitter tube.  As the tube heats, radiant energy from the tube strikes persons, floors and other objects in the area, warming them. If the burner is protected, the heater is draught-proof.
+Catalytic heaters use a catalyst such as platinum to oxidize the fuel at temperatures of 300–550 °C. As this is lower than the ignition temperature of most fuels, the catalyst must be heated by a pilot flame or electrically in order to start the reaction.
+
+
+=== Diesel / Kerosene-fired ===
+
+Diesel- and kerosene-fired infrared heaters use a pressure-atomizing oil burner to combust liquid fuel, heating a steel radiant emitter or heat-exchanger tube to infrared-emitting temperatures. Fuel is atomized under pressure (typically 0.5–1.2 MPa) into a fine spray that ignites within a combustion chamber. 
+The hot combustion gases transfer energy to the emitter surface, which then radiates mid-wave infrared energy (approximately 2–5 μm) toward the target area.
+These heaters are particularly suited to off-grid industrial and construction applications where natural gas pipelines are unavailable and propane supply is impractical. Common deployment contexts include temporary construction site enclosures, agricultural buildings, aircraft hangars, military field operations, and remote warehouses. 
+Portable units are widely used in regions where diesel fuel infrastructure is more accessible than other energy sources.
+Because combustion of liquid hydrocarbons produces carbon dioxide, water vapor, and trace combustion by-products, diesel/kerosene-fired infrared heaters require adequate ventilation or flue-gas venting and are not suitable for unvented operation in occupied enclosed spaces without proper air exchange. 
+Fuel efficiency and radiant output are strongly influenced by nozzle spray angle and flow rate, air-to-fuel ratio, and the emissivity and geometry of the radiant surface.
+Kerosene (No. 1 fuel oil) was historically preferred over diesel (No. 2 fuel oil) in enclosed or semi-permanent applications primarily due to the sulfurous odor associated with higher-sulfur distillate fuels. However, with the mandatory adoption of Ultra-Low Sulfur Diesel (ULSD, ≤15 ppm sulfur) across most of the United States and many other jurisdictions, sulfur oxide emissions and associated odor are no longer a significant operational concern in compliant fuel markets.
+In contemporary applications, the principal consideration for fuel grade selection is low-temperature operability. No. 2 diesel is susceptible to wax crystal formation as temperatures approach its cloud point (typically −7 to −12 °C for standard No. 2), which can restrict fuel flow through filters and nozzle orifices. In cold-weather deployments, Winter Diesel — a blend with an elevated proportion of No. 1 fuel oil — is specified to depress the cloud point and ensure reliable atomization and ignition at low ambient temperatures.[2] Some portable and construction-grade heaters carry manufacturer ratings for both grades, with the recommended blend ratio varying according to the expected minimum operating temperature.
+The efficiency of an infrared heater is a rating of the total energy consumed by the heater compared to the amount of infrared energy generated. While there will always be some amount of convective heat generated through the process, any introduction of air motion across the heater will reduce its infrared conversion efficiency. With new untarnished reflectors, radiant tubes have a downward radiant efficiency of about 60%. (The other 40% comprises unrecoverable upwards radiant and convective losses, and flue losses.)
+
+
+== Health effects ==
+In addition to the dangers of touching the hot bulb or element, high-intensity short-wave infrared radiation may cause indirect thermal burns when the skin is exposed for too long or the heater is positioned too close to the subject.  Individuals exposed to large amounts of infrared radiation (like glass blowers and arc welders) over an extended period of time may develop depigmentation of the iris and opacity of the aqueous humor, so exposure should be moderated.
+
+
+== Efficiency ==
+Electrically heated infrared heaters radiate up to 86% of their input as radiant energy. Nearly all the electrical energy input is converted into infrared radiant heat in the filament and directed onto the target by reflectors. Some heat energy is removed from the heating element by conduction or convection, which may be no loss at all for some designs where all of the electrical energy is desired in the heated space, or may be considered a loss in situations where only the radiative heat transfer is desired or productive.
+For practical applications, the efficiency of the infrared heater depends on matching the emitted wavelength and the absorption spectrum of the material to be heated. For example, the absorption spectrum for water has its peak at around 3 μm. This means that emission from medium-wave or carbon infrared heaters is much better absorbed by water and water-based coatings than NIR or short-wave infrared radiation.  The same is true for many plastics like PVC or polyethylene. Their peak absorption is around 3.5 μm. On the other hand, some metals absorb only in the short-wave range and show a strong reflectivity in the medium and far infrared. This makes a careful selection of the right infrared heater type important for energy efficiency in the heating process.
+Ceramic elements operate in the temperature of 300 to 700 °C (570 to 1,290 °F) producing infrared wavelengths in the 2 to 10 μm range. Most plastics and many other materials absorb infrared best in this range, which makes the ceramic heater most suited for this task.
+
+
+== Applications ==
+
+IR heaters can satisfy a variety of heating requirements, including:
+
+Extremely high temperatures, limited largely by the maximum temperature of the emitter
+Fast response time, on the order of 1–2 seconds
+Temperature gradients, especially on material webs with high heat input
+Focused heated area relative to conductive and convective heating methods
+Non-contact, thereby not disturbing the product as conductive or convective heating methods do
+Thus, IR heaters are applied for many purposes including:
+
+Heating systems
+Curing of coatings
+Space heaters
+Plastic shrinking
+Plastic heating prior to forming
+Plastic welding
+Glass & metal heat treating
+Cooking
+Warming suckling animals or captive animals in zoos or veterinary clinics
+
+
+== See also ==
+Ceramic heater
+
+
+== References ==
+
+
+== Further reading ==
+Deshmukh, Yeshvant V.: Industrial Heating, Principles, Techniques, Materials, Applications, and Design. Taylor and Francis, Boca Raton, Fl.: 2005.
+Siegel, Robert and Howell, John R.: Thermal Radiation Heat Transfer. 3rd Ed. Taylor and Francis, Philadelphia.

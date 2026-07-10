@@ -1,0 +1,84 @@
+A transcutaneous electrical nerve stimulation (TENS or TNS) is a device that produces mild electric current to stimulate the nerves for therapeutic purposes. TENS, by definition, covers the complete range of transcutaneously applied currents used for nerve excitation, but the term is often used with a more restrictive intent, namely, to describe the kind of pulses produced by portable stimulators used to reduce pain. The unit is usually connected to the skin using two or more electrodes which are typically conductive gel pads. A typical battery-operated TENS unit is able to modulate pulse width, frequency, and intensity.  Generally, TENS is applied at high frequency (>50 Hz) with an intensity below motor contraction (sensory intensity) or low frequency (<10 Hz) with an intensity that produces motor contraction. More recently, many TENS units use a mixed frequency mode which alleviates tolerance to repeated use. Intensity of stimulation should be strong but comfortable with greater intensities, regardless of frequency, producing the greatest analgesia. While the use of TENS has proved effective in clinical studies, there is controversy over which conditions the device should be used to treat.
+
+
+Medical uses
+
+
+Pain
+Transcutaneous electrical nerve stimulation is a commonly used treatment approach to alleviate acute and chronic pain by reducing the sensitization of dorsal horn neurons, elevating levels of gamma-aminobutyric acid and glycine, and inhibiting glial activation. Many systematic reviews and meta-analyses assessing clinical trials looking at the efficacy of TENS for different sources of pain, however, have been inconclusive due to a lack of high-quality and unbiased evidence. Potential benefits of TENS treatment include its safety profile, relative affordability, ease of self-administration, and availability over-the-counter without a prescription. In principle, an adequate intensity of stimulation is necessary to achieve pain relief with TENS. An analysis of treatment fidelity—meaning that the delivery of TENS in a trial was in accordance with current clinical advice, such as using "a strong but comfortable sensation" and suitable, frequent treatment durations—showed that higher-fidelity trials tended to have a positive outcome. Repeated use of TENS at the same intensity and frequency settings may lead to analgesic tolerance, this effect may be reduced by varying stimulation frequency or increasing intensity. Recent clinical trials indicate that TENS may only be effective for a subset of patients, with approximately 44% of individuals experience a meaningful reduction in pain. Compared to pharmacological drug treatments, TENS can have a similar effectiveness in some patients while presenting a lower risk of adverse effects.
+
+
+Acute pain
+For people with recent-onset pain i.e., fewer than three months, such as pain associated with surgery, trauma, and medical procedures, TENS may be better than placebo in some cases. The evidence of benefit is very weak, though.
+
+
+Musculoskeletal and neck/back pain
+There is some evidence to support a benefit of using TENS in chronic musculoskeletal pain. Results from a task force on neck pain in 2008 found no clinically significant benefit of TENS for the treatment of neck pain when compared to placebo. A 2010 review did not find evidence to support the use of TENS for chronic low back pain.
+Another study examining knee osteoarthritis patients found that TENS demonstrated efficacy and a better safety profile relative to weak opiates. Given the age, comorbidity frequency, tendency toward polypharmacy, and sensitivity to adverse reactions among individuals most frequently reporting osteoarthritis, TENS could be a non-pharmacological alternative to analgesics in the management of knee osteoarthritis pain.
+
+
+Neuropathy and phantom limb pain
+There is tentative evidence that TENS may be useful for painful diabetic neuropathy. As of 2015, the efficacy of TENS for phantom limb pain is unknown; no randomized controlled trials have been performed.
+A few studies have shown objective evidence that TENS may modulate or suppress pain signals in the brain. One used evoked cortical potentials to show that electric stimulation of peripheral A-beta sensory fibers reliably suppressed A-delta fiber nociceptive (pain perception) processing. Two other studies used functional magnetic resonance imaging (fMRI): one showed that high-frequency TENS produced a decrease in pain-related cortical activations in patients with carpal tunnel syndrome, while the other showed that low-frequency TENS decreased shoulder impingement pain and modulated pain-induced activation in the brain.
+
+
+Labor and menstrual pain
+Early studies found that TENS "has been shown not to be effective in postoperative and labour pain." These studies also had questionable ability to truly blind the patients. However, more recent studies have shown that TENS was "effective for relieving labour pain, and they are well considered by pregnant participants." One study also showed that there was a significant change in laboring individuals' time to request analgesia such as an epidural. The group with the TENS waited five additional hours relative to those without TENS. Both groups were satisfied with the pain relief that they had from their choices. No maternal, infant, or labor problems were noted. There is tentative evidence that TENS may be helpful for treating pain from dysmenorrhoea, however further research is required.
+
+
+Cancer pain
+Non-pharmacological treatment options for people experiencing pain caused by cancer are much needed, however, it is not clear from the weak studies that have been published if TENS is an effective approach.
+
+
+Bladder function
+Percutaneous and transcutaneous electrical nerve stimulation in the tibial nerve have been used in the treatment of overactive bladder and urinary retention. Sometimes it is also done in the sacrum. Systematic review studies have shown limited evidence on the effectiveness, and more quality research is needed. A major trial found that in a care home context transcutaneous posterior tibial nerve stimulation did not improve urinary incontinence.
+
+
+Dentistry
+TENS has been extensively used in non-odontogenic orofacial pain relief. In addition, TENS and ultra low frequency-TENS (ULF-TENS) are commonly employed in diagnosis and treatment of temporomandibular joint dysfunction (TMD). Further clinical studies are required to determine its efficacy.
+
+
+Tremor
+A wearable neuromodulation device that delivers electrical stimulation to nerves in the wrist is now available by prescription. Worn around the wrist, it acts as a non-invasive treatment for those living with essential tremor. The stimulator has electrodes that are placed circumferentially around a patient's wrist. Positioning the electrodes on generally opposing sides of the target nerve can result in improved stimulation of the nerve. In clinical trials reductions in hand tremors were reported following noninvasive median and radial nerve stimulation.
+Transcutaneous afferent patterned stimulation (TAPS) is a tremor-customized therapy, based on the patient's measured tremor frequency, and is delivered transcutaneously to the median and radial nerves of a patient's wrist. The patient specific TAPS stimulation is determined through a calibration process performed by the accelerometer and microprocessor on the device.
+The Cala ONE delivers TAPS in a wrist-worn device that is calibrated to treat tremor symptoms. Cala ONE received de novo FDA clearance in April 2018 for the transient relief of hand tremors in adults with essential tremor and is currently marketed as Cala Trio.
+
+
+Contraindications
+People who have implanted electronic medical devices including pacemakers and cardiodefibrillators are not suggested to use TENS. In addition, caution should be taken before using TENS in those who are pregnant, have epilepsy, have an active malignancy, have deep vein thrombosis, have skin that is damaged, or are frail. The use of TENS is likely to be less effective on areas of numb skin or decreased sensation due to nerve damage. It may also cause skin irritation due to the inability to feel currents until they are too high. There is an unknown level of risk when placing electrodes over an infection (possible spreading due to muscle contractions), but cross contamination with the electrodes themselves is of greater concern.
+There are several anatomical locations where TENS electrodes are contraindicated:
+
+Over the eyes due to the risk of increasing intraocular pressure
+Transcerebrally
+On the front of the neck due to the risk of an acute hypotension (through a vasovagal response) or even a laryngospasm
+Through the chest using anterior and posterior electrode positions, or other transthoracic applications understood as "across a thoracic diameter"; this does not preclude coplanar applications
+Internally, except for specific applications of dental, vaginal, and anal stimulation that employ specialized TENS units
+On broken skin areas or wounds, although it can be placed around wounds
+Over a tumor or malignancy, based on in vitro experiments where electricity promotes cell growth
+Directly over the spinal column
+
+
+Cardiac pacemakers
+TENS used across an artificial cardiac pacemaker or other indwelling stimulator, including across its leads, may cause interference and failure of the implanted device. Serious accidents have been recorded in cases when this principle was not observed. A 2009 review in this area suggests that electrotherapy, including TENS, is "best avoided" in patients with pacemakers or implantable cardioverter-defibrillators (ICDs). They add that "there is no consensus and it may be possible to safely deliver these modalities in a proper setting with device and patient monitoring", and recommend further research. The review found several reports of ICDs administering inappropriate treatment due to interference with TENS devices, but notes that the reports on pacemakers are mixed: some non-programmable pacemakers were inhibited by TENS, but others were unaffected or auto-reprogrammed.
+
+
+Pregnancy
+TENS should be used with caution on pregnant people; do not use over area of the uterus, as the effects of electrical stimulation on the developing fetus are not known.
+
+
+Side effects
+Overall, TENS has been found to be safe compared with pharmaceutical medications for treating pain. Potential side effects include skin itching near the electrodes and mild redness of the skin (erythema). Some people also report that they dislike the sensation associated with TENS.
+
+
+Device types
+The TENS device acts to stimulate the sensory nerves and a small portion of the peripheral motor nerves; the stimulation causes multiple mechanisms to trigger and manage the sense of pain in a patient. TENS operates by two main mechanisms: it stimulates competing sensory neurons at the pain perception gate, and it stimulates the opiate response. The mechanism that will be used varies with the type of device.
+The table below lists the types of devices:
+
+
+History
+Electrical stimulation for pain control was used in ancient Rome, in AD 63. It was reported by Scribonius Largus that pain was relieved by standing on an electrical fish at the seashore.
+In the 16th through the 18th centuries various electrostatic devices were used for headache and other pains. Benjamin Franklin was a proponent of this method for pain relief. In the 19th century a device called the electreat, along with numerous other devices were used for pain control and cancer cures. Only the electreat survived into the 20th century, but was not portable, and had limited control of the stimulus.
+
+
+Modern
+Development of the modern TENS unit has been credited to C. Norman Shealy, an American neurosurgeon. The practice dates back to earlier work on neurostimulation. Shealy aimed to use it to treat migraines, back pain, and gout. He developed a spinal cord stimulator in 1967 a

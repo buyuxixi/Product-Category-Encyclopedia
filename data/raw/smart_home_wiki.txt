@@ -1,0 +1,73 @@
+Home automation or domotics is building automation for a home. A home automation system will monitor and/or control home attributes such as lighting, climate, entertainment systems, and appliances. It may also include home security such as access control and alarm systems. 
+The phrase smart home refers to home automation devices that have internet access.  Home automation, a broader category, includes any device that can be monitored or controlled via wireless radio signals, not just those having internet access.  When connected with the Internet, home sensors and activation devices are an important constituent of the Internet of Things ("IoT").
+A home automation system typically connects controlled devices to a central smart home hub (sometimes called a "gateway"). The user interface for control of the system uses either wall-mounted terminals, tablet or desktop computers, a mobile phone application, or a Web interface that may also be accessible off-site through the Internet.
+
+
+== History ==
+Early home automation began with labor-saving machines. Self-contained electric or gas powered home appliances became viable in the 1900s with the introduction of electric power distribution and led to the introduction of washing machines (1904), water heaters (1889), refrigerators (1913), sewing machines, dishwashers, and clothes dryers.
+In 1975, the first general purpose home automation network technology, X10, was developed. It is a communication protocol for electronic devices. It primarily uses electric power transmission wiring for signalling and control, where the signals involve brief radio frequency bursts of digital data, and remains the most widely available.
+By 2012, in the United States, according to ABI Research, 1.5 million home automation systems were installed.
+Per research firm Statista more than 45 million smart home devices will be installed in U.S. homes by the end of the year 2018. From 2018 to 2023, the number of U.S. homes equipped with smart devices grew at 10.2% per year to reach 63.43 million by 2023.
+The word "domotics" is a contraction of the Latin word for a home (domus) and the word robotics. The word "smart" in "smart home" refers to the system being aware of the state of its devices, which is done through the information and communication technologies (ICT) protocol and the Internet of Things (IoT).
+
+
+== Applications and technologies ==
+Home automation is prevalent in a variety of different realms, including:
+
+Heating, ventilation and air conditioning (HVAC): it is possible to have remote control of all home energy monitors over the internet incorporating a simple and friendly user interface.
+Lighting control system: a "smart" network that incorporates communication between various lighting system inputs and outputs, using one or more central computing devices.
+Occupancy-aware control system: it is possible to sense the occupancy of the home using smart meters and environmental sensors like CO2 sensors, which can be integrated into the building automation system to trigger automatic responses for energy efficiency and building comfort applications.
+Appliance control and integration with the smart grid and a smart meter, taking advantage, for instance, of high solar panel output in the middle of the day to run washing machines.
+Home robots and security: a household security system integrated with a home automation system can provide additional services such as remote surveillance of security cameras over the Internet, or access control and central locking of all perimeter doors and windows.
+Leak detection, smoke and CO detectors
+Laundry-folding machine, self-making bed
+Indoor positioning systems (IPS).
+Home automation for the elderly and disabled.
+Pet and baby care, for example tracking the pets and babies' movements and controlling pet access rights.
+Air quality control (inside and outside). For example, Air Quality Egg is used by people at home to monitor the air quality and pollution level in the city and create a map of the pollution.
+Smart kitchen, with refrigerator inventory, premade cooking programs, cooking surveillance, etc.
+Voice control devices like Amazon Alexa or Google Nest used to control home appliances or systems.
+
+
+== Implementations ==
+In 2011, Microsoft Research found that home automation could involve a high cost of ownership, inflexibility of interconnected devices, and poor manageability. When designing and creating a home automation system, engineers take into account several factors including scalability, how well the devices can be monitored and controlled, ease of installation and use for the consumer, affordability, speed, security, and ability to diagnose issues. Findings from iControl showed that consumers prioritize ease-of-use over technical innovation, and although consumers recognize that new connected devices have an unparalleled cool factor, they are not quite ready to use them in their own homes yet.
+Historically, systems have been sold as complete systems where the consumer relies on one vendor for the entire system including the hardware, the communications protocol, the central hub, and the user interface. However, there are now open hardware and open source software systems which can be used instead of or with proprietary hardware. Many of these systems interface with consumer electronics such as the Arduino or Raspberry Pi, which are easily accessible online and in most electronics stores. In addition, home automation devices are increasingly interfaced with mobile phones through Bluetooth, allowing for increased affordability and customizability for the user.
+
+
+== Criticism and controversies ==
+
+Home automation suffers from platform fragmentation and lack of technical standards a situation where the variety of home automation devices, in terms of both hardware variations and differences in the software running on them, makes the task of developing applications that work consistently between different inconsistent technology ecosystems hard. Customers may hesitate to bet their IoT future on proprietary software or hardware devices that use proprietary protocols that may fade or become difficult to customize and interconnect.
+The nature of home automation devices can also be a problem for security, data security and data privacy, since patches to bugs found in the core operating system often do not reach users of older and lower-price devices. One set of researchers say that the failure of vendors to support older devices with patches and updates leaves more than 87% of active devices vulnerable.
+Concerns have been raised by tenants renting from landlords who decide to upgrade units with smart home technology. These concerns include weak wireless connections that render the door or appliance unusable or impractical; the security of door passcodes kept by the landlord; and the potential invasion of privacy that comes with connecting smart home technologies to home networks.
+Researchers have also conducted user studies to determine what the barriers are for consumers when integrating home automation devices or systems into their daily lifestyle. One of the main takeaways was regarding ease of use, as consumers tend to steer towards "plug and play" solutions over more complicated setups. One study found that there were large gaps in the mental-models generated by users regarding how the devices actually work. Specifically, the findings showed that there was a lot of misunderstanding related to where the data collected by smart devices was stored and how it was used. For example, in a smart light setup, one participant thought that her iPad communicated directly with the light, telling it to either turn-off or on. In reality, the iPad sends a signal to the cloud system that the company uses (in this case, the Hue Bridge) which then signals directly to the device.
+Overall, this field is still evolving and the nature of each device is constantly changing. While technologists work to create more secure, streamlined, and standardized security protocols, consumers also need to learn more about how these devices work and what the implications of putting them in their homes can be. The growth of this field is currently limited not only by technology but also by a user's ability to trust a device and integrate it successfully into his/her daily life.
+
+
+== Impact ==
+Utilizing home automation could lead to more efficient and intelligent energy-saving techniques. By integrating information and communication technologies (ICT) with renewable energy systems such as solar power or wind power, homes can autonomously make decisions about whether to store energy or expend it for a given appliance, leading to overall positive environmental impacts and lower electricity bills for the consumers using the system. To do this, researchers propose using data from sensors regarding consumer activity within the home to anticipate consumer needs and balance that with energy consumption.
+Furthermore, home automation has a large potential regarding family safety and security. According to a 2015 survey done by iControl, the primary drivers of the demand for smart and connected devices are first "personal and family security", and second "excitement about energy savings". Home automation includes a variety of smart security systems and surveillance setups. This allows consumers to monitor their homes while away, and to give trusted family members access to that information in case anything bad happens.
+While there are many competing vendors, there are increasing efforts towards open source systems. However, there are issues with the current state of home automation including a lack of standardized security measures and deprecation of older devices without backwards compatibility.
+Home automation has high potential for sharing data between family members or trusted individuals for personal security purposes and could lead to energy saving measures with a positive environmental impact in the future.
+The home automation market was worth US$64 billion in 2022 and is projected to grow to over $163 billion in 2028.
+
+
+== Gallery ==
+
+
+== See also ==
+
+Home automation companies
+List of home automation software
+Index of home automation articles
+Home network
+List of network buses
+Mobile manipulator and Mobile robot
+Smart device and smart speaker
+Web of Things
+
+
+== References ==
+
+
+== External links ==
+ Media related to Home automation at Wikimedia Commons

@@ -1,0 +1,91 @@
+A passive infrared sensor (PIR sensor) is an electronic device that measures infrared (IR) radiation emitted by objects in its field of view. They are most commonly used in motion detectors, including security alarms and automatic lighting systems.  
+PIR sensors detect general movement but do not provide information on the source of motion; for that purpose, an imaging IR sensor is required.
+PIR sensors are often referred to simply as "PIR", or sometimes "PID" (passive infrared detector). The term "passive" indicates that the device does not emit energy, but detects infrared radiation (heat) emitted or reflected by objects.
+
+
+== Operating principles ==
+All objects with a temperature above absolute zero emit heat energy in the form of electromagnetic radiation. Usually this radiation isn't visible to the human eye because it radiates at infrared wavelengths, but it can be detected by electronic devices designed for such a purpose.
+
+
+== PIR-based motion detector ==
+
+A PIR-based motion detector is used to sense movement of people, animals, or other objects. They are commonly used in burglar alarms and automatically activated lighting systems. 
+
+
+=== Operation ===
+A PIR sensor detects changes in the amount of infrared radiation impinging upon it, which varies depending on the temperature and surface characteristics of objects in its field of view. When an object, such as a person, passes in front of a background (e.g. a wall), the temperature at that point rises from room temperature to body temperature and then returns. The sensor converts this change in infrared radiation into a change in output voltage, triggering detection. Objects of similar temperature but different surface characteristics may also produce different infrared emission patterns, and movement relative to the background may likewise trigger the detector.
+PIRs come in various configurations for different applications. Common models use multiple Fresnel lenses or mirror segments, have an effective range of about 10 metres (30 feet), and a field of view of less than 180°. Models with wider fields of view, including 360°, are also available, typically for ceiling mounting. Some larger PIRs use single-segment mirrors and can detect changes in infrared energy over distances exceeding 30 metres (100 feet). There are also designs with reversible orientation mirrors, allowing either broad coverage (around 110°) or narrow "curtain" coverage, as well as models with individually selectable segments to shape the coverage.
+
+
+=== Differential detection ===
+Pairs of sensor elements may be wired as opposite inputs to a differential amplifier. In this configuration, the PIR signals cancel each other, removing the average temperature of the field of view from the output; an increase of IR energy across the entire sensor is self-cancelling and will not trigger the device. This helps reduce false detections caused by brief flashes of light or field-wide illumination (although sustained high energy exposure may still saturate the sensor). The differential arrangement also reduces common-mode interference, making the device less sensitive to nearby electric fields. However, in this configuration, the sensor cannot measure absolute temperature and is therefore used only for motion detection.
+
+
+==== Practical Implementation ====
+When a PIR sensor is configured in a differential mode, it specifically becomes applicable as a motion detector device. In this mode, when a movement is detected within the "line of sight" of the sensor, a pair of complementary pulses are processed at the output pin of the sensor. In order to implement this output signal for a practical triggering of a load such as a relay or a data logger, or an alarm, the differential signal is rectified using a bridge rectifier and fed to a transistorized relay driver circuit. The contacts of this relay close and open in response to the signals from the PIR, activating the attached load across its contacts, acknowledging the detection of a person within the predetermined restricted area.
+
+
+=== Product design ===
+
+The PIR sensor is typically mounted on a printed circuit board containing the necessary electronics required to interpret the signals from the sensor itself. The complete assembly is usually contained within a housing, mounted in a location where the sensor can cover the area to be monitored.
+ The housing will usually have a plastic "window" through which the infrared energy can enter. Despite often being only translucent to visible light, infrared energy is able to reach the sensor through the window because the plastic used is transparent to infrared radiation. The plastic window reduces the chance of foreign objects (dust, insects, rain, etc.) from obscuring the sensor's field of view, damaging the mechanism, and/or causing false alarms. The window may be used as a filter, to limit the wavelengths to 8–14 micrometres, which is closest to the infrared radiation emitted by humans. It may also serve as a focusing mechanism; see below.
+
+
+=== Focusing ===
+Different mechanisms can be used to focus the distant infrared energy onto the sensor surface.
+
+
+==== Lenses ====
+The plastic window covering may have multiple facets molded into it, to focus the infrared energy onto the sensor. Each individual facet is a Fresnel lens.
+
+
+==== Mirrors ====
+Some PIRs are manufactured with internal, segmented parabolic mirrors to focus the infrared energy. Where mirrors are used, the plastic window cover generally has no Fresnel lenses molded into it.
+
+
+=== Beam pattern ===
+
+As a result of the focussing, the detector view is actually a beam pattern. Under certain angles (zones), the PIR sensor receives almost no radiation energy and under other angles the PIR receives concentrated amounts of infrared energy. This separation helps the motion detector to discriminate between field-wide illumination and moving objects.
+When a person walks from one angle (beam) to another, the detector will only intermittently see the moving person. This results in a rapidly changing sensor signal which is used by the electronics to trigger an alarm or to turn on lighting. A slowly changing signal will be ignored by the electronics.
+The number, shape, distribution and sensitivity of these zones are determined by the lens and/or mirror. Manufacturers do their best to create the optimal sensitivity beam pattern for each application.
+
+
+=== Automatic lighting applications ===
+When used as part of a lighting system, the electronics in the PIR typically control an integral relay capable of switching mains voltage. This means the PIR can be set up to turn on lights that are connected to the PIR when movement is detected. This is most commonly used in outdoor scenarios either to deter criminals (security lighting) or for practical uses like the front door light turning on so you can find your keys in the dark.
+Additional uses can be in public toilets, walk-in pantries, hallways or anywhere that automatic control of lights is useful. This can provide energy savings as the lights are only turned on when they are needed and there is no reliance on users remembering to turn the lights off when they leave the area.
+
+
+=== Security applications ===
+When used as part of a security system, the electronics in the PIR typically control a small relay. This relay completes the circuit across a pair of electrical contacts connected to a detection input zone of the burglar alarm control panel. The system is usually designed such that if no motion is being detected, the relay contact is closed—a 'normally closed' (NC) relay. If motion is detected, the relay will open the circuit, triggering the alarm; or, if a wire is disconnected, the alarm will also operate.
+
+
+==== Placement ====
+Manufacturers recommend careful placement of their products to prevent false alarms (i.e., any detection not caused by an intruder).
+They suggest mounting the PIRs in such a way that the PIR cannot "see" out of a window. Although the wavelength of infrared radiation to which the chips are sensitive does not penetrate glass very well, a strong infrared source (such as from a vehicle headlight or sunlight) can overload the sensor and cause a false alarm. A person moving on the other side of the glass would not be "seen" by the PID. That may be good for a window facing a public sidewalk, or bad for a window in an interior partition.
+It is also recommended that the PIR not be placed in such a position that an HVAC vent would blow hot or cold air onto the surface of the plastic which covers the housing's window. Although air has very low emissivity (emits very small amounts of infrared energy), the air blowing on the plastic window cover could change the plastic's temperature enough to trigger a false alarm.
+Sensors are also often designed to "ignore" domestic pets, such as dogs or cats, by setting a higher sensitivity threshold, or by ensuring that the floor of the room remains out of focus.
+Since PIR sensors have ranges of up to 10 meters (30 feet), a single detector placed near the entrance is typically all that is necessary for rooms with only a single entrance. PIR-based security systems are also viable in outdoor security and motion-sensitive lighting; one advantage is their low power draw, which allows them to be solar-powered.
+
+
+== PIR remote-based thermometer ==
+Designs have been implemented in which a PIR circuit measures the temperature of a remote object. In such a circuit, a non-differential PIR output is used. The output signal is evaluated according to a calibration for the IR spectrum of a specific type of matter to be observed. By this means, relatively accurate and precise temperature measurements may be obtained remotely. Without calibration to the type of material being observed, a PIR thermometer device is able to measure changes in IR emission which correspond directly to temperature changes, but the actual temperature values cannot be calculated.
+
+
+== See also ==
+Heat detector
+Infrared point sensor
+Infrared sensor
+List of sensors
+Lithium tantalate
+Lithium niobate
+Ferroelectric ceramics
+Pyroelectricity
+
+
+== References ==
+
+
+== External links ==
+How Infrared motion detector components work
+Design advice and assembly instructions from a motion detector kit
+U.S. patent 3,703,718, Infrared Intrusion Detector System, issued November 21, 1972 to Herbert L. Berman, contains a very clear explanation

@@ -1,0 +1,262 @@
+In photometry, illuminance is the total luminous flux incident on a surface, per unit area. It is a measure of how much the incident light illuminates the surface, wavelength-weighted by the luminosity function to correlate with human brightness perception. Similarly, luminous emittance is the luminous flux per unit area emitted from a surface. Luminous emittance is also known as luminous exitance.
+In SI units illuminance is measured in lux (lx), or equivalently in lumens per square metre (lm·m−2). Luminous exitance is measured in lm·m−2 only, not lux. In the CGS system, the unit of illuminance is the phot, which is equal to 10000 lux. The foot-candle is a non-metric unit of illuminance that is used in photography.
+Illuminance was formerly often called brightness, but this leads to confusion with other uses of the word, such as to mean luminance. "Brightness" should never be used for quantitative description, but only for nonquantitative references to physiological sensations and perceptions of light.
+The human eye is capable of seeing somewhat more than a 2 trillion-fold range. The presence of white objects is somewhat discernible under starlight, at 5×10−5 lux (50 μlx), while at the bright end, it is possible to read large text at 108 lux (100 Mlx), or about 1000 times that of direct sunlight, although this can be very uncomfortable and cause long-lasting afterimages.
+
+
+Common illuminance levels
+
+
+Astronomy
+In astronomy, the illuminance stars cast on the Earth's atmosphere is used as a measure of their brightness. The usual units are apparent magnitudes in the visible band. V-magnitudes can be converted to lux using the formula
+
+  
+    
+      
+        
+          E
+          
+            
+              v
+            
+          
+        
+        =
+        
+          10
+          
+            (
+            −
+            14.18
+            −
+            
+              m
+              
+                
+                  v
+                
+              
+            
+            )
+            
+              /
+            
+            2.5
+          
+        
+        ,
+      
+    
+    {\displaystyle E_{\mathrm {v} }=10^{(-14.18-m_{\mathrm {v} })/2.5},}
+  
+
+where Ev is the illuminance in lux, and mv is the apparent magnitude. The reverse conversion is
+
+  
+    
+      
+        
+          m
+          
+            
+              v
+            
+          
+        
+        =
+        −
+        14.18
+        −
+        2.5
+        log
+        ⁡
+        (
+        
+          E
+          
+            
+              v
+            
+          
+        
+        )
+        .
+      
+    
+    {\displaystyle m_{\mathrm {v} }=-14.18-2.5\log(E_{\mathrm {v} }).}
+  
+
+
+Relation to luminous intensity
+When the light source is sufficiently far away to be treated as a point source, the illuminance on a surface is related to the luminous intensity of light it receives by combining the cosine law with the inverse-square law: 
+
+  
+    
+      
+        
+          E
+          
+            
+              v
+            
+          
+        
+        =
+        
+          
+            
+              
+                I
+                
+                  
+                    v
+                  
+                
+              
+              cos
+              ⁡
+              (
+              θ
+              )
+            
+            
+              D
+              
+                2
+              
+            
+          
+        
+      
+    
+    {\displaystyle E_{\mathrm {v} }={\frac {I_{\mathrm {v} }\cos(\theta )}{D^{2}}}}
+  
+
+where
+
+Iv is the luminous intensity of the source
+θ is the angle of incidence, and
+D is the distance between the source and the surface.
+
+
+Relation to luminance
+
+The luminance of a reflecting surface is related to the illuminance it receives:
+
+  
+    
+      
+        
+          ∫
+          
+            
+              Ω
+              
+                Σ
+              
+            
+          
+        
+        
+          L
+          
+            
+              v
+            
+          
+        
+        
+          d
+        
+        
+          Ω
+          
+            Σ
+          
+        
+        cos
+        ⁡
+        
+          θ
+          
+            Σ
+          
+        
+        =
+        
+          M
+          
+            
+              v
+            
+          
+        
+        =
+        
+          E
+          
+            
+              v
+            
+          
+        
+        R
+      
+    
+    {\displaystyle \int _{\Omega _{\Sigma }}L_{\mathrm {v} }\mathrm {d} \Omega _{\Sigma }\cos \theta _{\Sigma }=M_{\mathrm {v} }=E_{\mathrm {v} }R}
+  
+
+where the integral covers all the directions of emission ΩΣ, and
+
+Mv is the surface's luminous exitance
+Ev is the received illuminance, and
+R is the reflectance.
+In the case of a perfectly diffuse reflector (also called a Lambertian reflector), the luminance is isotropic, per Lambert's cosine law. Then the relationship is simply
+
+  
+    
+      
+        
+          L
+          
+            
+              v
+            
+          
+        
+        =
+        
+          
+            
+              
+                E
+                
+                  
+                    v
+                  
+                
+              
+              R
+            
+            π
+          
+        
+      
+    
+    {\displaystyle L_{\mathrm {v} }={\frac {E_{\mathrm {v} }R}{\pi }}}
+  
+
+
+See also
+Irradiance
+Exposure value
+Luminance
+
+
+References
+
+
+External links
+Illuminance Converter Archived 2010-02-10 at the Wayback Machine
+Knowledgedoor, LLC (2005) Library of Units and Constants: Illuminance Quantity
+Kodak's guide to Estimating Luminance and Illuminance using a camera's exposure meter. Also available in PDF form.
