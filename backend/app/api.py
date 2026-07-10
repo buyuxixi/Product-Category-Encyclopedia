@@ -710,6 +710,54 @@ def delete_hot_link(link_id: int, db: Db, actor: WriteActor):
     return {"ok": True}
 
 
+@router.post("/categories/{code}/crawl")
+def trigger_crawl(code: str, db: Db, actor: WriteActor):
+    """手动触发热点爬取 — 调用 hot-topic-crawler skill 的脚本。"""
+    ensure_role(actor, "admin", "data", "researcher")
+    category = _category_or_404(db, code)
+    import os
+    import subprocess
+
+    scripts_dir = os.path.expanduser("~/.hermes/skills/productivity/hot-topic-crawler/scripts")
+    runner = os.path.join(scripts_dir, "run_full_crawl.py")
+    if not os.path.exists(runner):
+        raise HTTPException(status_code=404, detail="Crawler script not found")
+
+    env = os.environ.copy()
+    env["ENCYCLOPEDIA_API_BASE"] = f"http://127.0.0.1:8010/api/v1"
+    env["CRAWLER_USERNAME"] = env.get("CRAWLER_USERNAME", "admin")
+    # Read password from AUTH_USERS_JSON if available
+    import json
+    users_json = env.get("AUTH_USERS_JSON", "")
+    if users_json:
+        try:
+            users = json.loads(users_json)
+            for u in users:
+                if u.get("username") == "admin":
+                    env["CRAWLER_PASSWORD"] = u.get("password", "")
+                    break
+        except Exception:
+            pass
+
+    try:
+        result = subprocess.run(
+            ["python3", runner],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            env=env,
+        )
+        return {
+            "returncode": result.returncode,
+            "stdout": result.stdout[-3000:],
+            "stderr": result.stderr[-1000:],
+        }
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail="Crawl timed out (5 min)")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
 @router.post("/imports/amazon")
 def import_amazon(body: AmazonImportRequest, db: Db, actor: WriteActor):
     ensure_role(actor, "admin", "data")

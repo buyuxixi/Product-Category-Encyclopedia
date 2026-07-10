@@ -46,6 +46,59 @@ const filteredHotLinks = computed(() => {
   return sectionHotLinks.value.filter((l) => l.platform === filterPlatform.value)
 })
 
+const groupedHotLinks = computed(() => {
+  const groups: Record<string, HotLink[]> = {}
+  for (const link of filteredHotLinks.value) {
+    const type = link.link_type
+    if (!groups[type]) groups[type] = []
+    groups[type].push(link)
+  }
+  return groups
+})
+
+const linkTypeOrder = ['product', 'discussion', 'video', 'trend', 'news', 'keyword']
+const linkTypeLabels: Record<string, string> = {
+  product: '🔥 爆品监控',
+  discussion: '💬 社区讨论',
+  video: '📺 视频测评',
+  trend: '📈 搜索趋势',
+  news: '📰 新闻动态',
+  keyword: '🔑 关键词',
+}
+
+const lastHotLinkUpdate = computed(() => {
+  if (!hotLinks.value.length) return null
+  const dates = hotLinks.value.map((l) => new Date(l.collected_at).getTime()).filter(Boolean)
+  return dates.length ? new Date(Math.max(...dates)) : null
+})
+
+function formatRelativeTime(date: Date | null): string {
+  if (!date) return '—'
+  const hours = (Date.now() - date.getTime()) / 3600000
+  if (hours < 1) return `${Math.floor(hours * 60)} 分钟前`
+  if (hours < 24) return `${Math.floor(hours)} 小时前`
+  return `${Math.floor(hours / 24)} 天前`
+}
+
+const crawlLoading = ref(false)
+async function triggerCrawl() {
+  if (!category.value) return
+  try {
+    await ElMessageBox.confirm('将手动触发一次热点爬取，预计需要 1-2 分钟。', '手动爬取', {
+      confirmButtonText: '开始爬取',
+      cancelButtonText: '取消',
+    })
+    crawlLoading.value = true
+    await apiRequest(`/categories/${category.value.code}/crawl`, { method: 'POST' })
+    ElMessage.success('爬取已触发，正在刷新数据...')
+    await loadCategory()
+  } catch (error) {
+    if (error !== 'cancel') ElMessage.error((error as Error).message)
+  } finally {
+    crawlLoading.value = false
+  }
+}
+
 const sectionTrendSignals = computed(() =>
   trendSignals.value.filter((s) => s.section_key === activeSectionKey.value)
 )
@@ -658,16 +711,26 @@ onMounted(loadCategory)
                   </div>
                 </div>
               </div>
-              <!-- Hot Links 内联渲染 -->
+              <!-- Hot Links 按类型分组渲染 -->
               <div v-if="filteredHotLinks.length" class="hot-links-section">
                 <div class="hot-links-header">
                   <span class="evidence-label">热点链接</span>
+                  <span v-if="lastHotLinkUpdate" class="hot-links-update">
+                    最后更新: {{ formatRelativeTime(lastHotLinkUpdate) }}
+                  </span>
+                  <el-button
+                    v-if="canEdit"
+                    size="small"
+                    :loading="crawlLoading"
+                    :icon="Refresh"
+                    @click="triggerCrawl"
+                  >手动爬取</el-button>
                   <el-select
                     v-model="filterPlatform"
                     placeholder="全部平台"
                     size="small"
                     clearable
-                    style="width: 140px"
+                    style="width: 140px; margin-left: auto"
                   >
                     <el-option
                       v-for="p in hotLinkPlatforms"
@@ -677,28 +740,35 @@ onMounted(loadCategory)
                     />
                   </el-select>
                 </div>
-                <div class="hot-links-list">
-                  <a
-                    v-for="link in filteredHotLinks"
-                    :key="link.id"
-                    :href="link.url"
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    class="hot-link-item"
-                    :class="{ 'is-hot': link.is_hot }"
-                  >
-                    <div class="hot-link-title">
-                      <span v-if="link.is_hot" class="hot-badge">🔥</span>
-                      {{ link.title }}
-                    </div>
-                    <div class="hot-link-meta">
-                      <el-tag size="small" effect="plain">{{ platformLabel(link.platform) }}</el-tag>
-                      <el-tag size="small" effect="plain" type="info">{{ link.link_type }}</el-tag>
-                      <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
-                    </div>
-                    <div v-if="link.description" class="hot-link-desc">{{ link.description }}</div>
-                    <small class="hot-link-date">{{ formatDate(link.collected_at) }}</small>
-                  </a>
+                <div
+                  v-for="type in linkTypeOrder.filter((t) => groupedHotLinks[t])"
+                  :key="type"
+                  class="hot-link-group"
+                >
+                  <div class="hot-link-group-title">{{ linkTypeLabels[type] || type }}</div>
+                  <div class="hot-links-list">
+                    <a
+                      v-for="link in groupedHotLinks[type]"
+                      :key="link.id"
+                      :href="link.url"
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      class="hot-link-item"
+                      :class="{ 'is-hot': link.is_hot }"
+                    >
+                      <div class="hot-link-title">
+                        <span v-if="link.is_hot" class="hot-badge">🔥</span>
+                        {{ link.title }}
+                      </div>
+                      <div class="hot-link-meta">
+                        <el-tag size="small" effect="plain">{{ platformLabel(link.platform) }}</el-tag>
+                        <el-tag size="small" effect="plain" type="info">{{ link.link_type }}</el-tag>
+                        <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
+                      </div>
+                      <div v-if="link.description" class="hot-link-desc">{{ link.description }}</div>
+                      <small class="hot-link-date">{{ formatDate(link.collected_at) }}</small>
+                    </a>
+                  </div>
                 </div>
               </div>
               <div v-if="activeSection.evidence.length" class="evidence-list">
