@@ -1570,6 +1570,17 @@ footer .stale {
 .kw-new-badge { color: #52c41a; margin-left: 2px; }
 
 /* ── Notes view ── */
+.notes-guide {
+  background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+  border-radius: 8px; padding: 24px; text-align: center;
+}
+.notes-guide h3 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+.guide-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; text-align: left; }
+.guide-step { display: flex; gap: 12px; align-items: flex-start; }
+.guide-num { width: 28px; height: 28px; border-radius: 50%; background: var(--brand-green, #2f6f55); color: white; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.guide-step strong { font-size: 14px; color: var(--ink); }
+.guide-step p { font-size: 12px; color: var(--text-secondary); margin: 4px 0 0; line-height: 1.5; }
+
 .notes-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .notes-toolbar h2 { font-size: 18px; font-weight: 600; color: var(--ink); }
 .notes-actions { display: flex; align-items: center; gap: 8px; }

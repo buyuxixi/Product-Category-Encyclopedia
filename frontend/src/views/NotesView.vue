@@ -106,7 +106,15 @@ const notesByTag = computed(() => {
   return groups
 })
 
-onMounted(loadNotes)
+onMounted(() => {
+  loadNotes()
+  // 如果没有笔记，显示引导提示
+  if (notes.value.length === 0) {
+    showGuide.value = true
+  }
+})
+
+const showGuide = ref(false)
 
 // 从品类详情页跳转来时，自动弹出新建笔记对话框
 watch(() => props.presetCategory, (code) => {
@@ -141,7 +149,29 @@ watch(() => props.presetCategory, (code) => {
         <p class="note-content">{{ note.content }}</p>
       </div>
     </div>
-    <el-empty v-else description="还没有笔记。点击上方「新建笔记」按钮，记录你的选品想法、竞品观察和用户洞察。" :image-size="80" />
+    <div v-if="!notes.length && showGuide" class="notes-guide">
+      <h3>📋 如何使用选品笔记？</h3>
+      <div class="guide-steps">
+        <div class="guide-step">
+          <span class="guide-num">1</span>
+          <div><strong>浏览品类百科</strong><p>在「品类百科」中查看各品类的用户画像、技术趋势和热点数据</p></div>
+        </div>
+        <div class="guide-step">
+          <span class="guide-num">2</span>
+          <div><strong>记录选品想法</strong><p>点击品类详情页的「📝 添加笔记」按钮，快速记录想法</p></div>
+        </div>
+        <div class="guide-step">
+          <span class="guide-num">3</span>
+          <div><strong>标签分类管理</strong><p>用 5 种标签（选品机会/竞品分析/用户洞察/技术趋势/其他）分类</p></div>
+        </div>
+        <div class="guide-step">
+          <span class="guide-num">4</span>
+          <div><strong>导出汇报</strong><p>一键导出 Markdown 格式的笔记汇总，用于团队汇报</p></div>
+        </div>
+      </div>
+      <el-button type="primary" :icon="Plus" @click="showAddDialog = true">立即创建第一条笔记</el-button>
+    </div>
+    <el-empty v-else-if="!notes.length" description="还没有笔记" :image-size="60" />
 
     <!-- 新建笔记对话框 -->
     <el-dialog v-model="showAddDialog" title="新建笔记" width="min(560px, 92vw)">
