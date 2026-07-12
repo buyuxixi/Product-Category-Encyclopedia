@@ -49,6 +49,21 @@ const topHotLinks = computed(() =>
     .slice(0, 10)
 )
 
+// Reddit 讨论精选 — 只显示 Reddit 平台
+const topRedditPosts = computed(() =>
+  allHotLinks.value
+    .filter(l => l.platform === 'reddit')
+    .sort((a, b) => (b.hotness_score || 0) - (a.hotness_score || 0))
+    .slice(0, 10)
+)
+
+// Amazon 选品榜单 — 只显示 Amazon 产品
+const topAmazonProducts = computed(() =>
+  allHotLinks.value
+    .filter(l => l.platform === 'amazon')
+    .slice(0, 10)
+)
+
 // 数据更新日志 — 按更新时间排序
 const updateLog = computed(() => {
   return categoryRows.value
@@ -209,17 +224,17 @@ watch([loading, categoryRows], ([isLoading]) => {
       </span>
     </section>
 
-    <!-- 热点精选 + 关键词面板 并排 -->
+    <!-- Reddit 讨论 + Amazon 选品 并排 -->
     <section class="bottom-split">
-      <!-- 左：热点精选 -->
+      <!-- 左：Reddit 讨论精选 -->
       <div class="hot-panel">
         <div class="panel-header">
-          <h2>🔥 热点精选</h2>
-          <span class="panel-hint">全品类热度 Top {{ topHotLinks.length }}</span>
+          <h2>💬 社区讨论精选</h2>
+          <span class="panel-hint">Reddit 真实用户讨论</span>
         </div>
-        <div class="hot-list">
+        <div v-if="topRedditPosts.length" class="hot-list">
           <a
-            v-for="link in topHotLinks"
+            v-for="link in topRedditPosts"
             :key="link.id"
             :href="link.url"
             target="_blank"
@@ -228,39 +243,44 @@ watch([loading, categoryRows], ([isLoading]) => {
             :class="{ 'is-hot': link.is_hot }"
           >
             <div class="hot-row-main">
-              <div class="hot-row-title">
-                <span v-if="link.is_hot" class="hot-badge">🔥</span>
-                {{ link.title }}
-              </div>
+              <div class="hot-row-title">{{ link.title }}</div>
               <div class="hot-row-meta">
                 <el-tag size="small" effect="plain">{{ platformLabel(link.platform) }}</el-tag>
-                <el-tag size="small" type="success" effect="plain">{{ categoryName(link.category_code || '') }}</el-tag>
+                <span class="hot-row-cat" v-if="categoryName(link.category_code)">{{ categoryName(link.category_code) }}</span>
                 <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
               </div>
             </div>
             <span class="hot-row-time">{{ formatRelativeTime(link.collected_at) }}</span>
           </a>
         </div>
+        <el-empty v-else description="暂无 Reddit 讨论数据" :image-size="60" />
       </div>
 
-      <!-- 右：关键词面板 -->
+      <!-- 右：Amazon 选品榜单 -->
       <div class="kw-panel">
         <div class="panel-header">
-          <h2>🔑 搜索趋势词</h2>
-          <span class="panel-hint">Google 用户真实搜索行为</span>
+          <h2>🛒 Amazon 选品榜单</h2>
+          <span class="panel-hint">搜索排名 Top 产品</span>
         </div>
-        <div class="kw-list">
-          <div
-            v-for="(kw, i) in topKeywords"
-            :key="i"
-            class="kw-row"
-            @click="selectCategory(categoryRows.find(r => r.name === kw.category)?.code || '')"
+        <div v-if="topAmazonProducts.length" class="hot-list">
+          <a
+            v-for="link in topAmazonProducts"
+            :key="link.id"
+            :href="link.url"
+            target="_blank"
+            rel="noreferrer noopener"
+            class="hot-row"
           >
-            <span class="kw-rank">{{ i + 1 }}</span>
-            <span class="kw-text">{{ kw.keyword }}</span>
-            <span v-if="kw.category" class="kw-cat-text">{{ kw.category }}</span>
-          </div>
+            <div class="hot-row-main">
+              <div class="hot-row-title">{{ link.title }}</div>
+              <div class="hot-row-meta">
+                <el-tag size="small" effect="plain" type="success">Amazon</el-tag>
+                <span class="hot-row-cat" v-if="categoryName(link.category_code)">{{ categoryName(link.category_code) }}</span>
+              </div>
+            </div>
+          </a>
         </div>
+        <el-empty v-else description="暂无 Amazon 产品数据" :image-size="60" />
       </div>
     </section>
   </main>
