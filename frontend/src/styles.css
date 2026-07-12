@@ -1485,6 +1485,19 @@ footer .stale {
 }
 .glossary-term:hover { color: var(--brand-green, #1e6650); border-bottom-color: var(--brand-green, #1e6650); }
 
+/* ── Market section tabs ── */
+.market-tabs {
+  display: flex; gap: 2px; margin-bottom: 12px;
+  border-bottom: 1px solid #e8e8e8;
+}
+.market-tabs button {
+  padding: 6px 14px; font-size: 13px; font-weight: 500; color: var(--text-secondary);
+  background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.market-tabs button:hover { color: var(--ink); }
+.market-tabs button.active { color: var(--brand-green, #1e6650); border-bottom-color: var(--brand-green, #1e6650); }
+
 /* ── Search highlight ── */
 .search-result mark { background: #fff3cd; padding: 0 2px; border-radius: 2px; }
 

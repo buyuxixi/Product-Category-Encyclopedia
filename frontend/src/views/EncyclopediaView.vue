@@ -80,6 +80,9 @@ function formatRelativeTime(date: Date | null): string {
 
 const crawlLoading = ref(false)
 
+// 06 章节分块 tab
+const marketTab = ref<'products' | 'videos' | 'discussions' | 'trends' | 'analysis'>('products')
+
 const marketTimestamp = computed(() => {
   if (!activeSection.value || activeSectionKey.value !== 'market') return null
   const match = activeSection.value.content.match(/数据采集时间[：:]\s*([\d\-/]+)/)
@@ -889,57 +892,28 @@ onMounted(() => {
                 <span>⏰ 数据采集时间: {{ marketTimestamp }}</span>
               </div>
 
-              <!-- 🔥 热点链接 — 顶置，业务人员最关注 -->
-              <div v-if="filteredHotLinks.length" class="hot-links-section hot-links-priority">
+              <!-- 06 章节分块 tab — 内容太多，按类型切换 -->
+              <div v-if="activeSectionKey === 'market'" class="market-tabs">
+                <button :class="{ active: marketTab === 'products' }" @click="marketTab = 'products'">🛒 爆品监控</button>
+                <button :class="{ active: marketTab === 'videos' }" @click="marketTab = 'videos'">📺 视频测评</button>
+                <button :class="{ active: marketTab === 'discussions' }" @click="marketTab = 'discussions'">💬 社区讨论</button>
+                <button :class="{ active: marketTab === 'trends' }" @click="marketTab = 'trends'">📊 趋势信号</button>
+                <button :class="{ active: marketTab === 'analysis' }" @click="marketTab = 'analysis'">📝 分析正文</button>
+              </div>
+
+              <!-- 爆品监控 (Amazon product) -->
+              <div v-if="activeSectionKey === 'market' && marketTab === 'products'" class="hot-links-section hot-links-priority">
                 <div class="hot-links-header">
-                  <span class="evidence-label">🔥 今日热点</span>
-                  <span v-if="lastHotLinkUpdate" class="hot-links-update">
-                    最后更新: {{ formatRelativeTime(lastHotLinkUpdate) }}
-                  </span>
-                  <el-button
-                    v-if="canEdit"
-                    size="small"
-                    :loading="crawlLoading"
-                    :icon="Refresh"
-                    @click="triggerCrawl"
-                  >手动爬取</el-button>
-                  <el-select
-                    v-model="filterPlatform"
-                    placeholder="全部平台"
-                    size="small"
-                    clearable
-                    style="width: 140px; margin-left: auto"
-                  >
-                    <el-option
-                      v-for="p in hotLinkPlatforms"
-                      :key="p"
-                      :label="platformLabel(p)"
-                      :value="p"
-                    />
-                  </el-select>
+                  <span class="evidence-label">🛒 爆品监控</span>
+                  <span v-if="lastHotLinkUpdate" class="hot-links-update">最后更新: {{ formatRelativeTime(lastHotLinkUpdate) }}</span>
+                  <el-button v-if="canEdit" size="small" :loading="crawlLoading" :icon="Refresh" @click="triggerCrawl">手动爬取</el-button>
                 </div>
-                <div
-                  v-for="type in linkTypeOrder.filter((t) => groupedHotLinks[t])"
-                  :key="type"
-                  class="hot-link-group"
-                >
-                  <div class="hot-link-group-title">{{ linkTypeLabels[type] || type }}</div>
+                <div v-if="groupedHotLinks['product']" class="hot-link-group">
                   <div class="hot-links-list">
-                    <a
-                      v-for="link in groupedHotLinks[type]"
-                      :key="link.id"
-                      :href="link.url"
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      class="hot-link-item"
-                      :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }"
-                    >
-                      <div class="hot-link-title">
-                        <span v-if="link.is_hot" class="hot-badge">🔥</span>
-                        {{ link.title }}
-                      </div>
+                    <a v-for="link in groupedHotLinks['product']" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
+                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title }}</div>
                       <div class="hot-link-meta">
-                        <el-tag size="small" effect="plain">{{ platformLabel(link.platform) }}</el-tag>
+                        <el-tag size="small" effect="plain" type="success">Amazon</el-tag>
                         <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
                         <button class="fav-btn" :class="{ active: isFavorited(link.url) }" @click.prevent="toggleFavorite(link.url)">⭐</button>
                       </div>
@@ -948,22 +922,51 @@ onMounted(() => {
                     </a>
                   </div>
                 </div>
-              </div>
-              <!-- 空状态：该品类暂无热点 -->
-              <div v-else-if="activeSectionKey === 'market'" class="hot-links-empty">
-                <span class="evidence-label">🔥 今日热点</span>
-                <p>该品类暂无爬取到的热点数据。可点击「手动爬取」触发一次数据采集。</p>
-                <el-button
-                  v-if="canEdit"
-                  size="small"
-                  :loading="crawlLoading"
-                  :icon="Refresh"
-                  @click="triggerCrawl"
-                >手动爬取</el-button>
+                <el-empty v-else description="暂无 Amazon 产品数据" :image-size="60" />
               </div>
 
-              <!-- 📊 趋势信号 — 第二优先 -->
-              <div v-if="sectionTrendSignals.length" class="trend-signals trend-signals-priority">
+              <!-- 视频测评 (YouTube) -->
+              <div v-if="activeSectionKey === 'market' && marketTab === 'videos'" class="hot-links-section">
+                <div class="hot-links-header"><span class="evidence-label">📺 视频测评</span></div>
+                <div v-if="groupedHotLinks['video']" class="hot-link-group">
+                  <div class="hot-links-list">
+                    <a v-for="link in groupedHotLinks['video']" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
+                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title }}</div>
+                      <div class="hot-link-meta">
+                        <el-tag size="small" effect="plain">YouTube</el-tag>
+                        <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
+                        <button class="fav-btn" :class="{ active: isFavorited(link.url) }" @click.prevent="toggleFavorite(link.url)">⭐</button>
+                      </div>
+                      <div v-if="link.description" class="hot-link-desc">{{ link.description }}</div>
+                      <small class="hot-link-date">{{ formatDate(link.collected_at) }}</small>
+                    </a>
+                  </div>
+                </div>
+                <el-empty v-else description="暂无 YouTube 视频数据" :image-size="60" />
+              </div>
+
+              <!-- 社区讨论 (Reddit) -->
+              <div v-if="activeSectionKey === 'market' && marketTab === 'discussions'" class="hot-links-section">
+                <div class="hot-links-header"><span class="evidence-label">💬 社区讨论</span></div>
+                <div v-if="groupedHotLinks['discussion']" class="hot-link-group">
+                  <div class="hot-links-list">
+                    <a v-for="link in groupedHotLinks['discussion']" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
+                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title }}</div>
+                      <div class="hot-link-meta">
+                        <el-tag size="small" effect="plain">Reddit</el-tag>
+                        <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
+                        <button class="fav-btn" :class="{ active: isFavorited(link.url) }" @click.prevent="toggleFavorite(link.url)">⭐</button>
+                      </div>
+                      <div v-if="link.description" class="hot-link-desc">{{ link.description }}</div>
+                      <small class="hot-link-date">{{ formatDate(link.collected_at) }}</small>
+                    </a>
+                  </div>
+                </div>
+                <el-empty v-else description="暂无 Reddit 讨论数据" :image-size="60" />
+              </div>
+
+              <!-- 趋势信号 -->
+              <div v-if="activeSectionKey === 'market' && marketTab === 'trends' && sectionTrendSignals.length" class="trend-signals trend-signals-priority">
                 <span class="evidence-label">📊 趋势信号</span>
                 <div class="trend-signal-grid">
                   <div v-for="signal in sectionTrendSignals" :key="signal.id" class="trend-signal-card" :class="`trend-dir-${signal.trend_direction || 'stable'}`">
@@ -977,9 +980,6 @@ onMounted(() => {
                     <div v-if="signal.metric_value !== null && signal.metric_value !== undefined" class="trend-signal-metric">
                       <span class="metric-value">{{ signal.metric_value }}</span>
                       <span v-if="signal.metric_unit" class="metric-unit">{{ signal.metric_unit }}</span>
-                      <div v-if="signal.metric_value > 0" class="metric-bar">
-                        <div class="metric-bar-fill" :style="{ width: `${Math.min(signal.metric_value / Math.max(...sectionTrendSignals.map(s => s.metric_value || 0)) * 100, 100)}%` }"></div>
-                      </div>
                     </div>
                     <div v-if="signal.summary" class="trend-signal-summary">{{ signal.summary }}</div>
                     <small class="trend-signal-date">{{ formatDate(signal.collected_at) }}</small>
@@ -987,9 +987,70 @@ onMounted(() => {
                 </div>
               </div>
 
-              <!-- 📝 分析内容 — 第三优先，深入分析 -->
-              <div v-if="activeSection.content" class="section-content" v-html="enhanceGlossary(renderMarkdown(renderedContentWithoutTimestamp))"></div>
-              <div v-else class="section-empty">暂无内容。可以补充材料或生成草稿。</div>
+              <!-- 分析正文 -->
+              <div v-if="activeSectionKey === 'market' && marketTab === 'analysis'">
+                <div v-if="activeSection.content" class="section-content" v-html="enhanceGlossary(renderMarkdown(renderedContentWithoutTimestamp))"></div>
+                <div v-else class="section-empty">暂无内容。可以补充材料或生成草稿。</div>
+              </div>
+
+              <!-- 非 market 章节 — 保持原有逻辑 -->
+              <div v-if="activeSectionKey !== 'market'">
+                <!-- 🔥 热点链接 — 顶置 -->
+                <div v-if="filteredHotLinks.length" class="hot-links-section hot-links-priority">
+                  <div class="hot-links-header">
+                    <span class="evidence-label">🔥 今日热点</span>
+                    <span v-if="lastHotLinkUpdate" class="hot-links-update">最后更新: {{ formatRelativeTime(lastHotLinkUpdate) }}</span>
+                    <el-button v-if="canEdit" size="small" :loading="crawlLoading" :icon="Refresh" @click="triggerCrawl">手动爬取</el-button>
+                    <el-select v-model="filterPlatform" placeholder="全部平台" size="small" clearable style="width: 140px; margin-left: auto">
+                      <el-option v-for="p in hotLinkPlatforms" :key="p" :label="platformLabel(p)" :value="p" />
+                    </el-select>
+                  </div>
+                  <div v-for="type in linkTypeOrder.filter((t) => groupedHotLinks[t])" :key="type" class="hot-link-group">
+                    <div class="hot-link-group-title">{{ linkTypeLabels[type] || type }}</div>
+                    <div class="hot-links-list">
+                      <a v-for="link in groupedHotLinks[type]" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
+                        <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title }}</div>
+                        <div class="hot-link-meta">
+                          <el-tag size="small" effect="plain">{{ platformLabel(link.platform) }}</el-tag>
+                          <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
+                          <button class="fav-btn" :class="{ active: isFavorited(link.url) }" @click.prevent="toggleFavorite(link.url)">⭐</button>
+                        </div>
+                        <div v-if="link.description" class="hot-link-desc">{{ link.description }}</div>
+                        <small class="hot-link-date">{{ formatDate(link.collected_at) }}</small>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                <div v-else-if="activeSectionKey === 'market'" class="hot-links-empty">
+                  <span class="evidence-label">🔥 今日热点</span>
+                  <p>该品类暂无爬取到的热点数据。可点击「手动爬取」触发一次数据采集。</p>
+                  <el-button v-if="canEdit" size="small" :loading="crawlLoading" :icon="Refresh" @click="triggerCrawl">手动爬取</el-button>
+                </div>
+                <!-- 📊 趋势信号 -->
+                <div v-if="sectionTrendSignals.length" class="trend-signals trend-signals-priority">
+                  <span class="evidence-label">📊 趋势信号</span>
+                  <div class="trend-signal-grid">
+                    <div v-for="signal in sectionTrendSignals" :key="signal.id" class="trend-signal-card" :class="`trend-dir-${signal.trend_direction || 'stable'}`">
+                      <div class="trend-signal-header">
+                        <span class="trend-signal-type">{{ signalTypeLabel(signal.signal_type) }}</span>
+                        <span class="trend-signal-platform">{{ platformLabel(signal.platform) }}</span>
+                        <span v-if="signal.trend_direction" class="trend-signal-direction" :class="`dir-${signal.trend_direction}`">{{ trendDirectionLabel(signal.trend_direction) }}</span>
+                      </div>
+                      <div v-if="signal.title" class="trend-signal-title">{{ signal.title }}</div>
+                      <div v-if="signal.keyword" class="trend-signal-keyword">关键词：{{ signal.keyword }}</div>
+                      <div v-if="signal.metric_value !== null && signal.metric_value !== undefined" class="trend-signal-metric">
+                        <span class="metric-value">{{ signal.metric_value }}</span>
+                        <span v-if="signal.metric_unit" class="metric-unit">{{ signal.metric_unit }}</span>
+                      </div>
+                      <div v-if="signal.summary" class="trend-signal-summary">{{ signal.summary }}</div>
+                      <small class="trend-signal-date">{{ formatDate(signal.collected_at) }}</small>
+                    </div>
+                  </div>
+                </div>
+                <!-- 📝 分析内容 -->
+                <div v-if="activeSection.content" class="section-content" v-html="enhanceGlossary(renderMarkdown(renderedContentWithoutTimestamp))"></div>
+                <div v-else class="section-empty">暂无内容。可以补充材料或生成草稿。</div>
+              </div>
               <footer>
                 <span>{{ activeSection.generation_mode === 'human' ? '人工编辑' : activeSection.generation_mode === 'generated' ? '系统草稿' : '未填写' }}</span>
                 <span v-if="activeSection.locked_by_human">已锁定</span>
