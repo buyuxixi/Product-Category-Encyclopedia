@@ -1,20 +1,18 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { DataBoard, Document, Fold, Search, Setting } from '@element-plus/icons-vue'
+import { DataBoard, Document, Fold, Search, Setting, TrendCharts, EditPen } from '@element-plus/icons-vue'
 import { ApiError, apiRequest, type Identity } from './api'
 import CategorySidebar from './components/CategorySidebar.vue'
 import DashboardView from './views/DashboardView.vue'
 import EncyclopediaView from './views/EncyclopediaView.vue'
 import LoginView from './views/LoginView.vue'
+import NotesView from './views/NotesView.vue'
+import TrendView from './views/TrendView.vue'
 import type { CategorySummary, Role, SearchResult } from './types'
 
-type ViewName = 'dashboard' | 'encyclopedia'
-type AuthConfig = {
-  mode: string
-  local_enabled: boolean
-  feishu_enabled: boolean
-}
+type ViewName = 'dashboard' | 'encyclopedia' | 'trends' | 'notes'
+type AuthConfig = { mode: string; local_enabled: boolean; feishu_enabled: boolean }
 type CurrentUser = { id: number; name: string; role: Role; provider: string }
 
 const activeView = ref<ViewName>('dashboard')
@@ -187,6 +185,12 @@ onMounted(loadSession)
         <button :class="{ active: activeView === 'encyclopedia' }" @click="activeView = 'encyclopedia'">
           <el-icon><Document /></el-icon>品类百科
         </button>
+        <button :class="{ active: activeView === 'trends' }" @click="activeView = 'trends'">
+          <el-icon><TrendCharts /></el-icon>趋势看板
+        </button>
+        <button :class="{ active: activeView === 'notes' }" @click="activeView = 'notes'">
+          <el-icon><EditPen /></el-icon>选品笔记
+        </button>
         <span class="nav-spacer"></span>
         <span class="system-stat">{{ dashboard.category_count }} 个品类 · {{ dashboard.source_count }} 条来源</span>
         <button class="settings-button" title="系统设置（后续开放）"><el-icon><Setting /></el-icon></button>
@@ -197,6 +201,19 @@ onMounted(loadSession)
         <DashboardView
           v-if="activeView === 'dashboard'"
           :identity="identity"
+          @select="selectCategory"
+        />
+        <!-- Trend view: no sidebar -->
+        <TrendView
+          v-else-if="activeView === 'trends'"
+          :identity="identity"
+          @select="selectCategory"
+        />
+        <!-- Notes view: no sidebar -->
+        <NotesView
+          v-else-if="activeView === 'notes'"
+          :identity="identity"
+          :categories="categories"
           @select="selectCategory"
         />
         <!-- Encyclopedia: with sidebar -->
@@ -221,7 +238,6 @@ onMounted(loadSession)
             <span>目录</span>
           </button>
           <EncyclopediaView
-            v-if="activeView === 'encyclopedia'"
             :category-code="selectedCode"
             :focus-section="targetSection"
             :identity="identity"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiRequest, type Identity } from '../api'
 import type { CategorySummary, HotLink, TrendSignal } from '../types'
@@ -133,11 +133,47 @@ async function loadDashboard() {
 }
 
 onMounted(loadDashboard)
+
+// 渲染迷你环形图
+function renderMiniCharts() {
+  for (const row of categoryRows.value) {
+    const el = document.getElementById(`chart-${row.code}`)
+    if (!el || !(window as any).echarts) continue
+    const chart = (window as any).echarts.init(el)
+    const total = row.hotLinks + row.trends + row.sources
+    if (total === 0) {
+      chart.setOption({ graphic: { type: 'text', style: { text: '无数据', fontSize: 12, fill: '#ccc' }, left: 'center', top: 'center' } })
+      continue
+    }
+    chart.setOption({
+      series: [{
+        type: 'pie',
+        radius: ['55%', '80%'],
+        center: ['50%', '50%'],
+        silent: true,
+        label: { show: false },
+        labelLine: { show: false },
+        data: [
+          { value: row.hotLinks, name: '热点', itemStyle: { color: '#e74c3c' } },
+          { value: row.trends, name: '趋势', itemStyle: { color: '#1890ff' } },
+          { value: row.sources, name: '来源', itemStyle: { color: '#52c41a' } },
+        ],
+      }],
+    })
+  }
+}
+
+// 数据加载完后渲染图表
+watch([loading, categoryRows], ([isLoading]) => {
+  if (!isLoading) {
+    setTimeout(renderMiniCharts, 100)
+  }
+}, { onTrigger: () => {} })
 </script>
 
 <template>
   <main v-loading="loading" class="dashboard-page">
-    <!-- 品类卡片墙 — 每个品类一张紧凑卡片 -->
+    <!-- 品类卡片墙 — 每个品类一张紧凑卡片，含迷你环形图 -->
     <section class="cat-grid">
       <div
         v-for="row in categoryRows"
@@ -150,11 +186,13 @@ onMounted(loadDashboard)
           <span class="cat-card-name">{{ row.name }}</span>
           <el-tag :type="healthType(row.health)" size="small" effect="plain">{{ healthLabel(row.health) }}</el-tag>
         </div>
-        <div class="cat-card-stats">
-          <div class="cat-stat"><span class="cat-stat-num">{{ row.hotLinks }}</span><span class="cat-stat-label">热点</span></div>
-          <div class="cat-stat"><span class="cat-stat-num">{{ row.trends }}</span><span class="cat-stat-label">趋势</span></div>
-          <div class="cat-stat"><span class="cat-stat-num">{{ row.sources }}</span><span class="cat-stat-label">来源</span></div>
-          <div class="cat-stat"><span class="cat-stat-num">{{ row.filled }}/{{ row.total }}</span><span class="cat-stat-label">模块</span></div>
+        <div class="cat-card-body">
+          <div :id="`chart-${row.code}`" class="cat-mini-chart"></div>
+          <div class="cat-card-stats">
+            <div class="cat-stat"><span class="cat-stat-num">{{ row.hotLinks }}</span><span class="cat-stat-label">🔥 热点</span></div>
+            <div class="cat-stat"><span class="cat-stat-num">{{ row.trends }}</span><span class="cat-stat-label">📊 趋势</span></div>
+            <div class="cat-stat"><span class="cat-stat-num">{{ row.sources }}</span><span class="cat-stat-label">📎 来源</span></div>
+          </div>
         </div>
         <div class="cat-card-footer">
           <span>{{ formatRelativeTime(row.updated) }}</span>

@@ -1496,6 +1496,48 @@ footer .stale {
 .qs-label { font-size: 11px; color: var(--text-quaternary); }
 .qs-value { font-size: 13px; font-weight: 600; color: var(--ink); }
 
+/* ── Trend view ── */
+.trend-charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.trend-chart-card {
+  background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+  border-radius: 8px; padding: 16px;
+}
+.trend-chart-card h3 { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+.chart-container { width: 100%; height: 200px; }
+.chart-container-wide { width: 100%; height: 280px; }
+
+/* ── Keyword ranking ── */
+.kw-ranking-list { display: flex; flex-direction: column; gap: 0; }
+.kw-rank-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 4px;
+  border-bottom: 1px solid #f5f5f5; cursor: pointer; transition: background .12s;
+}
+.kw-rank-row:hover { background: rgba(0,0,0,0.02); }
+.kw-rank-num { width: 24px; font-size: 14px; font-weight: 700; text-align: center; color: var(--text-quaternary); flex-shrink: 0; }
+.kw-rank-num.top-3 { color: #e74c3c; }
+.kw-rank-text { flex: 1; font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kw-rank-cat { font-size: 11px; color: var(--text-quaternary); flex-shrink: 0; }
+
+/* ── Notes view ── */
+.notes-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.notes-toolbar h2 { font-size: 18px; font-weight: 600; color: var(--ink); }
+.notes-actions { display: flex; align-items: center; gap: 8px; }
+.notes-count { font-size: 12px; color: var(--text-secondary); }
+.notes-list { display: flex; flex-direction: column; gap: 8px; }
+.note-card {
+  background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+  border-radius: 8px; padding: 14px 16px; border-left: 3px solid #1890ff;
+}
+.note-card.tag-选品机会 { border-left-color: #52c41a; }
+.note-card.tag-竞品分析 { border-left-color: #faad14; }
+.note-card.tag-用户洞察 { border-left-color: #1890ff; }
+.note-card.tag-技术趋势 { border-left-color: #722ed1; }
+.note-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.note-category { font-size: 13px; font-weight: 500; color: var(--brand-green, #1e6650); cursor: pointer; }
+.note-time { font-size: 11px; color: var(--text-quaternary); margin-left: auto; }
+.note-delete { margin-left: 4px; }
+.note-content { font-size: 14px; line-height: 1.6; color: var(--ink); margin: 0; }
+
 /* ── Dashboard ── */
 .dashboard-page { padding: 20px 24px; flex: 1; width: 100%; overflow-y: auto; }
 
@@ -1526,8 +1568,10 @@ footer .stale {
 .cat-card.health-poor { box-shadow: 0 0 0 1px rgba(0,0,0,0.08), inset 3px 0 0 #d9d9d9; }
 .cat-card-header { display: flex; align-items: center; justify-content: space-between; }
 .cat-card-name { font-size: 15px; font-weight: 600; color: var(--ink); }
-.cat-card-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-.cat-stat { display: flex; flex-direction: column; align-items: center; }
+.cat-card-stats { display: flex; gap: 4px; }
+.cat-card-body { display: flex; align-items: center; gap: 12px; }
+.cat-mini-chart { width: 70px; height: 70px; flex-shrink: 0; }
+.cat-stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
 .cat-stat-num { font-size: 18px; font-weight: 700; color: var(--ink); line-height: 1.2; }
 .cat-stat-label { font-size: 11px; color: var(--text-tertiary); }
 .cat-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-quaternary); }
