@@ -243,7 +243,7 @@ watch([loading, categoryRows], ([isLoading]) => {
             :class="{ 'is-hot': link.is_hot }"
           >
             <div class="hot-row-main">
-              <div class="hot-row-title">{{ link.title }}</div>
+              <div class="hot-row-title">{{ link.title.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'") }}</div>
               <div class="hot-row-meta">
                 <el-tag size="small" effect="plain">{{ platformLabel(link.platform) }}</el-tag>
                 <span class="hot-row-cat" v-if="categoryName(link.category_code)">{{ categoryName(link.category_code) }}</span>
@@ -272,7 +272,7 @@ watch([loading, categoryRows], ([isLoading]) => {
             class="hot-row"
           >
             <div class="hot-row-main">
-              <div class="hot-row-title">{{ link.title }}</div>
+              <div class="hot-row-title">{{ link.title.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'") }}</div>
               <div class="hot-row-meta">
                 <el-tag size="small" effect="plain" type="success">Amazon</el-tag>
                 <span class="hot-row-cat" v-if="categoryName(link.category_code)">{{ categoryName(link.category_code) }}</span>

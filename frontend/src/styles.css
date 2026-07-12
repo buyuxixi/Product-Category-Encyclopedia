@@ -1615,7 +1615,7 @@ footer .stale {
 /* 底部并排布局 */
 .bottom-split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
 
-/* 面板通用 */
+/* 面板通用 — 固定高度，内部滚动 */
 .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .panel-header h2 { font-size: 15px; font-weight: 600; color: var(--ink); }
 .panel-hint { font-size: 11px; color: var(--text-quaternary); }
@@ -1626,8 +1626,11 @@ footer .stale {
   box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
   border-radius: 8px;
   padding: 16px;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
 }
-.hot-list { display: flex; flex-direction: column; gap: 6px; }
+.hot-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1; }
 .hot-row {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
   padding: 8px 10px; border-radius: 6px; background: rgba(0,0,0,0.02);
