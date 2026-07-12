@@ -1520,6 +1520,13 @@ footer .stale {
 .qs-value { font-size: 13px; font-weight: 600; color: var(--ink); }
 
 /* ── Trend view ── */
+.trend-overview-bar {
+  display: flex; gap: 24px; padding: 10px 16px; margin-bottom: 16px;
+  background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08); border-radius: 8px;
+}
+.trend-overview-item { font-size: 13px; color: var(--text-secondary); }
+.trend-overview-item strong { font-size: 15px; color: var(--ink); font-weight: 700; }
+
 .trend-charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .trend-chart-card {
   background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08);

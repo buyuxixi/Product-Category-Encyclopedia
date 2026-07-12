@@ -172,6 +172,14 @@ onMounted(loadData)
 
 <template>
   <main v-loading="loading" class="dashboard-page">
+    <!-- 数据概览条 -->
+    <div class="trend-overview-bar">
+      <span class="trend-overview-item">📊 总热点: <strong>{{ allHotLinks.length }}</strong></span>
+      <span class="trend-overview-item">📈 总趋势: <strong>{{ allTrends.length }}</strong></span>
+      <span class="trend-overview-item">🏷️ 品类: <strong>{{ categories.filter(c => !c.parent_code).length }}</strong></span>
+      <span class="trend-overview-item">📡 数据源: <strong>{{ platformDist.length }}</strong> 个平台</span>
+    </div>
+
     <!-- 图表区域 -->
     <div class="trend-charts-grid">
       <!-- 平台分布饼图 -->

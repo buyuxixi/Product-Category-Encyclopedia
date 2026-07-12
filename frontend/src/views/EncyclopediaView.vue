@@ -49,10 +49,20 @@ const groupedHotLinks = computed(() => {
   for (const link of filteredHotLinks.value) {
     const type = link.link_type
     if (!groups[type]) groups[type] = []
-    groups[type].push(link)
+    // 清理 description 中的 HTML 实体
+    const cleaned = { ...link, description: link.description ? cleanHtmlEntities(link.description) : link.description }
+    groups[type].push(cleaned)
+  }
+  // 产品按热度降序排序
+  if (groups['product']) {
+    groups['product'].sort((a, b) => (b.hotness_score || 0) - (a.hotness_score || 0))
   }
   return groups
 })
+
+function cleanHtmlEntities(text: string): string {
+  return text.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+}
 
 const linkTypeOrder = ['product', 'video', 'discussion', 'trend', 'news', 'keyword']
 const linkTypeLabels: Record<string, string> = {
