@@ -204,7 +204,7 @@ onMounted(loadSession)
           <el-icon><EditPen /></el-icon>选品笔记
         </button>
         <span class="nav-spacer"></span>
-        <span class="system-stat">{{ dashboard.category_count }} 个品类 · {{ dashboard.source_count }} 条来源</span>
+        <span class="system-stat">{{ categories.filter(c => !c.parent_code).length }} 个品类 · {{ dashboard.source_count }} 条来源</span>
         <button class="settings-button" title="系统设置（后续开放）"><el-icon><Setting /></el-icon></button>
       </nav>
 

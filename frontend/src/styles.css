@@ -1536,7 +1536,7 @@ footer .stale {
 .video-rank-num { width: 24px; font-size: 14px; font-weight: 700; text-align: center; color: var(--text-quaternary); flex-shrink: 0; }
 .video-rank-num.top-3 { color: #e74c3c; }
 .video-rank-title { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.video-rank-cat { font-size: 11px; color: var(--text-quaternary); flex-shrink: 0; }
+.video-rank-cat { font-size: 11px; color: var(--text-secondary); flex-shrink: 0; }
 .video-rank-views { font-size: 12px; color: #999; flex-shrink: 0; }
 
 /* ── Keyword groups ── */
@@ -1651,7 +1651,7 @@ footer .stale {
 /* 面板通用 */
 .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .panel-header h2 { font-size: 15px; font-weight: 600; color: var(--ink); }
-.panel-hint { font-size: 11px; color: var(--text-quaternary); }
+.panel-hint { font-size: 11px; color: var(--text-secondary); }
 
 /* 热点列表 */
 .hot-list { display: flex; flex-direction: column; gap: 6px; }

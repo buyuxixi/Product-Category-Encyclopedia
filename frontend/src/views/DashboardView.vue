@@ -183,9 +183,9 @@ function renderMiniCharts() {
         label: { show: false },
         labelLine: { show: false },
         data: [
-          { value: row.hotLinks, name: '热点', itemStyle: { color: '#8cb4a3' } },
-          { value: row.trends, name: '趋势', itemStyle: { color: '#b5d3c5' } },
-          { value: row.sources, name: '来源', itemStyle: { color: '#d9e8de' } },
+          { value: row.hotLinks, name: '热点', itemStyle: { color: '#e74c3c' } },
+          { value: row.trends, name: '趋势', itemStyle: { color: '#3b7ea1' } },
+          { value: row.sources, name: '来源', itemStyle: { color: '#52c41a' } },
         ],
       }],
     })
@@ -218,9 +218,9 @@ watch([loading, categoryRows], ([isLoading]) => {
         <div class="cat-card-body">
           <div :id="`chart-${row.code}`" class="cat-mini-chart"></div>
           <div class="cat-card-stats">
-            <div class="cat-stat"><span class="cat-stat-num">{{ row.hotLinks }}</span><span class="cat-stat-label">🔥 热点</span></div>
-            <div class="cat-stat"><span class="cat-stat-num">{{ row.trends }}</span><span class="cat-stat-label">📊 趋势</span></div>
-            <div class="cat-stat"><span class="cat-stat-num">{{ row.sources }}</span><span class="cat-stat-label">📎 来源</span></div>
+            <div class="cat-stat"><span class="cat-stat-num">{{ row.hotLinks }}</span><span class="cat-stat-label">热点</span></div>
+            <div class="cat-stat"><span class="cat-stat-num">{{ row.trends }}</span><span class="cat-stat-label">趋势</span></div>
+            <div class="cat-stat"><span class="cat-stat-num">{{ row.sources }}</span><span class="cat-stat-label">来源</span></div>
           </div>
         </div>
         <div class="cat-card-footer">
@@ -230,15 +230,7 @@ watch([loading, categoryRows], ([isLoading]) => {
       </div>
     </section>
 
-    <!-- 数据更新日志 — 紧凑时间条 -->
-    <section v-if="updateLog.length" class="update-log">
-      <span class="update-log-label">🔄 最近更新</span>
-      <span v-for="item in updateLog" :key="item.code" class="update-log-item" @click="selectCategory(item.code)">
-        {{ item.name }} <small>{{ formatRelativeTime(item.updated) }}</small>
-      </span>
-    </section>
-
-    <!-- 单面板 tab 切换：Reddit 讨论 / Amazon 选品 -->
+    <!-- Reddit 讨论 + Amazon 选品 tab 切换 -->
     <section class="bottom-panel">
       <div class="panel-header">
         <div class="panel-tabs">
@@ -258,7 +250,6 @@ watch([loading, categoryRows], ([isLoading]) => {
               target="_blank"
               rel="noreferrer noopener"
               class="hot-row"
-              :class="{ 'is-hot': link.is_hot }"
             >
               <div class="hot-row-main">
                 <div class="hot-row-title">{{ cleanTitle(link.title) }}</div>

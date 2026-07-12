@@ -80,7 +80,7 @@ const categoryHotLinks = computed(() => {
 // 平台×品类交叉统计 — 用于堆叠条形图
 const stackedByPlatform = computed(() => {
   const topCats = categories.value.filter(c => !c.parent_code)
-  const platforms = ['youtube', 'reddit', 'amazon', 'news']
+  const platforms = ['amazon', 'youtube', 'reddit', 'news']
   return {
     categories: topCats.map(c => c.name),
     series: platforms.map(p => ({
@@ -135,7 +135,7 @@ function renderCharts() {
         type: 'pie', radius: ['45%', '72%'], center: ['50%', '45%'],
         label: { show: false }, labelLine: { show: false },
         data: platformDist.value.map(d => ({ name: d.name, value: d.value })),
-        color: ['#2f6f55', '#5b8c7a', '#8cb4a3', '#b5d3c5', '#d9e8de'],
+        color: ['#b8860b', '#e74c3c', '#3b7ea1', '#8b5a8c'],  // Amazon=金, YouTube=红, Reddit=蓝, News=紫
         itemStyle: { borderColor: '#fff', borderWidth: 2 },
       }],
     })
@@ -156,7 +156,7 @@ function renderCharts() {
         barWidth: 14,
         itemStyle: { borderRadius: [0, 2, 2, 0] },
       })),
-      color: ['#2f6f55', '#3b7ea1', '#b8860b', '#8b5a8c'],
+      color: ['#b8860b', '#e74c3c', '#3b7ea1', '#8b5a8c'],  // Amazon=金, YouTube=红, Reddit=蓝, News=紫
     })
   }
 
@@ -189,7 +189,7 @@ onMounted(loadData)
 
     <!-- YouTube 播放量排行 -->
     <div class="trend-chart-card" style="margin-bottom: 16px">
-      <h3>📺 YouTube 视频播放量 Top {{ topVideos.length }}</h3>
+      <h3>📺 YouTube 视频热度 Top {{ topVideos.length }}</h3>
       <div class="video-rank-list">
         <a v-for="(v, i) in topVideos" :key="v.id" :href="v.url" target="_blank" rel="noreferrer" class="video-rank-row">
           <span class="video-rank-num" :class="{ 'top-3': i < 3 }">{{ i + 1 }}</span>
