@@ -250,14 +250,6 @@ onMounted(loadSession)
               <el-icon><Fold /></el-icon>
             </button>
           </div>
-          <button
-            v-if="sidebarCollapsed"
-            class="sidebar-expand-btn"
-            @click="sidebarCollapsed = false"
-          >
-            <el-icon><Document /></el-icon>
-            <span>目录</span>
-          </button>
           <EncyclopediaView
             :category-code="selectedCode"
             :focus-section="targetSection"
