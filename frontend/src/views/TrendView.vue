@@ -152,7 +152,7 @@ function renderCharts() {
         data: allKeywords.map(kw => g.keywords.find(k => k.keyword === kw)?.value || 0),
         itemStyle: { borderRadius: [0, 2, 2, 0] },
       })),
-      color: ['#2f6f55', '#5b8c7a', '#8cb4a3', '#b5d3c5', '#d9e8de'],
+      color: ['#2f6f55', '#3b7ea1', '#b8860b', '#8b5a8c', '#c0704b'],
     })
   }
 }
