@@ -154,9 +154,9 @@ function renderMiniCharts() {
         label: { show: false },
         labelLine: { show: false },
         data: [
-          { value: row.hotLinks, name: '热点', itemStyle: { color: '#e74c3c' } },
-          { value: row.trends, name: '趋势', itemStyle: { color: '#1890ff' } },
-          { value: row.sources, name: '来源', itemStyle: { color: '#52c41a' } },
+          { value: row.hotLinks, name: '热点', itemStyle: { color: '#8cb4a3' } },
+          { value: row.trends, name: '趋势', itemStyle: { color: '#b5d3c5' } },
+          { value: row.sources, name: '来源', itemStyle: { color: '#d9e8de' } },
         ],
       }],
     })

@@ -106,12 +106,13 @@ function renderCharts() {
     const chart = echarts.init(pieEl)
     chart.setOption({
       tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-      legend: { bottom: 0, textStyle: { fontSize: 12 } },
+      legend: { bottom: 0, textStyle: { fontSize: 12, color: '#666' } },
       series: [{
-        type: 'pie', radius: ['40%', '70%'], center: ['50%', '45%'],
+        type: 'pie', radius: ['45%', '72%'], center: ['50%', '45%'],
         label: { show: false }, labelLine: { show: false },
         data: platformDist.value.map(d => ({ name: d.name, value: d.value })),
-        color: ['#e74c3c', '#52c41a', '#1890ff', '#faad14', '#722ed1', '#13c2c2'],
+        color: ['#2f6f55', '#5b8c7a', '#8cb4a3', '#b5d3c5', '#d9e8de'],
+        itemStyle: { borderColor: '#fff', borderWidth: 2 },
       }],
     })
   }
@@ -120,15 +121,16 @@ function renderCharts() {
   const barEl = document.getElementById('category-bar')
   if (barEl && categoryHotLinks.value.length) {
     const chart = echarts.init(barEl)
+    const maxVal = Math.max(...categoryHotLinks.value.map(d => d.value)) || 1
     chart.setOption({
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      grid: { left: 80, right: 30, top: 10, bottom: 10 },
-      xAxis: { type: 'value', splitLine: { lineStyle: { color: '#f0f0f0' } } },
-      yAxis: { type: 'category', data: categoryHotLinks.value.map(d => d.name), axisLabel: { fontSize: 12 } },
+      grid: { left: 110, right: 40, top: 10, bottom: 10 },
+      xAxis: { type: 'value', max: maxVal * 1.3, splitLine: { lineStyle: { color: '#f0f0f0' } }, axisLabel: { color: '#999' } },
+      yAxis: { type: 'category', data: categoryHotLinks.value.map(d => d.name), axisLabel: { fontSize: 12, color: '#666' } },
       series: [{
-        type: 'bar', barWidth: 16, data: categoryHotLinks.value.map(d => d.value),
-        itemStyle: { color: '#1e6650', borderRadius: [0, 4, 4, 0] },
-        label: { show: true, position: 'right', fontSize: 12, color: '#666' },
+        type: 'bar', barWidth: 14, data: categoryHotLinks.value.map(d => d.value),
+        itemStyle: { color: '#2f6f55', borderRadius: [0, 3, 3, 0] },
+        label: { show: true, position: 'right', fontSize: 12, color: '#999' },
       }],
     })
   }
@@ -138,18 +140,19 @@ function renderCharts() {
   if (kwBarEl && keywordByCategory.value.length) {
     const chart = echarts.init(kwBarEl)
     const allKeywords = keywordByCategory.value.flatMap(g => g.keywords.map(k => k.keyword))
-    const categories = keywordByCategory.value.map(g => g.category)
+    const maxVal = Math.max(...keywordByCategory.value.flatMap(g => g.keywords.map(k => k.value))) || 1
     chart.setOption({
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      legend: { top: 0, textStyle: { fontSize: 11 } },
-      grid: { left: 100, right: 30, top: 30, bottom: 10 },
-      xAxis: { type: 'value', splitLine: { lineStyle: { color: '#f0f0f0' } } },
-      yAxis: { type: 'category', data: allKeywords, axisLabel: { fontSize: 11 } },
+      legend: { top: 0, textStyle: { fontSize: 11, color: '#666' } },
+      grid: { left: 110, right: 50, top: 30, bottom: 10 },
+      xAxis: { type: 'value', max: maxVal * 1.3, splitLine: { lineStyle: { color: '#f0f0f0' } }, axisLabel: { color: '#999', formatter: '{value}' } },
+      yAxis: { type: 'category', data: allKeywords, axisLabel: { fontSize: 11, color: '#666' } },
       series: keywordByCategory.value.map(g => ({
-        name: g.category, type: 'bar', barWidth: 12,
+        name: g.category, type: 'bar', barWidth: 10,
         data: allKeywords.map(kw => g.keywords.find(k => k.keyword === kw)?.value || 0),
+        itemStyle: { borderRadius: [0, 2, 2, 0] },
       })),
-      color: ['#e74c3c', '#52c41a', '#1890ff', '#faad14', '#722ed1'],
+      color: ['#2f6f55', '#5b8c7a', '#8cb4a3', '#b5d3c5', '#d9e8de'],
     })
   }
 }
