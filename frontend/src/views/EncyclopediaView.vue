@@ -57,6 +57,14 @@ const groupedHotLinks = computed(() => {
   if (groups['product']) {
     groups['product'].sort((a, b) => (b.hotness_score || 0) - (a.hotness_score || 0))
   }
+  // 视频按热度降序排序
+  if (groups['video']) {
+    groups['video'].sort((a, b) => (b.hotness_score || 0) - (a.hotness_score || 0))
+  }
+  // 讨论按热度降序排序
+  if (groups['discussion']) {
+    groups['discussion'].sort((a, b) => (b.hotness_score || 0) - (a.hotness_score || 0))
+  }
   return groups
 })
 
