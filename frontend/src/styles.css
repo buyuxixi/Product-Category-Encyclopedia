@@ -72,33 +72,68 @@ button { color: inherit; cursor: pointer; }
 .app-root { min-height: 100vh; }
 
 /* ── Login ── */
-/* ── Login (Notion-style: warm white bg, whisper borders, blue CTA) ── */
+/* ── Login — Split-screen: left brand panel + right form ── */
 .login-shell {
   min-height: 100vh;
   display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Left brand panel */
+.login-hero {
+  position: relative;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 64px 56px;
+  overflow: hidden;
+}
+.login-hero-content { position: relative; z-index: 2; }
+.login-hero-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 48px; }
+.login-hero-logo span { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.login-hero-logo .brand-mark { width: 32px; height: 32px; border-radius: var(--r-xs); background: rgba(255,255,255,0.15); display: grid; place-items: center; font-size: 14px; font-weight: 800; }
+.login-hero-title { font-size: 36px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; margin: 0 0 16px; }
+.login-hero-desc { font-size: 15px; line-height: 1.6; color: rgba(255,255,255,0.7); max-width: 360px; margin: 0 0 48px; }
+.login-hero-stats { display: flex; gap: 32px; }
+.hero-stat strong { display: block; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+.hero-stat span { display: block; font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+.login-hero-deco {
+  position: absolute; bottom: -120px; right: -120px; width: 400px; height: 400px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+}
+.login-hero-deco::after {
+  content: ''; position: absolute; top: 60px; left: 60px; width: 280px; height: 280px;
+  border-radius: 50%; background: rgba(255,255,255,0.04);
+}
+
+/* Right form panel */
+.login-form-side {
+  display: grid;
   place-items: center;
-  padding: 24px;
-  background: #f6f5f4;
+  padding: 40px 24px;
+  background: var(--bg);
 }
 .login-card {
-  width: min(440px, 100%);
-  padding: 40px 36px 32px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 16px;
-  background: #ffffff;
-  box-shadow: rgba(0,0,0,0.04) 0px 4px 18px, rgba(0,0,0,0.027) 0px 2px 7.85px, rgba(0,0,0,0.02) 0px 0.8px 2.93px;
+  width: min(380px, 100%);
 }
-.login-brand { display: flex; align-items: center; gap: 12px; }
-.login-brand strong { display: block; color: var(--ink); font-size: 15px; font-weight: 600; }
-.login-brand small { display: block; margin-top: 2px; color: var(--text-secondary); font-size: 11px; }
-.login-copy { margin: 36px 0 28px; }
-.login-copy h1 { margin: 0; color: var(--ink); font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
-.login-copy p { margin: 10px 0 0; color: var(--text-secondary); line-height: 1.6; font-size: 14px; }
-.login-form .el-form-item { margin-bottom: 16px; }
-.login-submit { width: 100%; margin-top: 8px; height: 40px; font-size: 14px; font-weight: 600; }
-.feishu-login { width: 100%; margin-top: 8px; height: 40px; }
+.login-card .eyebrow { color: var(--primary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.login-card h1 { margin: 0; color: var(--ink); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+.login-card p { margin: 8px 0 28px; color: var(--text-secondary); line-height: 1.6; font-size: 14px; }
+.login-form { display: flex; flex-direction: column; gap: 18px; }
+.login-form .form-field { display: flex; flex-direction: column; gap: 6px; }
+.login-form .form-field label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.login-submit { width: 100%; margin-top: 4px; height: 42px; font-size: 14px; font-weight: 600; }
+.feishu-login { width: 100%; margin-top: 8px; height: 42px; }
 .login-alert { margin-bottom: 18px; }
-.login-footnote { margin: 24px 0 0; color: var(--text-tertiary); font-size: 12px; line-height: 1.6; text-align: center; }
+.login-footnote { margin: 28px 0 0; color: var(--text-tertiary); font-size: 12px; line-height: 1.6; text-align: center; }
+
+@media (max-width: 768px) {
+  .login-shell { grid-template-columns: 1fr; }
+  .login-hero { display: none; }
+}
 
 /* ── Custom Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -110,20 +145,19 @@ button { color: inherit; cursor: pointer; }
 .app-shell { min-height: 100vh; background: var(--bg); display: flex; flex-direction: column; height: auto; }
 
 /* ════════════════════════════════════════════
-   TOPBAR — 56px height, white bg, sticky
+   TOPBAR — Notion-style: logo + search + user, no secondary nav
    ════════════════════════════════════════════ */
 .topbar {
-  height: 56px;
+  height: 52px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   padding: 0 20px;
   background: var(--surface);
   border-bottom: 1px solid var(--line);
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: var(--shadow-xs);
 }
 .brand {
   display: flex;
@@ -283,7 +317,7 @@ button { color: inherit; cursor: pointer; }
 }
 
 /* ════════════════════════════════════════════
-   BODY LAYOUT — dark sidebar + light content
+   BODY LAYOUT — icon-nav + content
    ════════════════════════════════════════════ */
 .body-layout {
   flex: 1;
@@ -291,15 +325,56 @@ button { color: inherit; cursor: pointer; }
   overflow: visible;
 }
 
+/* ── Icon Nav (vertical, Notion-style) ── */
+.icon-nav {
+  width: 48px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 0 12px;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  position: sticky;
+  top: 52px;
+  align-self: flex-start;
+  max-height: 100vh;
+}
+.icon-nav button {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 17px;
+}
+.icon-nav button:hover { background: var(--surface-hover); color: var(--ink); }
+.icon-nav button.active { background: var(--primary-light); color: var(--primary); }
+.icon-nav-spacer { flex: 1; }
+.icon-nav-stat {
+  font-size: 9px;
+  color: var(--text-quaternary);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: 0.05em;
+  margin-top: 8px;
+}
+
 /* ── Dark Sidebar (collapsible, sticky) ── */
 .sidebar-wrapper {
   position: sticky;
-  top: 0;
+  top: 52px;
   align-self: flex-start;
   display: flex;
   flex-shrink: 0;
   transition: width 0.25s ease;
-  max-height: 100vh;
+  max-height: calc(100vh - 52px);
   overflow: hidden;
 }
 .sidebar-wrapper.collapsed { width: 0; }
@@ -332,31 +407,33 @@ button { color: inherit; cursor: pointer; }
   width: 36px;
   flex-shrink: 0;
   position: sticky;
-  top: 0;
+  top: 52px;
   align-self: flex-start;
-  height: 100vh;
+  height: calc(100vh - 52px);
   border: 0;
-  border-right: 1px solid var(--sidebar-border);
-  background: var(--sidebar-bg);
-  color: var(--sidebar-text);
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text-tertiary);
   font-size: 10px;
   cursor: pointer;
   transition: background 0.15s;
 }
-.sidebar-expand-btn:hover { background: var(--sidebar-hover); }
+.sidebar-expand-btn:hover { background: var(--surface-hover); color: var(--ink); }
 .sidebar-expand-btn .el-icon { font-size: 16px; }
 
+  /* ── Category Sidebar (Notion-style light sidebar) ── */
 .category-sidebar {
   width: 224px;
   flex-shrink: 0;
-  background: var(--sidebar-bg);
+  background: var(--surface);
+  border-right: 1px solid var(--line);
   overflow-y: auto;
   transition: width 0.25s ease, opacity 0.25s ease;
   height: 100vh;
 }
 .sidebar-label {
   padding: 20px 20px 12px;
-  color: var(--sidebar-text-muted);
+  color: var(--text-tertiary);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -364,7 +441,7 @@ button { color: inherit; cursor: pointer; }
 }
 .sidebar-empty {
   padding: 20px;
-  color: var(--sidebar-text-muted);
+  color: var(--text-tertiary);
   font-size: 13px;
   text-align: center;
 }
@@ -380,12 +457,12 @@ button { color: inherit; cursor: pointer; }
   width: 20px;
   border: 0;
   background: transparent;
-  color: var(--sidebar-text-muted);
+  color: var(--text-tertiary);
   cursor: pointer;
   flex-shrink: 0;
   transition: color 0.15s;
 }
-.tree-arrow:hover { color: var(--sidebar-text); }
+.tree-arrow:hover { color: var(--ink); }
 .tree-arrow-placeholder { width: 20px; flex-shrink: 0; }
 .tree-btn {
   flex: 1;
@@ -400,31 +477,21 @@ button { color: inherit; cursor: pointer; }
   cursor: pointer;
   transition: background 0.12s;
   min-height: 36px;
-  color: var(--sidebar-text);
+  color: var(--text-regular);
   font-size: 13px;
 }
-.tree-btn:hover { background: var(--sidebar-hover); }
+.tree-btn:hover { background: var(--surface-hover); }
 .tree-btn.active {
-  background: var(--sidebar-active);
-  color: var(--sidebar-active-text);
+  background: var(--primary-light);
+  color: var(--primary-dark);
   font-weight: 600;
-}
-.tree-btn.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 4px;
-  bottom: 4px;
-  width: 3px;
-  border-radius: 2px;
-  background: var(--primary);
 }
 .tree-icon {
   font-size: 14px;
-  color: var(--sidebar-text-muted);
+  color: var(--text-tertiary);
   flex-shrink: 0;
 }
-.tree-btn.active .tree-icon { color: var(--sidebar-active-text); }
+.tree-btn.active .tree-icon { color: var(--primary); }
 .tree-text {
   flex: 1;
   min-width: 0;
@@ -1195,9 +1262,8 @@ button { color: inherit; cursor: pointer; }
   .topbar { padding: 0 12px; gap: 12px; flex-wrap: wrap; height: auto; }
   .global-search { max-width: none; width: 100%; order: 3; }
   .identity-controls { margin-left: auto; }
-  .primary-nav { overflow-x: auto; padding: 0 12px; }
-  .system-stat, .settings-button { display: none !important; }
-  .category-sidebar { width: 200px; }
+  .icon-nav { width: 40px; }
+  .icon-nav button { width: 32px; height: 32px; font-size: 15px; }
   .workspace-main, .page-shell { padding: 20px 16px 40px; }
   .summary-strip { grid-template-columns: repeat(2, 1fr); }
 }
@@ -1635,15 +1701,16 @@ footer .stale {
 .platform-bar-fill { height: 100%; border-radius: 4px; background: var(--brand-green, #2f6650); transition: width .4s; }
 .platform-count { width: 40px; font-size: 13px; color: var(--text-secondary); text-align: right; flex-shrink: 0; }
 
-/* 品类卡片墙 */
+/* 品类卡片墙 — Bento Grid 布局 */
 .cat-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
+  grid-auto-rows: minmax(140px, auto);
+  gap: 14px;
+  margin-bottom: 24px;
 }
-.cat-card:nth-child(1), .cat-card:nth-child(2), .cat-card:nth-child(3) { grid-column: span 2; }
-.cat-card:nth-child(4), .cat-card:nth-child(5) { grid-column: span 3; }
+.cat-card:nth-child(1), .cat-card:nth-child(2) { grid-column: span 3; grid-row: span 2; }
+.cat-card:nth-child(3), .cat-card:nth-child(4), .cat-card:nth-child(5) { grid-column: span 2; }
 .cat-card {
   background: var(--surface);
   border: 1px solid var(--line);

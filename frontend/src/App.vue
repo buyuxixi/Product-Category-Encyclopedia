@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { DataBoard, Document, Fold, Search, Setting, TrendCharts, EditPen } from '@element-plus/icons-vue'
+import { DataBoard, Document, Fold, Search, TrendCharts, EditPen } from '@element-plus/icons-vue'
 import { ApiError, apiRequest, type Identity } from './api'
 import CategorySidebar from './components/CategorySidebar.vue'
 import DashboardView from './views/DashboardView.vue'
@@ -197,25 +197,25 @@ onMounted(loadSession)
         </div>
       </header>
 
-      <nav class="primary-nav">
-        <button :class="{ active: activeView === 'dashboard' }" @click="activeView = 'dashboard'">
-          <el-icon><DataBoard /></el-icon>总览
-        </button>
-        <button :class="{ active: activeView === 'encyclopedia' }" @click="activeView = 'encyclopedia'">
-          <el-icon><Document /></el-icon>品类百科
-        </button>
-        <button :class="{ active: activeView === 'trends' }" @click="activeView = 'trends'">
-          <el-icon><TrendCharts /></el-icon>趋势看板
-        </button>
-        <button :class="{ active: activeView === 'notes' }" @click="activeView = 'notes'">
-          <el-icon><EditPen /></el-icon>选品笔记
-        </button>
-        <span class="nav-spacer"></span>
-        <span class="system-stat">{{ categories.filter(c => !c.parent_code).length }} 个品类 · {{ dashboard.source_count }} 条来源</span>
-        <button class="settings-button" title="系统设置（后续开放）"><el-icon><Setting /></el-icon></button>
-      </nav>
-
       <div class="body-layout">
+        <!-- 左侧 icon 导航 -->
+        <nav class="icon-nav">
+          <button :class="{ active: activeView === 'dashboard' }" @click="activeView = 'dashboard'" title="总览">
+            <el-icon><DataBoard /></el-icon>
+          </button>
+          <button :class="{ active: activeView === 'encyclopedia' }" @click="activeView = 'encyclopedia'" title="品类百科">
+            <el-icon><Document /></el-icon>
+          </button>
+          <button :class="{ active: activeView === 'trends' }" @click="activeView = 'trends'" title="趋势看板">
+            <el-icon><TrendCharts /></el-icon>
+          </button>
+          <button :class="{ active: activeView === 'notes' }" @click="activeView = 'notes'" title="选品笔记">
+            <el-icon><EditPen /></el-icon>
+          </button>
+          <div class="icon-nav-spacer"></div>
+          <span class="icon-nav-stat">{{ categories.filter(c => !c.parent_code).length }} 品类</span>
+        </nav>
+
         <!-- Dashboard: no sidebar -->
         <DashboardView
           v-if="activeView === 'dashboard'"
