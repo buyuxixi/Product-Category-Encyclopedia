@@ -147,7 +147,14 @@ async function loadDashboard() {
   }
 }
 
+function cleanTitle(title: string): string {
+  return (title || '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+}
+
 onMounted(loadDashboard)
+
+// 底部面板 tab 切换
+const bottomTab = ref<'reddit' | 'amazon'>('reddit')
 
 // 渲染迷你环形图
 function renderMiniCharts() {
@@ -224,63 +231,63 @@ watch([loading, categoryRows], ([isLoading]) => {
       </span>
     </section>
 
-    <!-- Reddit 讨论 + Amazon 选品 并排 -->
-    <section class="bottom-split">
-      <!-- 左：Reddit 讨论精选 -->
-      <div class="hot-panel">
-        <div class="panel-header">
-          <h2>💬 社区讨论精选</h2>
-          <span class="panel-hint">Reddit 真实用户讨论</span>
+    <!-- 单面板 tab 切换：Reddit 讨论 / Amazon 选品 -->
+    <section class="bottom-panel">
+      <div class="panel-header">
+        <div class="panel-tabs">
+          <button :class="{ active: bottomTab === 'reddit' }" @click="bottomTab = 'reddit'">💬 社区讨论</button>
+          <button :class="{ active: bottomTab === 'amazon' }" @click="bottomTab = 'amazon'">🛒 Amazon 选品</button>
         </div>
-        <div v-if="topRedditPosts.length" class="hot-list">
-          <a
-            v-for="link in topRedditPosts"
-            :key="link.id"
-            :href="link.url"
-            target="_blank"
-            rel="noreferrer noopener"
-            class="hot-row"
-            :class="{ 'is-hot': link.is_hot }"
-          >
-            <div class="hot-row-main">
-              <div class="hot-row-title">{{ link.title.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'") }}</div>
-              <div class="hot-row-meta">
-                <el-tag size="small" effect="plain">{{ platformLabel(link.platform) }}</el-tag>
-                <span class="hot-row-cat" v-if="categoryName(link.category_code)">{{ categoryName(link.category_code) }}</span>
-                <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
-              </div>
-            </div>
-            <span class="hot-row-time">{{ formatRelativeTime(link.collected_at) }}</span>
-          </a>
-        </div>
-        <el-empty v-else description="暂无 Reddit 讨论数据" :image-size="60" />
+        <span class="panel-hint">{{ bottomTab === 'reddit' ? 'Reddit 真实用户讨论' : '搜索排名 Top 产品' }}</span>
       </div>
-
-      <!-- 右：Amazon 选品榜单 -->
-      <div class="kw-panel">
-        <div class="panel-header">
-          <h2>🛒 Amazon 选品榜单</h2>
-          <span class="panel-hint">搜索排名 Top 产品</span>
-        </div>
-        <div v-if="topAmazonProducts.length" class="hot-list">
-          <a
-            v-for="link in topAmazonProducts"
-            :key="link.id"
-            :href="link.url"
-            target="_blank"
-            rel="noreferrer noopener"
-            class="hot-row"
-          >
-            <div class="hot-row-main">
-              <div class="hot-row-title">{{ link.title.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'") }}</div>
-              <div class="hot-row-meta">
-                <el-tag size="small" effect="plain" type="success">Amazon</el-tag>
-                <span class="hot-row-cat" v-if="categoryName(link.category_code)">{{ categoryName(link.category_code) }}</span>
+      <div class="panel-body">
+        <!-- Reddit 讨论 -->
+        <div v-if="bottomTab === 'reddit'">
+          <div v-if="topRedditPosts.length" class="hot-list">
+            <a
+              v-for="link in topRedditPosts"
+              :key="link.id"
+              :href="link.url"
+              target="_blank"
+              rel="noreferrer noopener"
+              class="hot-row"
+              :class="{ 'is-hot': link.is_hot }"
+            >
+              <div class="hot-row-main">
+                <div class="hot-row-title">{{ cleanTitle(link.title) }}</div>
+                <div class="hot-row-meta">
+                  <el-tag size="small" effect="plain">{{ platformLabel(link.platform) }}</el-tag>
+                  <span class="hot-row-cat" v-if="categoryName(link.category_code)">{{ categoryName(link.category_code) }}</span>
+                  <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
+                </div>
               </div>
-            </div>
-          </a>
+              <span class="hot-row-time">{{ formatRelativeTime(link.collected_at) }}</span>
+            </a>
+          </div>
+          <el-empty v-else description="暂无 Reddit 讨论数据" :image-size="60" />
         </div>
-        <el-empty v-else description="暂无 Amazon 产品数据" :image-size="60" />
+        <!-- Amazon 选品 -->
+        <div v-else>
+          <div v-if="topAmazonProducts.length" class="hot-list">
+            <a
+              v-for="link in topAmazonProducts"
+              :key="link.id"
+              :href="link.url"
+              target="_blank"
+              rel="noreferrer noopener"
+              class="hot-row"
+            >
+              <div class="hot-row-main">
+                <div class="hot-row-title">{{ cleanTitle(link.title) }}</div>
+                <div class="hot-row-meta">
+                  <el-tag size="small" effect="plain" type="success">Amazon</el-tag>
+                  <span class="hot-row-cat" v-if="categoryName(link.category_code)">{{ categoryName(link.category_code) }}</span>
+                </div>
+              </div>
+            </a>
+          </div>
+          <el-empty v-else description="暂无 Amazon 产品数据" :image-size="60" />
+        </div>
       </div>
     </section>
   </main>

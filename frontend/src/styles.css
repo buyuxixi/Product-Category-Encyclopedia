@@ -1612,25 +1612,33 @@ footer .stale {
 .update-log-item:hover { background: rgba(0,0,0,0.04); color: var(--ink); }
 .update-log-item small { color: var(--text-quaternary); }
 
-/* 底部并排布局 */
-.bottom-split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+/* 底部单面板 tab 切换 */
+.bottom-panel {
+  background: var(--surface);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+  border-radius: 8px;
+  padding: 16px;
+  height: 420px;
+  display: flex;
+  flex-direction: column;
+}
+.panel-tabs { display: flex; gap: 4px; }
+.panel-tabs button {
+  padding: 6px 14px; font-size: 14px; font-weight: 500; color: var(--text-secondary);
+  background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.panel-tabs button:hover { color: var(--ink); }
+.panel-tabs button.active { color: var(--brand-green, #1e6650); border-bottom-color: var(--brand-green, #1e6650); }
+.panel-body { flex: 1; overflow-y: auto; margin-top: 10px; }
 
-/* 面板通用 — 固定高度，内部滚动 */
+/* 面板通用 */
 .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .panel-header h2 { font-size: 15px; font-weight: 600; color: var(--ink); }
 .panel-hint { font-size: 11px; color: var(--text-quaternary); }
 
 /* 热点列表 */
-.hot-panel, .kw-panel {
-  background: var(--surface);
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
-  border-radius: 8px;
-  padding: 16px;
-  height: 400px;
-  display: flex;
-  flex-direction: column;
-}
-.hot-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1; }
+.hot-list { display: flex; flex-direction: column; gap: 6px; }
 .hot-row {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
   padding: 8px 10px; border-radius: 6px; background: rgba(0,0,0,0.02);
