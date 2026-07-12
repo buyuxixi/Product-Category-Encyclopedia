@@ -1612,8 +1612,8 @@ footer .stale {
 .update-log-item:hover { background: rgba(0,0,0,0.04); color: var(--ink); }
 .update-log-item small { color: var(--text-quaternary); }
 
-/* 底部 7:5 不对称布局 */
-.bottom-split { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; align-items: start; }
+/* 底部并排布局 */
+.bottom-split { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; align-items: start; overflow: hidden; }
 
 /* 面板通用 */
 .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -1629,18 +1629,19 @@ footer .stale {
 }
 .hot-list { display: flex; flex-direction: column; gap: 6px; }
 .hot-row {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
-  padding: 10px 12px; border-radius: 6px; background: rgba(0,0,0,0.02);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+  padding: 8px 10px; border-radius: 6px; background: rgba(0,0,0,0.02);
   text-decoration: none; color: var(--ink);
-  transition: background .12s; min-height: 48px;
+  transition: background .12s; min-height: 40px; overflow: hidden;
 }
 .hot-row:hover { background: rgba(30,102,80,0.04); }
 .hot-row.is-hot { background: rgba(231,76,60,0.04); }
-.hot-row-main { flex: 1; min-width: 0; }
-.hot-row-title { font-size: 13px; font-weight: 500; line-height: 1.4; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hot-row-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.hot-row-meta .hot-score { font-size: 11px; color: #e74c3c; font-weight: 500; }
-.hot-row-time { font-size: 11px; color: var(--text-quaternary); flex-shrink: 0; margin-top: 2px; }
+.hot-row-main { flex: 1; min-width: 0; overflow: hidden; }
+.hot-row-title { font-size: 13px; font-weight: 500; line-height: 1.3; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hot-row-meta { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; overflow: hidden; }
+.hot-row-meta .hot-score { font-size: 11px; color: #e74c3c; font-weight: 500; flex-shrink: 0; }
+.hot-row-cat { font-size: 11px; color: var(--text-quaternary); flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
+.hot-row-time { font-size: 11px; color: var(--text-quaternary); flex-shrink: 0; }
 
 /* 关键词列表 */
 .kw-list { display: flex; flex-direction: column; gap: 0; }
