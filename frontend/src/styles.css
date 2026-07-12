@@ -1,62 +1,62 @@
 :root {
-  /* ── Typography ── */
-  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
-  font-feature-settings: 'cv01', 'ss03', 'tnum';
+  /* ── Typography (Notion: Inter + OpenType lnum/locl) ── */
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-feature-settings: 'lnum', 'locl', 'tnum';
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* ── Color Palette ── */
-  /* Sidebar (dark navy like v3-admin-vite) */
-  --sidebar-bg: #23382c;
-  --sidebar-hover: rgba(255, 255, 255, 0.08);
-  --sidebar-active: rgba(174, 218, 188, 0.18);
-  --sidebar-text: rgba(255, 255, 255, 0.85);
-  --sidebar-text-muted: rgba(255, 255, 255, 0.45);
+  /* ── Notion Color Palette ── */
+  /* Sidebar — Notion warm dark (#31302e) instead of green-navy */
+  --sidebar-bg: #31302e;
+  --sidebar-hover: rgba(255, 255, 255, 0.055);
+  --sidebar-active: rgba(255, 255, 255, 0.08);
+  --sidebar-text: rgba(255, 255, 255, 0.81);
+  --sidebar-text-muted: rgba(255, 255, 255, 0.40);
   --sidebar-active-text: #fff;
   --sidebar-border: rgba(255, 255, 255, 0.06);
 
-  /* App background */
-  --bg: #f5f3ee;
+  /* App background — Notion warm white (#f6f5f4) */
+  --bg: #f6f5f4;
   --surface: #ffffff;
-  --surface-alt: #fbfaf7;
-  --surface-hover: #f5f5f5;
+  --surface-alt: #f6f5f4;
+  --surface-hover: #f0efed;
 
-  /* Text */
-  --ink: #1d2129;
-  --text-regular: #4e5969;
-  --text-secondary: #86909c;
-  --text-tertiary: #a8abb2;
-  --text-quaternary: #c0c4cc;
+  /* Text — Notion warm near-black + warm gray scale */
+  --ink: rgba(0, 0, 0, 0.95);
+  --text-regular: #31302e;
+  --text-secondary: #615d59;
+  --text-tertiary: #a39e98;
+  --text-quaternary: #c4c0bb;
 
-  /* Brand */
+  /* Brand — keep green accent but use Notion-toned green */
   --primary: #2f6f55;
   --primary-light: #e8f2eb;
   --primary-dark: #245740;
-  --green: #4d9466;
+  --green: #1aae39;
   --green-light: #e8f5eb;
-  --orange: #ff7d00;
-  --orange-light: #fff7e8;
-  --red: #f53f3f;
-  --red-light: #fff0ec;
+  --orange: #dd5b00;
+  --orange-light: #fff5ed;
+  --red: #e03e3e;
+  --red-light: #fdf0ee;
   --amber: #d4a017;
-  --purple: #722ed1;
+  --purple: #391c57;
 
-  /* Borders */
-  --line: #e5e6eb;
-  --line-soft: #f0f1f5;
-  --line-strong: #d0d3d9;
+  /* Borders — Notion whisper borders */
+  --line: rgba(0, 0, 0, 0.1);
+  --line-soft: rgba(0, 0, 0, 0.06);
+  --line-strong: rgba(0, 0, 0, 0.16);
 
-  /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  /* Shadows — Notion multi-layer stacks (max opacity 0.04-0.05) */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: rgba(0,0,0,0.04) 0px 4px 18px, rgba(0,0,0,0.027) 0px 2px 7.85px, rgba(0,0,0,0.02) 0px 0.8px 2.93px;
+  --shadow-lg: rgba(0,0,0,0.01) 0px 1px 3px, rgba(0,0,0,0.02) 0px 3px 7px, rgba(0,0,0,0.02) 0px 7px 15px, rgba(0,0,0,0.04) 0px 14px 28px, rgba(0,0,0,0.05) 0px 23px 52px;
 
-  /* Radius */
-  --r-xs: 3px;
-  --r-sm: 5px;
+  /* Radius — Notion scale */
+  --r-xs: 4px;
+  --r-sm: 4px;
   --r-md: 8px;
   --r-lg: 12px;
   --r-xl: 16px;
@@ -72,35 +72,33 @@ button { color: inherit; cursor: pointer; }
 .app-root { min-height: 100vh; }
 
 /* ── Login ── */
+/* ── Login (Notion-style: warm white bg, whisper borders, blue CTA) ── */
 .login-shell {
   min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 24px;
-  background:
-    radial-gradient(circle at 12% 15%, rgba(47, 111, 85, 0.16), transparent 34%),
-    radial-gradient(circle at 88% 80%, rgba(214, 158, 46, 0.15), transparent 32%),
-    #f5f3ee;
+  background: #f6f5f4;
 }
 .login-card {
   width: min(440px, 100%);
-  padding: 34px;
-  border: 1px solid rgba(39, 68, 54, 0.12);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 24px 70px rgba(40, 54, 43, 0.13);
+  padding: 40px 36px 32px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: rgba(0,0,0,0.04) 0px 4px 18px, rgba(0,0,0,0.027) 0px 2px 7.85px, rgba(0,0,0,0.02) 0px 0.8px 2.93px;
 }
 .login-brand { display: flex; align-items: center; gap: 12px; }
-.login-brand strong { display: block; color: #24352c; font-size: 16px; }
-.login-brand small { display: block; margin-top: 2px; color: #829087; font-size: 11px; }
-.login-copy { margin: 42px 0 24px; }
-.login-copy h1 { margin: 0; color: #24352c; font-size: 30px; letter-spacing: -0.04em; }
-.login-copy p { margin: 10px 0 0; color: #6c796f; line-height: 1.7; }
+.login-brand strong { display: block; color: var(--ink); font-size: 15px; font-weight: 600; }
+.login-brand small { display: block; margin-top: 2px; color: var(--text-secondary); font-size: 11px; }
+.login-copy { margin: 36px 0 28px; }
+.login-copy h1 { margin: 0; color: var(--ink); font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+.login-copy p { margin: 10px 0 0; color: var(--text-secondary); line-height: 1.6; font-size: 14px; }
 .login-form .el-form-item { margin-bottom: 16px; }
-.login-submit, .feishu-login { width: 100%; margin-top: 8px; }
-.feishu-login { color: #2f6f55; border-color: #bdd1c3; background: #f3f8f4; }
+.login-submit { width: 100%; margin-top: 8px; height: 40px; font-size: 14px; font-weight: 600; }
+.feishu-login { width: 100%; margin-top: 8px; height: 40px; }
 .login-alert { margin-bottom: 18px; }
-.login-footnote { margin: 24px 0 0; color: #9aa49d; font-size: 12px; line-height: 1.6; text-align: center; }
+.login-footnote { margin: 24px 0 0; color: var(--text-tertiary); font-size: 12px; line-height: 1.6; text-align: center; }
 
 /* ── Custom Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -137,16 +135,15 @@ button { color: inherit; cursor: pointer; }
   flex-shrink: 0;
 }
 .brand-mark {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
-  border-radius: var(--r-sm);
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: var(--r-xs);
+  background: var(--primary);
   color: #fff;
   font-size: 13px;
   font-weight: 800;
-  box-shadow: 0 2px 6px rgba(47, 111, 85, 0.25);
 }
 .brand strong {
   display: block;
@@ -457,38 +454,38 @@ button { color: inherit; cursor: pointer; }
 .workspace-main, .page-shell {
   flex: 1;
   overflow-y: visible;
-  padding: 24px clamp(20px, 3vw, 40px) 48px;
+  padding: 28px clamp(20px, 3vw, 40px) 48px;
 }
 
-/* ── Headers ── */
+/* ── Headers — Notion: tight letter-spacing, warm near-black ── */
 .category-header, .page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 .eyebrow {
   color: var(--primary);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 6px;
 }
 .category-header h1, .page-header h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1.25;
+  line-height: 1.2;
   color: var(--ink);
 }
 .category-header p, .page-header p {
   max-width: 620px;
   margin: 8px 0 0;
-  color: var(--text-regular);
-  line-height: 1.65;
+  color: var(--text-secondary);
+  line-height: 1.6;
   font-size: 14px;
 }
 .title-row {
@@ -695,29 +692,29 @@ button { color: inherit; cursor: pointer; }
   margin: 14px 0 18px;
   font-size: 13px;
   border: 1px solid var(--line);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-md);
   overflow: hidden;
 }
 .section-content .md-table th {
   padding: 10px 14px;
-  background: #eef1f5;
+  background: var(--surface-alt);
   font-weight: 600;
   color: var(--ink);
   text-align: left;
-  border-bottom: 2px solid var(--line-strong);
+  border-bottom: 1px solid var(--line);
   font-size: 12px;
   letter-spacing: 0.02em;
 }
 .section-content .md-table td {
   padding: 10px 14px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--line-soft);
   color: var(--text-regular);
   vertical-align: top;
   line-height: 1.65;
 }
 .section-content .md-table tr:last-child td { border-bottom: 0; }
-.section-content .md-table tbody tr:nth-child(even) { background: #fafbfc; }
-.section-content .md-table tr:hover td { background: #f0f7f4; }
+.section-content .md-table tbody tr:nth-child(even) { background: var(--surface-alt); }
+.section-content .md-table tr:hover td { background: rgba(47, 111, 85, 0.03); }
 
 /* Bold label rendered as section label (like Notion callout heading) */
 .section-content .md-label {
@@ -1029,12 +1026,12 @@ button { color: inherit; cursor: pointer; }
    Element Plus Overrides — deep customization
    ════════════════════════════════════════════ */
 
-/* Buttons */
+/* Buttons — Notion: 4px radius, subtle hover, scale active */
 .el-button {
   height: var(--comp-h);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-xs);
   font-weight: 500;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 .el-button--small { height: 28px; font-size: 12px; }
 .el-button--primary {
@@ -1044,6 +1041,14 @@ button { color: inherit; cursor: pointer; }
   --el-button-hover-border-color: var(--primary-dark);
   --el-button-active-bg-color: var(--primary-dark);
   --el-button-active-border-color: var(--primary-dark);
+}
+.el-button--primary.is-disabled,
+.el-button--primary.is-disabled:hover,
+.el-button--primary.is-disabled:focus {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 .el-button--text {
   height: auto;
@@ -1441,7 +1446,7 @@ footer .stale {
 }
 .hot-score {
   font-size: 12px;
-  color: var(--red);
+  color: #dd5b00;
   font-weight: 600;
 }
 .hot-link-desc {
@@ -1498,12 +1503,12 @@ footer .stale {
 .market-tabs button:hover { color: var(--ink); }
 .market-tabs button.active { color: var(--brand-green, #1e6650); border-bottom-color: var(--brand-green, #1e6650); }
 
-/* ── Search highlight ── */
-.search-result mark { background: #fff3cd; padding: 0 2px; border-radius: 2px; }
+/* ── Search highlight — Notion: subtle yellow ── */
+.search-result mark { background: rgba(255, 215, 0, 0.25); padding: 0 2px; border-radius: 2px; }
 .search-kind { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-right: 6px; flex-shrink: 0; }
 .kind-category { background: #e8f3ef; color: #2f6f55; }
 .kind-section { background: #e8f0fe; color: #3b7ea1; }
-.kind-hotlink { background: #fff3e0; color: #b8860b; }
+.kind-hotlink { background: #fff5ed; color: #c4a017; }
 .kind-trend { background: #f3e8fe; color: #8b5a8c; }
 .kind-source { background: #f0f0f0; color: #666; }
 .search-empty { padding: 16px; text-align: center; color: var(--text-quaternary); font-size: 13px; }
@@ -1511,8 +1516,7 @@ footer .stale {
 /* ── Quick summary bar ── */
 .quick-summary {
   display: flex; gap: 0; margin-bottom: 16px;
-  background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
-  border-radius: 8px; padding: 10px 16px; overflow-x: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 16px; overflow-x: auto;
 }
 .qs-item { display: flex; flex-direction: column; gap: 2px; padding: 0 16px; border-right: 1px solid #f0f0f0; white-space: nowrap; }
 .qs-item:last-child { border-right: none; }
@@ -1522,15 +1526,14 @@ footer .stale {
 /* ── Trend view ── */
 .trend-overview-bar {
   display: flex; gap: 24px; padding: 10px 16px; margin-bottom: 16px;
-  background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08); border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
 }
 .trend-overview-item { font-size: 13px; color: var(--text-secondary); }
 .trend-overview-item strong { font-size: 15px; color: var(--ink); font-weight: 700; }
 
 .trend-charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .trend-chart-card {
-  background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
-  border-radius: 8px; padding: 16px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px;
 }
 .trend-chart-card h3 { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
 .chart-container { width: 100%; height: 200px; }
@@ -1548,7 +1551,7 @@ footer .stale {
 .video-rank-row:hover { background: rgba(0,0,0,0.02); }
 .video-rank-row:last-child { border-bottom: none; }
 .video-rank-num { width: 24px; font-size: 14px; font-weight: 700; text-align: center; color: var(--text-quaternary); flex-shrink: 0; }
-.video-rank-num.top-3 { color: #e74c3c; }
+.video-rank-num.top-3 { color: #dd5b00; }
 .video-rank-title { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .video-rank-cat { font-size: 11px; color: var(--text-secondary); flex-shrink: 0; }
 .video-rank-views { font-size: 12px; color: #999; flex-shrink: 0; }
@@ -1567,12 +1570,11 @@ footer .stale {
   background: #f5f5f5; color: var(--text-secondary);
 }
 .kw-tag.is-new { background: #e8f3ef; color: #2f6f55; font-weight: 500; }
-.kw-new-badge { color: #52c41a; margin-left: 2px; }
+.kw-new-badge { color: #1aae39; margin-left: 2px; }
 
 /* ── Notes view ── */
 .notes-guide {
-  background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
-  border-radius: 8px; padding: 24px; text-align: center;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 24px; text-align: center;
 }
 .notes-guide h3 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
 .guide-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; text-align: left; }
@@ -1587,13 +1589,12 @@ footer .stale {
 .notes-count { font-size: 12px; color: var(--text-secondary); }
 .notes-list { display: flex; flex-direction: column; gap: 8px; }
 .note-card {
-  background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
-  border-radius: 8px; padding: 14px 16px; border-left: 3px solid #1890ff;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; border-left: 3px solid var(--primary);
 }
-.note-card.tag-选品机会 { border-left-color: #52c41a; }
-.note-card.tag-竞品分析 { border-left-color: #faad14; }
-.note-card.tag-用户洞察 { border-left-color: #1890ff; }
-.note-card.tag-技术趋势 { border-left-color: #722ed1; }
+.note-card.tag-选品机会 { border-left-color: #1aae39; }
+.note-card.tag-竞品分析 { border-left-color: #dd5b00; }
+.note-card.tag-用户洞察 { border-left-color: var(--primary); }
+.note-card.tag-技术趋势 { border-left-color: #391c57; }
 .note-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .note-category { font-size: 13px; font-weight: 500; color: var(--brand-green, #1e6650); cursor: pointer; }
 .note-time { font-size: 11px; color: var(--text-quaternary); margin-left: auto; }
@@ -1606,8 +1607,7 @@ footer .stale {
 /* 三列最新动态 */
 .latest-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .latest-panel {
-  background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
-  border-radius: 8px; padding: 14px 16px; height: 320px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; height: 320px;
   display: flex; flex-direction: column;
 }
 .latest-panel .hot-list { overflow-y: auto; flex: 1; }
@@ -1626,8 +1626,7 @@ footer .stale {
 
 /* 平台分布条形图 */
 .platform-overview {
-  background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
-  border-radius: 8px; padding: 16px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px;
 }
 .platform-bars { display: flex; flex-direction: column; gap: 8px; }
 .platform-bar { display: flex; align-items: center; gap: 12px; }
@@ -1647,28 +1646,31 @@ footer .stale {
 .cat-card:nth-child(4), .cat-card:nth-child(5) { grid-column: span 3; }
 .cat-card {
   background: var(--surface);
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
-  border-radius: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
   padding: 14px 16px;
   cursor: pointer;
-  transition: box-shadow .15s, transform .15s;
+  transition: box-shadow .15s, transform .15s, border-color .15s;
   display: flex; flex-direction: column; gap: 10px;
 }
 .cat-card:hover {
-  box-shadow: 0 0 0 1px rgba(30,102,80,0.3), 0 4px 12px rgba(0,0,0,0.06);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }
-.cat-card.health-good { box-shadow: 0 0 0 1px rgba(0,0,0,0.08), inset 3px 0 0 #52c41a; }
-.cat-card.health-fair { box-shadow: 0 0 0 1px rgba(0,0,0,0.08), inset 3px 0 0 #faad14; }
-.cat-card.health-poor { box-shadow: 0 0 0 1px rgba(0,0,0,0.08), inset 3px 0 0 #d9d9d9; }
+.cat-card.health-good { border-left: 3px solid #1aae39; }
+.cat-card.health-fair { border-left: 3px solid #dd5b00; }
+.cat-card.health-poor { border-left: 3px solid #a39e98; }
 .cat-card-header { display: flex; align-items: center; justify-content: space-between; }
 .cat-card-name { font-size: 15px; font-weight: 600; color: var(--ink); }
 .cat-card-stats { display: flex; gap: 4px; }
 .cat-card-body { display: flex; align-items: center; gap: 12px; }
 .cat-mini-chart { width: 70px; height: 70px; flex-shrink: 0; }
-.cat-stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
+.cat-card-stats { display: flex; gap: 0; flex: 1; }
+.cat-stat { display: flex; flex-direction: column; align-items: center; flex: 1; padding: 0 4px; border-right: 1px solid var(--line-soft); }
+.cat-stat:last-child { border-right: none; }
 .cat-stat-num { font-size: 18px; font-weight: 700; color: var(--ink); line-height: 1.2; }
-.cat-stat-label { font-size: 11px; color: var(--text-tertiary); }
+.cat-stat-label { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
 .cat-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-quaternary); }
 .cat-card-arrow { color: var(--brand-green, #1e6650); font-size: 14px; }
 
@@ -1676,7 +1678,7 @@ footer .stale {
 .update-log {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   padding: 8px 16px; margin-bottom: 16px;
-  background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08); border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
 }
 .update-log-label { font-size: 13px; font-weight: 600; color: var(--ink); flex-shrink: 0; }
 .update-log-item {
@@ -1689,8 +1691,7 @@ footer .stale {
 /* 底部单面板 tab 切换 */
 .bottom-panel {
   background: var(--surface);
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
-  border-radius: 8px;
+  border: 1px solid var(--line); border-radius: 8px;
   padding: 16px;
   height: 420px;
   display: flex;
@@ -1720,11 +1721,11 @@ footer .stale {
   transition: background .12s; min-height: 40px; overflow: hidden;
 }
 .hot-row:hover { background: rgba(30,102,80,0.04); }
-.hot-row.is-hot { background: rgba(231,76,60,0.04); }
+.hot-row.is-hot { background: rgba(224, 62, 62, 0.03); }
 .hot-row-main { flex: 1; min-width: 0; overflow: hidden; }
 .hot-row-title { font-size: 13px; font-weight: 500; line-height: 1.3; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hot-row-meta { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; overflow: hidden; }
-.hot-row-meta .hot-score { font-size: 11px; color: #e74c3c; font-weight: 500; flex-shrink: 0; }
+.hot-row-meta .hot-score { font-size: 11px; color: #dd5b00; font-weight: 500; flex-shrink: 0; }
 .hot-row-cat { font-size: 11px; color: var(--text-quaternary); flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
 .hot-row-time { font-size: 11px; color: var(--text-quaternary); flex-shrink: 0; }
 
@@ -1741,19 +1742,19 @@ footer .stale {
 .kw-text { flex: 1; font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .kw-cat-text { font-size: 11px; color: var(--text-quaternary); flex-shrink: 0; }
 
-/* ── Trend signal visual ── */
-.trend-dir-up { border-left: 3px solid #52c41a; }
-.trend-dir-down { border-left: 3px solid #f5222d; }
-.trend-dir-stable { border-left: 3px solid #8c8c8c; }
-.trend-dir-new { border-left: 3px solid #1890ff; }
-.trend-signal-direction.dir-up { color: #52c41a; }
-.trend-signal-direction.dir-down { color: #f5222d; }
-.trend-signal-direction.dir-stable { color: #8c8c8c; }
-.trend-signal-direction.dir-new { color: #1890ff; }
-.trend-signal-metric .metric-value { font-size: 18px; font-weight: 700; color: var(--brand-green, #1e6650); }
+/* ── Trend signal visual — Notion semantic colors ── */
+.trend-dir-up { border-left: 3px solid #1aae39; }
+.trend-dir-down { border-left: 3px solid #e03e3e; }
+.trend-dir-stable { border-left: 3px solid #a39e98; }
+.trend-dir-new { border-left: 3px solid var(--primary); }
+.trend-signal-direction.dir-up { color: #1aae39; }
+.trend-signal-direction.dir-down { color: #e03e3e; }
+.trend-signal-direction.dir-stable { color: #a39e98; }
+.trend-signal-direction.dir-new { color: var(--primary); }
+.trend-signal-metric .metric-value { font-size: 18px; font-weight: 700; color: var(--primary); }
 .trend-signal-metric .metric-unit { font-size: 12px; color: var(--text-secondary); margin-left: 4px; }
-.metric-bar { height: 4px; background: #f0f0f0; border-radius: 2px; margin-top: 6px; overflow: hidden; }
-.metric-bar-fill { height: 100%; background: var(--brand-green, #1e6650); border-radius: 2px; transition: width .3s; }
+.metric-bar { height: 4px; background: var(--surface-alt); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.metric-bar-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width .3s; }
 
 /* ── Section header actions ── */
 .section-header-actions { display: flex; align-items: center; gap: 4px; }
@@ -1764,7 +1765,7 @@ footer .stale {
 .trend-chart-label { width: 100px; font-size: 13px; color: var(--ink); text-align: right; flex-shrink: 0; }
 .trend-chart-bar { flex: 1; height: 20px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
 .trend-chart-fill { height: 100%; border-radius: 4px; transition: width .4s; }
-.fill-up { background: #52c41a; }
-.fill-stable { background: #8c8c8c; }
+.fill-up { background: #1aae39; }
+.fill-stable { background: #a39e98; }
 .fill-down { background: #d9d9d9; }
 .trend-chart-value { width: 60px; font-size: 12px; color: var(--text-secondary); flex-shrink: 0; }

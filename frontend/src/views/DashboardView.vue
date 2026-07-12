@@ -173,9 +173,9 @@ function renderMiniCharts() {
         type: 'pie', radius: ['55%', '80%'], center: ['50%', '50%'],
         silent: true, label: { show: false }, labelLine: { show: false },
         data: [
-          { value: row.hotLinks, name: '热点', itemStyle: { color: '#e74c3c' } },
-          { value: row.trends, name: '趋势', itemStyle: { color: '#3b7ea1' } },
-          { value: row.sources, name: '来源', itemStyle: { color: '#52c41a' } },
+          { value: row.hotLinks, name: '热点', itemStyle: { color: '#2f6f55' } },
+          { value: row.trends, name: '趋势', itemStyle: { color: '#8cb4a3' } },
+          { value: row.sources, name: '来源', itemStyle: { color: '#d9e8de' } },
         ],
       }],
     })

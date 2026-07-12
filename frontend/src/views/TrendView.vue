@@ -135,7 +135,7 @@ function renderCharts() {
         type: 'pie', radius: ['45%', '72%'], center: ['50%', '45%'],
         label: { show: false }, labelLine: { show: false },
         data: platformDist.value.map(d => ({ name: d.name, value: d.value })),
-        color: ['#b8860b', '#e74c3c', '#3b7ea1', '#8b5a8c'],  // Amazon=金, YouTube=红, Reddit=蓝, News=紫
+        color: ['#d4a017', '#5b8c7a', '#6b9bc4', '#9b8ab8'],  // Amazon=琥珀, YouTube=薄荷绿, Reddit=淡蓝, News=淡紫
         itemStyle: { borderColor: '#fff', borderWidth: 2 },
       }],
     })
@@ -156,7 +156,7 @@ function renderCharts() {
         barWidth: 14,
         itemStyle: { borderRadius: [0, 2, 2, 0] },
       })),
-      color: ['#b8860b', '#e74c3c', '#3b7ea1', '#8b5a8c'],  // Amazon=金, YouTube=红, Reddit=蓝, News=紫
+      color: ['#d4a017', '#5b8c7a', '#6b9bc4', '#9b8ab8'],  // Amazon=琥珀, YouTube=薄荷绿, Reddit=淡蓝, News=淡紫
     })
   }
 
