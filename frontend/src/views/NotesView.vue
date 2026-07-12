@@ -141,14 +141,14 @@ watch(() => props.presetCategory, (code) => {
         <p class="note-content">{{ note.content }}</p>
       </div>
     </div>
-    <el-empty v-else description="还没有笔记。在浏览品类百科时，点击「新建笔记」记录你的选品想法。" :image-size="80" />
+    <el-empty v-else description="还没有笔记。点击上方「新建笔记」按钮，记录你的选品想法、竞品观察和用户洞察。" :image-size="80" />
 
     <!-- 新建笔记对话框 -->
     <el-dialog v-model="showAddDialog" title="新建笔记" width="min(560px, 92vw)">
       <el-form label-position="top">
         <el-form-item label="关联品类">
           <el-select v-model="newNote.categoryCode" placeholder="选择品类" style="width: 100%">
-            <el-option v-for="c in categories.filter(c => !c.parent_code)" :key="c.code" :label="c.name" :value="c.code" />
+            <el-option v-for="c in categories" :key="c.code" :label="c.name" :value="c.code" />
           </el-select>
         </el-form-item>
         <el-form-item label="标签">

@@ -807,7 +807,7 @@ onMounted(() => {
         </div>
         <div class="qs-item">
           <span class="qs-label">数据状态</span>
-          <span class="qs-value">{{ marketTimestamp ? `今日已更新` : '待更新' }}</span>
+          <span class="qs-value">{{ marketTimestamp ? `今日已更新` : `等待爬取` }}</span>
         </div>
         <div class="qs-item">
           <span class="qs-label">热点</span>
@@ -853,7 +853,7 @@ onMounted(() => {
             @click="activeSectionKey = section.section_key"
           >
             <span class="outline-num">{{ String(index + 1).padStart(2, '0') }}</span>
-            <span class="outline-label">{{ section.title }}</span>
+            <span class="outline-label" :title="section.title">{{ section.title }}</span>
             <i v-if="section.content" class="outline-dot filled"></i>
             <i v-else class="outline-dot"></i>
           </button>
@@ -910,7 +910,7 @@ onMounted(() => {
                 </div>
                 <div v-if="groupedHotLinks['product']" class="hot-link-group">
                   <div class="hot-links-list">
-                    <a v-for="link in groupedHotLinks['product']" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
+                    <a v-for="link in groupedHotLinks['product'].filter(l => l.description && !l.description.includes('\$?') && !l.description.includes('0 reviews')).slice(0, 20)" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
                       <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title }}</div>
                       <div class="hot-link-meta">
                         <el-tag size="small" effect="plain" type="success">Amazon</el-tag>

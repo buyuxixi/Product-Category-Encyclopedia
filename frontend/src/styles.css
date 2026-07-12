@@ -1500,6 +1500,13 @@ footer .stale {
 
 /* ── Search highlight ── */
 .search-result mark { background: #fff3cd; padding: 0 2px; border-radius: 2px; }
+.search-kind { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-right: 6px; flex-shrink: 0; }
+.kind-category { background: #e8f3ef; color: #2f6f55; }
+.kind-section { background: #e8f0fe; color: #3b7ea1; }
+.kind-hotlink { background: #fff3e0; color: #b8860b; }
+.kind-trend { background: #f3e8fe; color: #8b5a8c; }
+.kind-source { background: #f0f0f0; color: #666; }
+.search-empty { padding: 16px; text-align: center; color: var(--text-quaternary); font-size: 13px; }
 
 /* ── Quick summary bar ── */
 .quick-summary {

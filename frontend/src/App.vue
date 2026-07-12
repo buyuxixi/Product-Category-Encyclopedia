@@ -127,6 +127,11 @@ function highlightSearch(text: string): string {
   return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>')
 }
 
+function searchKindLabel(kind: string): string {
+  const labels: Record<string, string> = { category: '品类', section: '章节', hotlink: '热点', trend: '趋势', source: '来源' }
+  return labels[kind] || kind
+}
+
 function goToNotes(code: string) {
   noteCategoryCode.value = code
   activeView.value = 'notes'
@@ -177,11 +182,13 @@ onMounted(loadSession)
           <el-icon><Search /></el-icon>
           <input v-model="query" placeholder="搜索品类、别名或业务术语…" aria-label="搜索品类、别名或业务术语" />
           <span class="search-kbd">⌘K</span>
-          <div v-if="query.trim() && searchResults.length" class="search-popover">
-            <button v-for="result in searchResults" :key="`${result.kind}-${result.category_code}-${result.section_key}-${result.title}`" class="search-result" @click="openSearchResult(result)">
+          <div v-if="query.trim()" class="search-popover">
+            <button v-for="result in searchResults.slice(0, 10)" :key="`${result.kind}-${result.category_code}-${result.section_key}-${result.title}`" class="search-result" @click="openSearchResult(result)">
+              <span class="search-kind" :class="`kind-${result.kind}`">{{ searchKindLabel(result.kind) }}</span>
               <strong v-html="highlightSearch(result.title)"></strong>
               <span v-html="highlightSearch(result.snippet)"></span>
             </button>
+            <div v-if="!searchResults.length" class="search-empty">无匹配结果</div>
           </div>
         </div>
         <div class="identity-controls">
