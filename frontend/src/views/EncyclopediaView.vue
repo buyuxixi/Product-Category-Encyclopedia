@@ -14,7 +14,7 @@ import type {
 } from '../types'
 
 const props = defineProps<{ categoryCode: string; identity: Identity; focusSection?: string | null }>()
-const emit = defineEmits<{ changed: []; navigate: [code: string] }>()
+const emit = defineEmits<{ changed: []; navigate: [code: string]; addNote: [code: string] }>()
 
 const loading = ref(false)
 const category = ref<CategoryDetail | null>(null)
@@ -763,6 +763,12 @@ function isFavorited(url: string): boolean {
   return favorites.value.has(url)
 }
 
+function goToNotes() {
+  if (category.value) {
+    emit('addNote', category.value.code)
+  }
+}
+
 onMounted(() => {
   loadFavorites()
   loadAllCategories()
@@ -786,6 +792,7 @@ onMounted(() => {
           <el-button :icon="Refresh" @click="loadCategory">刷新</el-button>
           <el-button text :icon="Download" @click="downloadFullCategory">导出全文</el-button>
           <el-button v-if="canEditContent" :icon="MagicStick" @click="generateDraft">生成草稿</el-button>
+          <el-button text :icon="EditPen" @click="goToNotes">📝 添加笔记</el-button>
         </div>
       </header>
 

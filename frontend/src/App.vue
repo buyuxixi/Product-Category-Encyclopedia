@@ -18,6 +18,7 @@ type CurrentUser = { id: number; name: string; role: Role; provider: string }
 const activeView = ref<ViewName>('dashboard')
 const categories = ref<CategorySummary[]>([])
 const selectedCode = ref('FAR_INFRARED')
+const noteCategoryCode = ref<string | null>(null)
 const query = ref('')
 const searchResults = ref<SearchResult[]>([])
 const targetSection = ref<string | null>(null)
@@ -120,6 +121,17 @@ function selectCategory(code: string) {
   activeView.value = 'encyclopedia'
 }
 
+function highlightSearch(text: string): string {
+  if (!query.value.trim() || !text) return text
+  const escaped = query.value.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>')
+}
+
+function goToNotes(code: string) {
+  noteCategoryCode.value = code
+  activeView.value = 'notes'
+}
+
 function openSearchResult(result: SearchResult) {
   selectedCode.value = result.category_code
   targetSection.value = result.section_key
@@ -167,8 +179,8 @@ onMounted(loadSession)
           <span class="search-kbd">⌘K</span>
           <div v-if="query.trim() && searchResults.length" class="search-popover">
             <button v-for="result in searchResults" :key="`${result.kind}-${result.category_code}-${result.section_key}-${result.title}`" class="search-result" @click="openSearchResult(result)">
-              <strong>{{ result.title }}</strong>
-              <span>{{ result.snippet }}</span>
+              <strong v-html="highlightSearch(result.title)"></strong>
+              <span v-html="highlightSearch(result.snippet)"></span>
             </button>
           </div>
         </div>
@@ -214,6 +226,7 @@ onMounted(loadSession)
           v-else-if="activeView === 'notes'"
           :identity="identity"
           :categories="categories"
+          :preset-category="noteCategoryCode"
           @select="selectCategory"
         />
         <!-- Encyclopedia: with sidebar -->
@@ -243,6 +256,7 @@ onMounted(loadSession)
             :identity="identity"
             @changed="refresh"
             @navigate="selectCategory"
+            @add-note="goToNotes"
           />
         </template>
       </div>

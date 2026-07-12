@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Delete, Download } from '@element-plus/icons-vue'
 import { type Identity } from '../api'
 import type { CategorySummary } from '../types'
 
-const props = defineProps<{ identity: Identity; categories: CategorySummary[] }>()
+const props = defineProps<{ identity: Identity; categories: CategorySummary[]; presetCategory?: string | null }>()
 const emit = defineEmits<{ select: [code: string] }>()
 
 interface Note {
@@ -107,6 +107,14 @@ const notesByTag = computed(() => {
 })
 
 onMounted(loadNotes)
+
+// 从品类详情页跳转来时，自动弹出新建笔记对话框
+watch(() => props.presetCategory, (code) => {
+  if (code) {
+    newNote.value.categoryCode = code
+    showAddDialog.value = true
+  }
+}, { immediate: true })
 </script>
 
 <template>

@@ -151,6 +151,13 @@ function cleanTitle(title: string): string {
   return (title || '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
 }
 
+// 搜索结果高亮
+function highlightText(text: string, query: string): string {
+  if (!query.trim()) return text
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>')
+}
+
 onMounted(loadDashboard)
 
 // 底部面板 tab 切换
