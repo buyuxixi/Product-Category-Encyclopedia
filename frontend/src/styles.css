@@ -325,44 +325,55 @@ button { color: inherit; cursor: pointer; }
   overflow: visible;
 }
 
-/* ── Icon Nav (vertical, Notion-style) ── */
+/* ── Icon Nav → Rail Nav with labels (Notion/Linear style) ── */
 .icon-nav {
-  width: 48px;
+  width: 180px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 12px 0 12px;
+  gap: 2px;
+  padding: 12px 10px;
   border-right: 1px solid var(--line);
   background: var(--surface);
   position: sticky;
   top: 52px;
   align-self: flex-start;
-  max-height: 100vh;
+  max-height: calc(100vh - 52px);
+}
+.icon-nav .nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-quaternary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 12px 10px 6px;
 }
 .icon-nav button {
-  width: 36px;
+  width: 100%;
   height: 36px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
   border: 0;
   border-radius: var(--r-sm);
   background: transparent;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s;
-  font-size: 17px;
+  transition: all 0.12s;
+  font-size: 13px;
+  font-weight: 500;
 }
+.icon-nav button .el-icon { font-size: 16px; flex-shrink: 0; }
 .icon-nav button:hover { background: var(--surface-hover); color: var(--ink); }
-.icon-nav button.active { background: var(--primary-light); color: var(--primary); }
+.icon-nav button.active { background: var(--primary-light); color: var(--primary-dark); font-weight: 600; }
+.icon-nav button.active .el-icon { color: var(--primary); }
 .icon-nav-spacer { flex: 1; }
 .icon-nav-stat {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--text-quaternary);
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  letter-spacing: 0.05em;
+  padding: 8px 10px;
+  border-top: 1px solid var(--line-soft);
   margin-top: 8px;
 }
 
@@ -1262,8 +1273,10 @@ button { color: inherit; cursor: pointer; }
   .topbar { padding: 0 12px; gap: 12px; flex-wrap: wrap; height: auto; }
   .global-search { max-width: none; width: 100%; order: 3; }
   .identity-controls { margin-left: auto; }
-  .icon-nav { width: 40px; }
-  .icon-nav button { width: 32px; height: 32px; font-size: 15px; }
+  .icon-nav { width: 56px; }
+  .icon-nav button { padding: 0; justify-content: center; }
+  .icon-nav button span { display: none; }
+  .icon-nav .nav-label { display: none; }
   .workspace-main, .page-shell { padding: 20px 16px 40px; }
   .summary-strip { grid-template-columns: repeat(2, 1fr); }
 }
@@ -1582,7 +1595,7 @@ footer .stale {
 /* ── Quick summary bar ── */
 .quick-summary {
   display: flex; gap: 0; margin-bottom: 16px;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 16px; overflow-x: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 16px; overflow-x: auto;
 }
 .qs-item { display: flex; flex-direction: column; gap: 2px; padding: 0 16px; border-right: 1px solid #f0f0f0; white-space: nowrap; }
 .qs-item:last-child { border-right: none; }
@@ -1592,14 +1605,14 @@ footer .stale {
 /* ── Trend view ── */
 .trend-overview-bar {
   display: flex; gap: 24px; padding: 10px 16px; margin-bottom: 16px;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
 }
 .trend-overview-item { font-size: 13px; color: var(--text-secondary); }
 .trend-overview-item strong { font-size: 15px; color: var(--ink); font-weight: 700; }
 
 .trend-charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .trend-chart-card {
-  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px;
 }
 .trend-chart-card h3 { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
 .chart-container { width: 100%; height: 200px; }
@@ -1640,7 +1653,7 @@ footer .stale {
 
 /* ── Notes view ── */
 .notes-guide {
-  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 24px; text-align: center;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 24px; text-align: center;
 }
 .notes-guide h3 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
 .guide-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; text-align: left; }
@@ -1655,7 +1668,7 @@ footer .stale {
 .notes-count { font-size: 12px; color: var(--text-secondary); }
 .notes-list { display: flex; flex-direction: column; gap: 8px; }
 .note-card {
-  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; border-left: 3px solid var(--primary);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; border-left: 3px solid var(--primary);
 }
 .note-card.tag-选品机会 { border-left-color: #1aae39; }
 .note-card.tag-竞品分析 { border-left-color: #dd5b00; }
@@ -1673,7 +1686,7 @@ footer .stale {
 /* 三列最新动态 */
 .latest-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .latest-panel {
-  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; height: 320px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; height: 320px;
   display: flex; flex-direction: column;
 }
 .latest-panel .hot-list { overflow-y: auto; flex: 1; }
@@ -1692,7 +1705,7 @@ footer .stale {
 
 /* 平台分布条形图 */
 .platform-overview {
-  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px;
 }
 .platform-bars { display: flex; flex-direction: column; gap: 8px; }
 .platform-bar { display: flex; align-items: center; gap: 12px; }
@@ -1714,16 +1727,16 @@ footer .stale {
 .cat-card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 14px 16px;
+  border-radius: 12px;
+  padding: 16px 18px;
   cursor: pointer;
-  transition: box-shadow .15s, transform .15s, border-color .15s;
-  display: flex; flex-direction: column; gap: 10px;
+  transition: box-shadow .2s, transform .2s, border-color .2s;
+  display: flex; flex-direction: column; gap: 12px;
 }
 .cat-card:hover {
-  border-color: var(--line-strong);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  border-color: rgba(0,0,0,0.16);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  transform: translateY(-2px);
 }
 .cat-card.health-good { border-left: 3px solid #1aae39; }
 .cat-card.health-fair { border-left: 3px solid #dd5b00; }
@@ -1745,7 +1758,7 @@ footer .stale {
 .update-log {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   padding: 8px 16px; margin-bottom: 16px;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
 }
 .update-log-label { font-size: 13px; font-weight: 600; color: var(--ink); flex-shrink: 0; }
 .update-log-item {
@@ -1758,7 +1771,7 @@ footer .stale {
 /* 底部单面板 tab 切换 */
 .bottom-panel {
   background: var(--surface);
-  border: 1px solid var(--line); border-radius: 8px;
+  border: 1px solid var(--line); border-radius: 10px;
   padding: 16px;
   height: 420px;
   display: flex;

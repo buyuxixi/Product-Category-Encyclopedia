@@ -198,22 +198,23 @@ onMounted(loadSession)
       </header>
 
       <div class="body-layout">
-        <!-- 左侧 icon 导航 -->
+        <!-- 左侧导航栏 -->
         <nav class="icon-nav">
-          <button :class="{ active: activeView === 'dashboard' }" @click="activeView = 'dashboard'" title="总览">
-            <el-icon><DataBoard /></el-icon>
+          <div class="nav-label">工作台</div>
+          <button :class="{ active: activeView === 'dashboard' }" @click="activeView = 'dashboard'">
+            <el-icon><DataBoard /></el-icon><span>总览</span>
           </button>
-          <button :class="{ active: activeView === 'encyclopedia' }" @click="activeView = 'encyclopedia'" title="品类百科">
-            <el-icon><Document /></el-icon>
+          <button :class="{ active: activeView === 'encyclopedia' }" @click="activeView = 'encyclopedia'">
+            <el-icon><Document /></el-icon><span>品类百科</span>
           </button>
-          <button :class="{ active: activeView === 'trends' }" @click="activeView = 'trends'" title="趋势看板">
-            <el-icon><TrendCharts /></el-icon>
+          <button :class="{ active: activeView === 'trends' }" @click="activeView = 'trends'">
+            <el-icon><TrendCharts /></el-icon><span>趋势看板</span>
           </button>
-          <button :class="{ active: activeView === 'notes' }" @click="activeView = 'notes'" title="选品笔记">
-            <el-icon><EditPen /></el-icon>
+          <button :class="{ active: activeView === 'notes' }" @click="activeView = 'notes'">
+            <el-icon><EditPen /></el-icon><span>选品笔记</span>
           </button>
           <div class="icon-nav-spacer"></div>
-          <span class="icon-nav-stat">{{ categories.filter(c => !c.parent_code).length }} 品类</span>
+          <div class="icon-nav-stat">{{ categories.filter(c => !c.parent_code).length }} 个品类 · {{ dashboard.source_count }} 条来源</div>
         </nav>
 
         <!-- Dashboard: no sidebar -->
