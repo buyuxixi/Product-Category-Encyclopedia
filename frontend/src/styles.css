@@ -325,32 +325,36 @@ button { color: inherit; cursor: pointer; }
   overflow: visible;
 }
 
-/* ── Icon Nav → Rail Nav with labels (Notion/Linear style) ── */
-.icon-nav {
-  width: 180px;
+/* ════════════════════════════════════════════
+   SIDE NAV — 统一导航+品类树
+   ════════════════════════════════════════════ */
+.side-nav {
+  width: 240px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 12px 10px;
   border-right: 1px solid var(--line);
   background: var(--surface);
   position: sticky;
   top: 52px;
   align-self: flex-start;
   max-height: calc(100vh - 52px);
+  overflow-y: auto;
 }
-.icon-nav .nav-label {
+.nav-section { padding: 12px 10px; }
+.nav-section + .nav-section { border-top: 1px solid var(--line-soft); }
+.nav-label {
   font-size: 10px;
   font-weight: 600;
   color: var(--text-quaternary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding: 12px 10px 6px;
+  padding: 4px 10px 8px;
 }
-.icon-nav button {
+.side-nav .nav-section button[class*="nav-tree-btn"],
+.side-nav .nav-section > button {
   width: 100%;
-  height: 36px;
+  height: 34px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -358,24 +362,69 @@ button { color: inherit; cursor: pointer; }
   border: 0;
   border-radius: var(--r-sm);
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-regular);
   cursor: pointer;
   transition: all 0.12s;
   font-size: 13px;
   font-weight: 500;
 }
-.icon-nav button .el-icon { font-size: 16px; flex-shrink: 0; }
-.icon-nav button:hover { background: var(--surface-hover); color: var(--ink); }
-.icon-nav button.active { background: var(--primary-light); color: var(--primary-dark); font-weight: 600; }
-.icon-nav button.active .el-icon { color: var(--primary); }
-.icon-nav-spacer { flex: 1; }
-.icon-nav-stat {
-  font-size: 11px;
-  color: var(--text-quaternary);
+.side-nav .nav-section > button .el-icon { font-size: 16px; flex-shrink: 0; color: var(--text-tertiary); }
+.side-nav .nav-section > button:hover { background: var(--surface-hover); color: var(--ink); }
+.side-nav .nav-section > button:hover .el-icon { color: var(--text-secondary); }
+.side-nav .nav-section > button.active { background: var(--primary-light); color: var(--primary-dark); font-weight: 600; }
+.side-nav .nav-section > button.active .el-icon { color: var(--primary); }
+
+/* 品类搜索 */
+.nav-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  border-radius: var(--r-sm);
+  background: var(--surface-alt);
+}
+.nav-search .el-icon { font-size: 14px; color: var(--text-tertiary); }
+.nav-search input {
+  flex: 1; border: 0; outline: 0; background: transparent;
+  font-size: 12px; color: var(--ink);
+}
+.nav-search input::placeholder { color: var(--text-tertiary); }
+
+/* 品类树 */
+.nav-tree { padding: 0; }
+.nav-empty { padding: 12px 10px; color: var(--text-tertiary); font-size: 12px; text-align: center; }
+.nav-tree-node { margin-bottom: 1px; }
+.nav-tree-row { display: flex; align-items: stretch; }
+.nav-tree-arrow {
+  display: grid; place-items: center; width: 20px;
+  border: 0; background: transparent; color: var(--text-tertiary); cursor: pointer; flex-shrink: 0;
+}
+.nav-tree-arrow:hover { color: var(--ink); }
+.nav-tree-arrow-placeholder { width: 20px; flex-shrink: 0; }
+.nav-tree-btn {
+  flex: 1; display: flex; align-items: center; gap: 7px;
+  padding: 7px 10px; border: 0; border-radius: var(--r-sm);
+  background: transparent; text-align: left; cursor: pointer;
+  transition: background 0.12s; min-height: 34px;
+  color: var(--text-regular); font-size: 13px;
+}
+.nav-tree-btn:hover { background: var(--surface-hover); }
+.nav-tree-btn.active { background: var(--primary-light); color: var(--primary-dark); font-weight: 600; }
+.nav-tree-icon { font-size: 14px; color: var(--text-tertiary); flex-shrink: 0; }
+.nav-tree-btn.active .nav-tree-icon { color: var(--primary); }
+.nav-tree-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.3; }
+.nav-tree-dot { flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; opacity: 0.6; }
+.nav-tree-dot.small { width: 5px; height: 5px; }
+.nav-tree-children { padding-left: 20px; }
+.nav-tree-child { font-size: 12.5px; min-height: 30px; padding: 5px 10px; }
+
+.nav-footer {
+  margin-top: auto;
   padding: 8px 10px;
   border-top: 1px solid var(--line-soft);
-  margin-top: 8px;
 }
+.nav-footer span { font-size: 11px; color: var(--text-quaternary); }
 
 /* ── Dark Sidebar (collapsible, sticky) ── */
 .sidebar-wrapper {
@@ -1256,10 +1305,9 @@ button { color: inherit; cursor: pointer; }
   .topbar { padding: 0 12px; gap: 12px; flex-wrap: wrap; height: auto; }
   .global-search { max-width: none; width: 100%; order: 3; }
   .identity-controls { margin-left: auto; }
-  .icon-nav { width: 56px; }
-  .icon-nav button { padding: 0; justify-content: center; }
-  .icon-nav button span { display: none; }
-  .icon-nav .nav-label { display: none; }
+  .side-nav { width: 56px; }
+  .side-nav .nav-section > button span, .side-nav .nav-label, .nav-search, .nav-tree, .nav-cats, .nav-footer { display: none; }
+  .side-nav .nav-section > button { padding: 0; justify-content: center; }
   .workspace-main, .page-shell { padding: 20px 16px 40px; }
   .summary-strip { grid-template-columns: repeat(2, 1fr); }
 }

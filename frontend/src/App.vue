@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { DataBoard, Document, Fold, Search, TrendCharts, EditPen } from '@element-plus/icons-vue'
+import { DataBoard, Document, Search, TrendCharts, EditPen, ArrowDown, ArrowRight, FolderOpened } from '@element-plus/icons-vue'
 import { ApiError, apiRequest, type Identity } from './api'
-import CategorySidebar from './components/CategorySidebar.vue'
 import DashboardView from './views/DashboardView.vue'
 import EncyclopediaView from './views/EncyclopediaView.vue'
 import LoginView from './views/LoginView.vue'
@@ -28,6 +27,20 @@ const authenticated = ref(false)
 const authConfig = ref<AuthConfig>({ mode: 'local', local_enabled: false, feishu_enabled: false })
 const user = ref<CurrentUser | null>(null)
 const sidebarCollapsed = ref(false)
+const collapsedTrees = ref<Set<string>>(new Set())
+
+function toggleTree(code: string) {
+  const next = new Set(collapsedTrees.value)
+  if (next.has(code)) next.delete(code)
+  else next.add(code)
+  collapsedTrees.value = next
+}
+
+function statusColor(status: string) {
+  if (status === 'published' || status === 'approved') return '#1aae39'
+  if (status === 'pending_review') return '#dd5b00'
+  return '#a39e98'
+}
 
 const identity = computed<Identity>(() => ({
   id: user.value?.id,
@@ -198,38 +211,74 @@ onMounted(loadSession)
       </header>
 
       <div class="body-layout">
-        <!-- 左侧导航栏 -->
-        <nav class="icon-nav">
-          <div class="nav-label">工作台</div>
-          <button :class="{ active: activeView === 'dashboard' }" @click="activeView = 'dashboard'">
-            <el-icon><DataBoard /></el-icon><span>总览</span>
-          </button>
-          <button :class="{ active: activeView === 'encyclopedia' }" @click="activeView = 'encyclopedia'">
-            <el-icon><Document /></el-icon><span>品类百科</span>
-          </button>
-          <button :class="{ active: activeView === 'trends' }" @click="activeView = 'trends'">
-            <el-icon><TrendCharts /></el-icon><span>趋势看板</span>
-          </button>
-          <button :class="{ active: activeView === 'notes' }" @click="activeView = 'notes'">
-            <el-icon><EditPen /></el-icon><span>选品笔记</span>
-          </button>
-          <div class="icon-nav-spacer"></div>
-          <div class="icon-nav-stat">{{ categories.filter(c => !c.parent_code).length }} 个品类 · {{ dashboard.source_count }} 条来源</div>
+        <!-- 左侧导航: 固定导航 + 品类树 -->
+        <nav class="side-nav">
+          <div class="nav-section">
+            <div class="nav-label">导航</div>
+            <button :class="{ active: activeView === 'dashboard' }" @click="activeView = 'dashboard'">
+              <el-icon><DataBoard /></el-icon><span>总览</span>
+            </button>
+            <button :class="{ active: activeView === 'encyclopedia' }" @click="activeView = 'encyclopedia'">
+              <el-icon><Document /></el-icon><span>品类百科</span>
+            </button>
+            <button :class="{ active: activeView === 'trends' }" @click="activeView = 'trends'">
+              <el-icon><TrendCharts /></el-icon><span>趋势看板</span>
+            </button>
+            <button :class="{ active: activeView === 'notes' }" @click="activeView = 'notes'">
+              <el-icon><EditPen /></el-icon><span>选品笔记</span>
+            </button>
+          </div>
+
+          <div v-if="activeView === 'encyclopedia'" class="nav-section nav-cats">
+            <div class="nav-label">品类目录</div>
+            <div class="nav-search">
+              <el-icon><Search /></el-icon>
+              <input v-model="query" placeholder="搜索品类…" />
+            </div>
+            <div class="nav-tree">
+              <div v-if="!filteredCategories.length" class="nav-empty">无匹配品类</div>
+              <div v-for="root in filteredCategories.filter(c => !c.parent_code)" :key="root.code" class="nav-tree-node">
+                <div class="nav-tree-row">
+                  <button v-if="root.children.length" class="nav-tree-arrow" @click.stop="toggleTree(root.code)">
+                    <el-icon v-if="!collapsedTrees.has(root.code)"><ArrowDown /></el-icon>
+                    <el-icon v-else><ArrowRight /></el-icon>
+                  </button>
+                  <span v-else class="nav-tree-arrow-placeholder"></span>
+                  <button class="nav-tree-btn" :class="{ active: selectedCode === root.code }" @click="selectCategory(root.code)">
+                    <el-icon class="nav-tree-icon"><FolderOpened /></el-icon>
+                    <span class="nav-tree-text">{{ root.name }}</span>
+                    <span class="nav-tree-dot" :style="{ background: statusColor(root.workflow_status) }"></span>
+                  </button>
+                </div>
+                <div v-if="root.children.length && !collapsedTrees.has(root.code)" class="nav-tree-children">
+                  <button v-for="child in root.children" :key="child.code" class="nav-tree-btn nav-tree-child" :class="{ active: selectedCode === child.code }" @click="selectCategory(child.code)">
+                    <el-icon class="nav-tree-icon"><Document /></el-icon>
+                    <span class="nav-tree-text">{{ child.name }}</span>
+                    <span class="nav-tree-dot small" :style="{ background: statusColor(child.workflow_status) }"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="nav-section nav-footer">
+            <span>{{ categories.filter(c => !c.parent_code).length }} 个品类 · {{ dashboard.source_count }} 条来源</span>
+          </div>
         </nav>
 
-        <!-- Dashboard: no sidebar -->
+        <!-- Dashboard -->
         <DashboardView
           v-if="activeView === 'dashboard'"
           :identity="identity"
           @select="selectCategory"
         />
-        <!-- Trend view: no sidebar -->
+        <!-- Trend view -->
         <TrendView
           v-else-if="activeView === 'trends'"
           :identity="identity"
           @select="selectCategory"
         />
-        <!-- Notes view: no sidebar -->
+        <!-- Notes view -->
         <NotesView
           v-else-if="activeView === 'notes'"
           :identity="identity"
@@ -237,28 +286,16 @@ onMounted(loadSession)
           :preset-category="noteCategoryCode"
           @select="selectCategory"
         />
-        <!-- Encyclopedia: with sidebar -->
-        <template v-else>
-          <div class="sidebar-wrapper" :class="{ collapsed: sidebarCollapsed }">
-            <CategorySidebar
-              :categories="filteredCategories"
-              :selected-code="selectedCode"
-              :query="query"
-              @select="selectCategory"
-            />
-            <button class="sidebar-toggle" @click="sidebarCollapsed = !sidebarCollapsed">
-              <el-icon><Fold /></el-icon>
-            </button>
-          </div>
-          <EncyclopediaView
-            :category-code="selectedCode"
-            :focus-section="targetSection"
-            :identity="identity"
-            @changed="refresh"
-            @navigate="selectCategory"
-            @add-note="goToNotes"
-          />
-        </template>
+        <!-- Encyclopedia -->
+        <EncyclopediaView
+          v-else
+          :category-code="selectedCode"
+          :focus-section="targetSection"
+          :identity="identity"
+          @changed="refresh"
+          @navigate="selectCategory"
+          @add-note="goToNotes"
+        />
       </div>
     </div>
   </div>
