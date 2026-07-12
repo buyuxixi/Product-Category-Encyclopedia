@@ -1613,7 +1613,7 @@ footer .stale {
 .update-log-item small { color: var(--text-quaternary); }
 
 /* 底部并排布局 */
-.bottom-split { display: grid; grid-template-columns: 7fr 5fr; gap: 16px; align-items: start; overflow: hidden; }
+.bottom-split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
 
 /* 面板通用 */
 .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
