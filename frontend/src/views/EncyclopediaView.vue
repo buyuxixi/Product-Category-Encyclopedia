@@ -1,26 +1,23 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { EditPen, MagicStick, Refresh, View } from '@element-plus/icons-vue'
+import { EditPen, MagicStick, Refresh, View, CopyDocument, Download } from '@element-plus/icons-vue'
 import { apiRequest, type Identity } from '../api'
 import type {
   CategoryDetail,
+  CategorySummary,
   DraftSuggestion,
   EncyclopediaSection,
   HotLink,
-  Listing,
   SourceMaterial,
   TrendSignal,
 } from '../types'
 
 const props = defineProps<{ categoryCode: string; identity: Identity; focusSection?: string | null }>()
-const emit = defineEmits<{ changed: [] }>()
+const emit = defineEmits<{ changed: []; navigate: [code: string] }>()
 
 const loading = ref(false)
 const category = ref<CategoryDetail | null>(null)
-const listings = ref<Listing[]>([])
-const listingTotal = ref(0)
-const listingPage = ref(1)
 const sources = ref<SourceMaterial[]>([])
 const hotLinks = ref<HotLink[]>([])
 const trendSignals = ref<TrendSignal[]>([])
@@ -33,7 +30,8 @@ const activeSection = computed(() =>
 const filterPlatform = ref('')
 
 const sectionHotLinks = computed(() =>
-  hotLinks.value.filter((l) => l.section_key === activeSectionKey.value)
+  // 热点链接只在 market 章节显示（舆情与市场趋势）
+  activeSectionKey.value === 'market' ? hotLinks.value : []
 )
 
 const hotLinkPlatforms = computed(() => {
@@ -56,11 +54,11 @@ const groupedHotLinks = computed(() => {
   return groups
 })
 
-const linkTypeOrder = ['product', 'discussion', 'video', 'trend', 'news', 'keyword']
+const linkTypeOrder = ['product', 'video', 'discussion', 'trend', 'news', 'keyword']
 const linkTypeLabels: Record<string, string> = {
   product: '🔥 爆品监控',
-  discussion: '💬 社区讨论',
   video: '📺 视频测评',
+  discussion: '💬 社区讨论',
   trend: '📈 搜索趋势',
   news: '📰 新闻动态',
   keyword: '🔑 关键词',
@@ -81,6 +79,21 @@ function formatRelativeTime(date: Date | null): string {
 }
 
 const crawlLoading = ref(false)
+
+const marketTimestamp = computed(() => {
+  if (!activeSection.value || activeSectionKey.value !== 'market') return null
+  const match = activeSection.value.content.match(/数据采集时间[：:]\s*([\d\-/]+)/)
+  return match ? match[1] : null
+})
+
+const renderedContentWithoutTimestamp = computed(() => {
+  if (!activeSection.value) return ''
+  // 移除时间戳 blockquote 行，避免重复显示
+  return activeSection.value.content
+    .split('\n')
+    .filter(line => !line.trim().startsWith('>') || !line.includes('数据采集时间'))
+    .join('\n')
+})
 async function triggerCrawl() {
   if (!category.value) return
   try {
@@ -100,7 +113,16 @@ async function triggerCrawl() {
 }
 
 const sectionTrendSignals = computed(() =>
-  trendSignals.value.filter((s) => s.section_key === activeSectionKey.value)
+  // 趋势信号只在 market 章节显示（舆情与市场趋势）
+  activeSectionKey.value === 'market'
+    ? trendSignals.value
+        .filter((s) => {
+          // keyword_trend 信号即使 metric_value=null 也保留（有相关搜索词 summary）
+          if (s.signal_type === 'keyword_trend') return true
+          // 其他类型过滤掉 0/null 噪音
+          return s.metric_value !== null && s.metric_value !== undefined && s.metric_value > 0
+        })
+    : []
 )
 
 function signalTypeLabel(type: string): string {
@@ -393,20 +415,15 @@ async function loadCategory() {
   loading.value = true
   try {
     category.value = await apiRequest<CategoryDetail>(`/categories/${props.categoryCode}`)
-    const listingResponse = await apiRequest<{ total: number; items: Listing[] }>(
-      `/categories/${props.categoryCode}/listings?page=${listingPage.value}&page_size=20`,
-    )
     const sourceResponse = await apiRequest<{ items: SourceMaterial[] }>(
       `/categories/${props.categoryCode}/source-materials`,
     )
     const hotLinkResponse = await apiRequest<{ items: HotLink[] }>(
-      `/categories/${props.categoryCode}/hot-links?days=365`,
+      `/categories/${props.categoryCode}/hot-links?days=7`,
     )
     const trendResponse = await apiRequest<{ items: TrendSignal[] }>(
-      `/categories/${props.categoryCode}/trend-signals?days=365`,
+      `/categories/${props.categoryCode}/trend-signals?days=7`,
     )
-    listings.value = listingResponse.items
-    listingTotal.value = listingResponse.total
     sources.value = sourceResponse.items
     hotLinks.value = hotLinkResponse.items
     trendSignals.value = trendResponse.items
@@ -431,11 +448,6 @@ function openEdit(section: EncyclopediaSection) {
     .filter((item) => item.source_type === 'source_material')
     .map((item) => item.source_id)
   editVisible.value = true
-}
-
-async function changeListingPage(page: number) {
-  listingPage.value = page
-  await loadCategory()
 }
 
 function openBoundaryEdit() {
@@ -500,6 +512,92 @@ async function saveEdit() {
   }
 }
 
+function buildSectionMarkdown(): string {
+  if (!activeSection.value || !category.value) return ''
+  let md = `# ${category.value.name} — ${activeSection.value.title}\n\n`
+  md += activeSection.value.content + '\n\n'
+  // Append hot links if market section
+  if (activeSectionKey.value === 'market' && filteredHotLinks.value.length) {
+    md += `## 热点链接\n\n`
+    for (const group of Object.entries(groupedHotLinks.value)) {
+      md += `### ${linkTypeLabels[group[0]] || group[0]}\n\n`
+      for (const link of group[1]) {
+        md += `- [${link.title}](${link.url}) — ${platformLabel(link.platform)}${link.hotness_score ? ` (热度 ${link.hotness_score})` : ''}\n`
+      }
+      md += '\n'
+    }
+  }
+  // Append trend signals if market section
+  if (activeSectionKey.value === 'market' && sectionTrendSignals.value.length) {
+    md += `## 趋势信号\n\n`
+    for (const sig of sectionTrendSignals.value) {
+      md += `- **${signalTypeLabel(sig.signal_type)}** | ${platformLabel(sig.platform)} | 关键词: ${sig.keyword}${sig.metric_value ? ` | 值: ${sig.metric_value}${sig.metric_unit ? ' ' + sig.metric_unit : ''}` : ''} | ${sig.summary}\n`
+    }
+    md += '\n'
+  }
+  // Append evidence
+  if (activeSection.value.evidence.length) {
+    md += `## 证据来源\n\n`
+    for (const ev of activeSection.value.evidence) {
+      const title = ev.source?.title || `${ev.source_type} #${ev.source_id}`
+      const url = ev.source?.url || ''
+      md += `- ${url ? `[${title}](${url})` : title}\n`
+    }
+  }
+  return md
+}
+
+async function copySection() {
+  const md = buildSectionMarkdown()
+  if (!md) return
+  try {
+    await navigator.clipboard.writeText(md)
+    ElMessage.success('已复制到剪贴板')
+  } catch {
+    ElMessage.error('当前浏览器不允许复制')
+  }
+}
+
+function downloadSection() {
+  const md = buildSectionMarkdown()
+  if (!md || !category.value || !activeSection.value) return
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${category.value.code}-${activeSection.value.section_key}.md`
+  link.click()
+  URL.revokeObjectURL(url)
+  ElMessage.success('已下载 Markdown 文件')
+}
+
+function downloadFullCategory() {
+  if (!category.value) return
+  let md = `# ${category.value.name} — 品类百科\n\n`
+  md += `> 品类编码: ${category.value.code}\n`
+  if (category.value.description) md += `> 描述: ${category.value.description}\n\n`
+  for (const section of category.value.sections) {
+    md += `---\n\n## ${section.title}\n\n${section.content || '暂无内容'}\n\n`
+    if (section.evidence.length) {
+      md += `**证据来源:**\n`
+      for (const ev of section.evidence) {
+        const title = ev.source?.title || `${ev.source_type} #${ev.source_id}`
+        const url = ev.source?.url || ''
+        md += `- ${url ? `[${title}](${url})` : title}\n`
+      }
+      md += '\n'
+    }
+  }
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${category.value.code}-百科全文.md`
+  link.click()
+  URL.revokeObjectURL(url)
+  ElMessage.success('已下载完整百科 Markdown')
+}
+
 async function generateDraft() {
   if (!category.value) return
   draftLoading.value = true
@@ -556,25 +654,6 @@ async function applyDraft() {
   }
 }
 
-async function submitReview() {
-  if (!category.value) return
-  try {
-    await ElMessageBox.confirm('提交后将生成不可变版本，交由审核人处理。', '提交审核', {
-      confirmButtonText: '确认提交',
-      cancelButtonText: '取消',
-    })
-    await apiRequest(
-      `/categories/${category.value.code}/submit-review`,
-      { method: 'POST', body: JSON.stringify({ note: 'MVP 业务评审' }) },
-    )
-    ElMessage.success('已提交审核')
-    await loadCategory()
-    emit('changed')
-  } catch (error) {
-    if (error !== 'cancel') ElMessage.error((error as Error).message)
-  }
-}
-
 async function addSource() {
   if (!category.value || !sourceForm.value.title.trim()) return
   try {
@@ -600,12 +679,95 @@ async function addSource() {
 }
 
 watch(() => props.categoryCode, () => {
-  listingPage.value = 1
   activeSectionKey.value = 'definition'
   loadCategory()
 })
 watch(() => props.focusSection, (val) => { if (val) activeSectionKey.value = val })
-onMounted(loadCategory)
+
+// 术语词典
+const glossary: Record<string, string> = {
+  'TENS': '经皮神经电刺激 (Transcutaneous Electrical Nerve Stimulation)',
+  'EMS': '电肌肉刺激 (Electrical Muscle Stimulation)',
+  'FIR': '远红外 (Far Infrared Radiation)',
+  'BSR': 'Best Seller Rank，亚马逊畅销排名',
+  'ASIN': '亚马逊标准识别号 (Amazon Standard Identification Number)',
+  'Vasodilation': '血管扩张',
+  'Gate Control Theory': '门控理论 — 疼痛信号传导机制',
+  'PTC': '正温度系数热敏陶瓷 (Positive Temperature Coefficient)',
+  'DOMS': '延迟性肌肉酸痛 (Delayed Onset Muscle Soreness)',
+  'Graphene': '石墨烯 — 碳纳米材料，远红外发射率高',
+  'Neoprene': '氯丁橡胶 — 弹性好，运动护具常用材料',
+  'Polyurethane': '聚氨酯 — 记忆棉主要材料',
+}
+
+function enhanceGlossary(html: string): string {
+  let result = html
+  for (const [term, explanation] of Object.entries(glossary)) {
+    const regex = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
+    result = result.replace(regex, `<span class="glossary-term" title="${explanation}">${term}</span>`)
+  }
+  return result
+}
+
+// 收藏功能 — localStorage 存储
+const favorites = ref<Set<string>>(new Set())
+
+// 全部品类列表（用于关联推荐）
+const allCategories = ref<CategorySummary[]>([])
+
+// 关联品类推荐 — 同父品类的兄弟品类
+const relatedCategories = computed(() => {
+  if (!category.value || !allCategories.value.length) return []
+  const current = category.value
+  // 如果是子品类，找同父的其他子品类
+  if (current.parent_code) {
+    return allCategories.value.filter(c =>
+      c.parent_code === current.parent_code && c.code !== current.code
+    ).slice(0, 4)
+  }
+  // 如果是一级品类，找其他一级品类
+  return allCategories.value.filter(c =>
+    !c.parent_code && c.code !== current.code
+  ).slice(0, 4)
+})
+
+async function loadAllCategories() {
+  try {
+    const result = await apiRequest<{ items: CategorySummary[] }>('/categories')
+    allCategories.value = result.items
+  } catch { /* ignore */ }
+}
+
+function loadFavorites() {
+  try {
+    const saved = localStorage.getItem('encyclopedia_favorites')
+    if (saved) favorites.value = new Set(JSON.parse(saved))
+  } catch { /* ignore */ }
+}
+
+function saveFavorites() {
+  localStorage.setItem('encyclopedia_favorites', JSON.stringify([...favorites.value]))
+}
+
+function toggleFavorite(url: string) {
+  if (favorites.value.has(url)) {
+    favorites.value.delete(url)
+  } else {
+    favorites.value.add(url)
+  }
+  favorites.value = new Set(favorites.value)
+  saveFavorites()
+}
+
+function isFavorited(url: string): boolean {
+  return favorites.value.has(url)
+}
+
+onMounted(() => {
+  loadFavorites()
+  loadAllCategories()
+  loadCategory()
+})
 </script>
 
 <template>
@@ -622,25 +784,52 @@ onMounted(loadCategory)
         </div>
         <div class="header-actions">
           <el-button :icon="Refresh" @click="loadCategory">刷新</el-button>
+          <el-button text :icon="Download" @click="downloadFullCategory">导出全文</el-button>
           <el-button v-if="canEditContent" :icon="MagicStick" @click="generateDraft">生成草稿</el-button>
-          <el-button v-if="canEditContent" type="primary" @click="submitReview">提交审核</el-button>
         </div>
       </header>
 
-      <section class="summary-strip">
-        <div><strong>{{ category.listing_count }}</strong><span>Listing 快照</span></div>
-        <div><strong>{{ category.source_count }}</strong><span>补充来源</span></div>
+      <!-- 品类快速摘要 — 业务同事秒懂核心信息 -->
+      <section v-if="category" class="quick-summary">
+        <div class="qs-item">
+          <span class="qs-label">所属大类</span>
+          <span class="qs-value">{{ category.parent_code ? category.parent_code : '一级品类' }}</span>
+        </div>
+        <div class="qs-item">
+          <span class="qs-label">数据状态</span>
+          <span class="qs-value">{{ marketTimestamp ? `今日已更新` : '待更新' }}</span>
+        </div>
+        <div class="qs-item">
+          <span class="qs-label">热点</span>
+          <span class="qs-value">{{ hotLinks.length }} 条</span>
+        </div>
+        <div class="qs-item">
+          <span class="qs-label">趋势</span>
+          <span class="qs-value">{{ trendSignals.length }} 条</span>
+        </div>
+        <div class="qs-item">
+          <span class="qs-label">来源</span>
+          <span class="qs-value">{{ sources.length }} 条</span>
+        </div>
+        <div class="qs-item">
+          <span class="qs-label">完整度</span>
+          <span class="qs-value">{{ category.sections.filter((s) => s.content).length }}/{{ category.sections.length }}</span>
+        </div>
+      </section>
+
+      <section v-if="activeSectionKey === 'market'" class="summary-strip">
+        <div class="stat-hot"><strong>{{ filteredHotLinks.length }}</strong><span>🔥 热点链接</span></div>
+        <div><strong>{{ sectionTrendSignals.length }}</strong><span>📊 趋势信号</span></div>
+        <div><strong>{{ sources.length }}</strong><span>📎 来源材料</span></div>
         <div><strong>{{ category.sections.filter((item) => item.content).length }}/{{ category.sections.length }}</strong><span>已填写模块</span></div>
-        <div><strong>{{ category.sections.reduce((count, item) => count + item.evidence.length, 0) }}</strong><span>证据引用</span></div>
       </section>
 
       <section v-if="!category.sections.some((item) => item.content)" class="getting-started">
         <div class="getting-started-icon">→</div>
         <div>
-          <strong>{{ category.listing_count ? '已有数据，先生成一版可追溯草稿' : '先准备数据，再开始建立百科' }}</strong>
-          <p>{{ category.listing_count ? '系统会明确标出证据不足和待验证模块，人工确认后再提交审核。' : '可以前往数据导入扫描目录，也可以先登记一条研究来源。' }}</p>
+          <strong>先准备数据，再开始建立百科</strong>
+          <p>可以登记一条研究来源，或在「06 舆情与市场趋势」中点击「手动爬取」获取热点数据。</p>
         </div>
-        <el-button v-if="canEditContent && category.listing_count" type="primary" @click="generateDraft">生成草稿</el-button>
       </section>
 
       <div class="content-card">
@@ -681,40 +870,22 @@ onMounted(loadCategory)
                   <span class="section-number">{{ String(category.sections.findIndex((s) => s.section_key === activeSectionKey) + 1).padStart(2, '0') }}</span>
                   <h2>{{ activeSection.title }}</h2>
                 </div>
-                <el-button v-if="canEditContent" text :icon="EditPen" @click="openEdit(activeSection)">编辑</el-button>
-              </header>
-              <div v-if="activeSection.content" class="section-content" v-html="renderedContent(activeSection)"></div>
-              <div v-else class="section-empty">暂无内容。可以补充材料或生成草稿。</div>
-              <footer>
-                <span>{{ activeSection.generation_mode === 'human' ? '人工编辑' : activeSection.generation_mode === 'generated' ? '系统草稿' : '未填写' }}</span>
-                <span v-if="activeSection.locked_by_human">已锁定</span>
-                <span>{{ activeSection.evidence.length }} 条证据</span>
-                <span v-if="activeSection.updated_by">更新人：{{ activeSection.updated_by }}</span>
-                <span v-if="activeSection.updated_at" :class="{ stale: isStale(activeSection.updated_at) }">{{ formatDate(activeSection.updated_at) }}{{ isStale(activeSection.updated_at) ? ' · 数据可能过时' : '' }}</span>
-              </footer>
-              <div v-if="sectionTrendSignals.length" class="trend-signals">
-                <span class="evidence-label">趋势信号</span>
-                <div class="trend-signal-grid">
-                  <div v-for="signal in sectionTrendSignals" :key="signal.id" class="trend-signal-card">
-                    <div class="trend-signal-header">
-                      <span class="trend-signal-type">{{ signalTypeLabel(signal.signal_type) }}</span>
-                      <span class="trend-signal-platform">{{ platformLabel(signal.platform) }}</span>
-                      <span v-if="signal.trend_direction" class="trend-signal-direction">{{ trendDirectionLabel(signal.trend_direction) }}</span>
-                    </div>
-                    <div v-if="signal.title" class="trend-signal-title">{{ signal.title }}</div>
-                    <div v-if="signal.keyword" class="trend-signal-keyword">关键词：{{ signal.keyword }}</div>
-                    <div v-if="signal.metric_value !== null" class="trend-signal-metric">
-                      {{ signal.metric_value }}{{ signal.metric_unit ? ' ' + signal.metric_unit : '' }}
-                    </div>
-                    <div v-if="signal.summary" class="trend-signal-summary">{{ signal.summary }}</div>
-                    <small class="trend-signal-date">{{ formatDate(signal.collected_at) }}</small>
-                  </div>
+                <div class="section-header-actions">
+                  <el-button text :icon="CopyDocument" @click="copySection">复制</el-button>
+                  <el-button text :icon="Download" @click="downloadSection">导出</el-button>
+                  <el-button v-if="canEditContent" text :icon="EditPen" @click="openEdit(activeSection)">编辑</el-button>
                 </div>
+              </header>
+
+              <!-- ⏰ 数据采集时间 — market 章节顶置 -->
+              <div v-if="activeSectionKey === 'market' && marketTimestamp" class="market-timestamp">
+                <span>⏰ 数据采集时间: {{ marketTimestamp }}</span>
               </div>
-              <!-- Hot Links 按类型分组渲染 -->
-              <div v-if="filteredHotLinks.length" class="hot-links-section">
+
+              <!-- 🔥 热点链接 — 顶置，业务人员最关注 -->
+              <div v-if="filteredHotLinks.length" class="hot-links-section hot-links-priority">
                 <div class="hot-links-header">
-                  <span class="evidence-label">热点链接</span>
+                  <span class="evidence-label">🔥 今日热点</span>
                   <span v-if="lastHotLinkUpdate" class="hot-links-update">
                     最后更新: {{ formatRelativeTime(lastHotLinkUpdate) }}
                   </span>
@@ -754,7 +925,7 @@ onMounted(loadCategory)
                       target="_blank"
                       rel="noreferrer noopener"
                       class="hot-link-item"
-                      :class="{ 'is-hot': link.is_hot }"
+                      :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }"
                     >
                       <div class="hot-link-title">
                         <span v-if="link.is_hot" class="hot-badge">🔥</span>
@@ -762,8 +933,8 @@ onMounted(loadCategory)
                       </div>
                       <div class="hot-link-meta">
                         <el-tag size="small" effect="plain">{{ platformLabel(link.platform) }}</el-tag>
-                        <el-tag size="small" effect="plain" type="info">{{ link.link_type }}</el-tag>
                         <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
+                        <button class="fav-btn" :class="{ active: isFavorited(link.url) }" @click.prevent="toggleFavorite(link.url)">⭐</button>
                       </div>
                       <div v-if="link.description" class="hot-link-desc">{{ link.description }}</div>
                       <small class="hot-link-date">{{ formatDate(link.collected_at) }}</small>
@@ -771,8 +942,58 @@ onMounted(loadCategory)
                   </div>
                 </div>
               </div>
+              <!-- 空状态：该品类暂无热点 -->
+              <div v-else-if="activeSectionKey === 'market'" class="hot-links-empty">
+                <span class="evidence-label">🔥 今日热点</span>
+                <p>该品类暂无爬取到的热点数据。可点击「手动爬取」触发一次数据采集。</p>
+                <el-button
+                  v-if="canEdit"
+                  size="small"
+                  :loading="crawlLoading"
+                  :icon="Refresh"
+                  @click="triggerCrawl"
+                >手动爬取</el-button>
+              </div>
+
+              <!-- 📊 趋势信号 — 第二优先 -->
+              <div v-if="sectionTrendSignals.length" class="trend-signals trend-signals-priority">
+                <span class="evidence-label">📊 趋势信号</span>
+                <div class="trend-signal-grid">
+                  <div v-for="signal in sectionTrendSignals" :key="signal.id" class="trend-signal-card" :class="`trend-dir-${signal.trend_direction || 'stable'}`">
+                    <div class="trend-signal-header">
+                      <span class="trend-signal-type">{{ signalTypeLabel(signal.signal_type) }}</span>
+                      <span class="trend-signal-platform">{{ platformLabel(signal.platform) }}</span>
+                      <span v-if="signal.trend_direction" class="trend-signal-direction" :class="`dir-${signal.trend_direction}`">{{ trendDirectionLabel(signal.trend_direction) }}</span>
+                    </div>
+                    <div v-if="signal.title" class="trend-signal-title">{{ signal.title }}</div>
+                    <div v-if="signal.keyword" class="trend-signal-keyword">关键词：{{ signal.keyword }}</div>
+                    <div v-if="signal.metric_value !== null && signal.metric_value !== undefined" class="trend-signal-metric">
+                      <span class="metric-value">{{ signal.metric_value }}</span>
+                      <span v-if="signal.metric_unit" class="metric-unit">{{ signal.metric_unit }}</span>
+                      <div v-if="signal.metric_value > 0" class="metric-bar">
+                        <div class="metric-bar-fill" :style="{ width: `${Math.min(signal.metric_value / Math.max(...sectionTrendSignals.map(s => s.metric_value || 0)) * 100, 100)}%` }"></div>
+                      </div>
+                    </div>
+                    <div v-if="signal.summary" class="trend-signal-summary">{{ signal.summary }}</div>
+                    <small class="trend-signal-date">{{ formatDate(signal.collected_at) }}</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 📝 分析内容 — 第三优先，深入分析 -->
+              <div v-if="activeSection.content" class="section-content" v-html="enhanceGlossary(renderMarkdown(renderedContentWithoutTimestamp))"></div>
+              <div v-else class="section-empty">暂无内容。可以补充材料或生成草稿。</div>
+              <footer>
+                <span>{{ activeSection.generation_mode === 'human' ? '人工编辑' : activeSection.generation_mode === 'generated' ? '系统草稿' : '未填写' }}</span>
+                <span v-if="activeSection.locked_by_human">已锁定</span>
+                <span>{{ activeSection.evidence.length }} 条证据</span>
+                <span v-if="activeSection.updated_by">更新人：{{ activeSection.updated_by }}</span>
+                <span v-if="activeSection.updated_at" :class="{ stale: isStale(activeSection.updated_at) }">{{ formatDate(activeSection.updated_at) }}{{ isStale(activeSection.updated_at) ? ' · 数据可能过时' : '' }}</span>
+              </footer>
+
+              <!-- 📎 证据 — 最后，原始来源材料 -->
               <div v-if="activeSection.evidence.length" class="evidence-list">
-                <span class="evidence-label">证据</span>
+                <span class="evidence-label">📎 证据来源</span>
                 <a
                   v-for="evidence in activeSection.evidence"
                   :key="evidence.id"
@@ -812,7 +1033,7 @@ onMounted(loadCategory)
             </el-checkbox>
             <el-tag v-if="item.missing_evidence" type="warning" size="small">证据待补充</el-tag>
             <p>{{ item.content }}</p>
-            <span>{{ item.evidence_listing_ids.length }} 条 Listing 证据 · {{ item.evidence_source_ids.length }} 条补充来源</span>
+            <span>{{ item.evidence_listing_ids.length }} 条证据 · {{ item.evidence_source_ids.length }} 条来源</span>
           </div>
         </div>
         <template #footer>

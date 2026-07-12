@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { DataAnalysis, Document, Fold, Search, Setting, UploadFilled } from '@element-plus/icons-vue'
+import { DataBoard, Document, Fold, Search, Setting } from '@element-plus/icons-vue'
 import { ApiError, apiRequest, type Identity } from './api'
 import CategorySidebar from './components/CategorySidebar.vue'
+import DashboardView from './views/DashboardView.vue'
 import EncyclopediaView from './views/EncyclopediaView.vue'
-import ImportView from './views/ImportView.vue'
 import LoginView from './views/LoginView.vue'
-import ReviewView from './views/ReviewView.vue'
 import type { CategorySummary, Role, SearchResult } from './types'
 
-type ViewName = 'encyclopedia' | 'imports' | 'review'
+type ViewName = 'dashboard' | 'encyclopedia'
 type AuthConfig = {
   mode: string
   local_enabled: boolean
@@ -18,13 +17,13 @@ type AuthConfig = {
 }
 type CurrentUser = { id: number; name: string; role: Role; provider: string }
 
-const activeView = ref<ViewName>('encyclopedia')
+const activeView = ref<ViewName>('dashboard')
 const categories = ref<CategorySummary[]>([])
 const selectedCode = ref('FAR_INFRARED')
 const query = ref('')
 const searchResults = ref<SearchResult[]>([])
 const targetSection = ref<string | null>(null)
-const dashboard = ref({ category_count: 0, listing_count: 0, source_count: 0, pending_review_count: 0 })
+const dashboard = ref({ category_count: 0, source_count: 0 })
 const authLoading = ref(true)
 const authenticated = ref(false)
 const authConfig = ref<AuthConfig>({ mode: 'local', local_enabled: false, feishu_enabled: false })
@@ -160,7 +159,7 @@ onMounted(loadSession)
 
     <div v-else-if="authenticated" class="app-shell">
       <header class="topbar">
-        <button class="brand" @click="activeView = 'encyclopedia'">
+        <button class="brand" @click="activeView = 'dashboard'">
           <span class="brand-mark">P</span>
           <span><strong>产品品类百科</strong><small>Category Intelligence</small></span>
         </button>
@@ -182,50 +181,54 @@ onMounted(loadSession)
       </header>
 
       <nav class="primary-nav">
+        <button :class="{ active: activeView === 'dashboard' }" @click="activeView = 'dashboard'">
+          <el-icon><DataBoard /></el-icon>总览
+        </button>
         <button :class="{ active: activeView === 'encyclopedia' }" @click="activeView = 'encyclopedia'">
           <el-icon><Document /></el-icon>品类百科
         </button>
-        <button :class="{ active: activeView === 'imports' }" @click="activeView = 'imports'">
-          <el-icon><UploadFilled /></el-icon>数据导入
-        </button>
-        <button :class="{ active: activeView === 'review' }" @click="activeView = 'review'">
-          <el-icon><DataAnalysis /></el-icon>审核发布
-          <span v-if="dashboard.pending_review_count" class="nav-count">{{ dashboard.pending_review_count }}</span>
-        </button>
         <span class="nav-spacer"></span>
-        <span class="system-stat">{{ dashboard.category_count }} 个品类 · {{ dashboard.listing_count }} 条 Listing</span>
+        <span class="system-stat">{{ dashboard.category_count }} 个品类 · {{ dashboard.source_count }} 条来源</span>
         <button class="settings-button" title="系统设置（后续开放）"><el-icon><Setting /></el-icon></button>
       </nav>
 
       <div class="body-layout">
-        <div v-if="activeView === 'encyclopedia'" class="sidebar-wrapper" :class="{ collapsed: sidebarCollapsed }">
-          <CategorySidebar
-            :categories="filteredCategories"
-            :selected-code="selectedCode"
-            :query="query"
-            @select="selectCategory"
-          />
-          <button class="sidebar-toggle" @click="sidebarCollapsed = !sidebarCollapsed">
-            <el-icon><Fold /></el-icon>
-          </button>
-        </div>
-        <button
-          v-if="activeView === 'encyclopedia' && sidebarCollapsed"
-          class="sidebar-expand-btn"
-          @click="sidebarCollapsed = false"
-        >
-          <el-icon><Document /></el-icon>
-          <span>目录</span>
-        </button>
-        <EncyclopediaView
-          v-if="activeView === 'encyclopedia'"
-          :category-code="selectedCode"
-          :focus-section="targetSection"
+        <!-- Dashboard: no sidebar -->
+        <DashboardView
+          v-if="activeView === 'dashboard'"
           :identity="identity"
-          @changed="refresh"
+          @select="selectCategory"
         />
-        <ImportView v-else-if="activeView === 'imports'" :identity="identity" @changed="refresh" />
-        <ReviewView v-else :identity="identity" @changed="refresh" />
+        <!-- Encyclopedia: with sidebar -->
+        <template v-else>
+          <div class="sidebar-wrapper" :class="{ collapsed: sidebarCollapsed }">
+            <CategorySidebar
+              :categories="filteredCategories"
+              :selected-code="selectedCode"
+              :query="query"
+              @select="selectCategory"
+            />
+            <button class="sidebar-toggle" @click="sidebarCollapsed = !sidebarCollapsed">
+              <el-icon><Fold /></el-icon>
+            </button>
+          </div>
+          <button
+            v-if="sidebarCollapsed"
+            class="sidebar-expand-btn"
+            @click="sidebarCollapsed = false"
+          >
+            <el-icon><Document /></el-icon>
+            <span>目录</span>
+          </button>
+          <EncyclopediaView
+            v-if="activeView === 'encyclopedia'"
+            :category-code="selectedCode"
+            :focus-section="targetSection"
+            :identity="identity"
+            @changed="refresh"
+            @navigate="selectCategory"
+          />
+        </template>
       </div>
     </div>
   </div>

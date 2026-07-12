@@ -48,78 +48,15 @@ export interface EncyclopediaSection {
 
 export interface CategoryDetail extends CategorySummary {
   sections: EncyclopediaSection[]
-  listing_count: number
   source_count: number
 }
 
-export interface Listing {
-  id: number
-  asin: string
-  title: string
-  brand: string
-  rating_value: number | null
-  rating_count: number | null
-  current_price: number | null
-  currency: string | null
-  bsr_rank: number | null
-  bsr_category: string | null
-  scraped_at: string
-  source_url: string | null
-}
-
-export interface ImportJob {
-  id: number
-  status: string
-  source_path: string
-  requested_directories: string[]
-  total_count: number
-  inserted_count: number
-  duplicate_count: number
-  failed_count: number
-  skipped_count: number
-  errors: Array<{ file: string; reason: string }>
-  created_by: string
-  created_at: string
-}
-
-export interface ImportCatalogItem {
-  code: string
-  name: string
-  directories: string[]
-  file_count: number
-  json_directory_count: number
-}
-
-export interface VersionRecord {
-  id: number
-  category_id: number
+export interface SearchResult {
+  kind: 'category' | 'section' | 'hotlink' | 'trend' | 'source'
   category_code: string
-  category_name: string
-  version_number: number
-  status: string
-  created_by: string
-  reviewed_by: string | null
-  review_comment: string | null
-  created_at: string
-  reviewed_at: string | null
-  published_at: string | null
-}
-
-export interface VersionDetail extends VersionRecord {
-  content_snapshot: {
-    sections: Array<{
-      section_key: string
-      title: string
-      content: string
-      evidence: Array<{ source_type: string; source_id: number; locator: string | null }>
-    }>
-  }
-}
-
-export interface VersionDiff {
-  version_id: number
-  previous_version_id: number | null
-  changes: Array<{ section_key: string; title: string; before: string; after: string }>
+  title: string
+  snippet: string
+  section_key: string | null
 }
 
 export interface DraftSuggestion {
@@ -143,16 +80,9 @@ export interface SourceMaterial {
   created_by: string
 }
 
-export interface SearchResult {
-  kind: 'category' | 'section' | 'listing' | 'source'
-  category_code: string
-  title: string
-  snippet: string
-  section_key: string | null
-}
-
 export interface HotLink {
   id: number
+  category_code: string
   section_key: string
   link_type: string
   platform: string
@@ -166,6 +96,7 @@ export interface HotLink {
 
 export interface TrendSignal {
   id: number
+  category_code: string
   section_key: string
   signal_type: string
   platform: string

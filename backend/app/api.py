@@ -356,27 +356,51 @@ def search(
                 "section_key": section.section_key,
             }
         )
-    listing_rows = db.execute(
-        select(ListingSnapshot, Category)
-        .join(Category, Category.id == ListingSnapshot.category_id)
+    # 搜索热点链接
+    hotlink_rows = db.execute(
+        select(HotLink, Category)
+        .join(Category, Category.id == HotLink.category_id)
         .where(
             or_(
-                ListingSnapshot.asin.contains(keyword),
-                ListingSnapshot.title.contains(keyword),
-                ListingSnapshot.brand.contains(keyword),
+                HotLink.title.contains(keyword),
+                HotLink.description.contains(keyword),
+                HotLink.url.contains(keyword),
             )
         )
-        .order_by(ListingSnapshot.scraped_at.desc())
+        .order_by(HotLink.collected_at.desc())
         .limit(limit)
     ).all()
-    for listing, category in listing_rows:
+    for link, category in hotlink_rows:
         items.append(
             {
-                "kind": "listing",
+                "kind": "hotlink",
                 "category_code": category.code,
-                "title": listing.title or listing.asin,
-                "snippet": f"{listing.brand} · {listing.asin} · {listing.marketplace}",
-                "section_key": "amazon_insights",
+                "title": f"🔗 {link.title}",
+                "snippet": f"{link.platform} · {link.description[:100]}" if link.description else link.platform,
+                "section_key": "market",
+            }
+        )
+    # 搜索趋势信号关键词
+    trend_rows = db.execute(
+        select(TrendSignal, Category)
+        .join(Category, Category.id == TrendSignal.category_id)
+        .where(
+            or_(
+                TrendSignal.keyword.contains(keyword),
+                TrendSignal.summary.contains(keyword),
+            )
+        )
+        .order_by(TrendSignal.collected_at.desc())
+        .limit(limit)
+    ).all()
+    for signal, category in trend_rows:
+        items.append(
+            {
+                "kind": "trend",
+                "category_code": category.code,
+                "title": f"📊 {signal.keyword or signal.title}",
+                "snippet": f"{signal.platform} · {signal.summary[:100]}" if signal.summary else signal.platform,
+                "section_key": "market",
             }
         )
     source_rows = db.execute(
@@ -586,6 +610,7 @@ def list_trend_signals(
         "items": [
             {
                 "id": item.id,
+                "category_code": category.code,
                 "section_key": item.section_key,
                 "signal_type": item.signal_type,
                 "platform": item.platform,
@@ -684,6 +709,7 @@ def list_hot_links(
         "items": [
             {
                 "id": item.id,
+                "category_code": category.code,
                 "section_key": item.section_key,
                 "link_type": item.link_type,
                 "platform": item.platform,
@@ -710,9 +736,28 @@ def delete_hot_link(link_id: int, db: Db, actor: WriteActor):
     return {"ok": True}
 
 
+@router.delete("/categories/{code}/trend-signals")
+def clear_trend_signals(code: str, db: Db, actor: WriteActor):
+    """删除某品类的全部旧 trend_signals，实现覆盖模式。"""
+    ensure_role(actor, "admin", "data")
+    category = _category_or_404(db, code)
+    rows = db.scalars(
+        select(TrendSignal).where(TrendSignal.category_id == category.id)
+    ).all()
+    count = len(rows)
+    for row in rows:
+        db.delete(row)
+    db.commit()
+    return {"ok": True, "deleted": count}
+
+
 @router.post("/categories/{code}/crawl")
 def trigger_crawl(code: str, db: Db, actor: WriteActor):
-    """手动触发热点爬取 — 调用 hot-topic-crawler skill 的脚本。"""
+    """手动触发热点爬取 — 调用 hot-topic-crawler skill 的脚本。
+    
+    执行 run_full_crawl.py（YouTube + Bing News + Google Suggest），
+    然后执行 crawl_reddit_single.py（当前品类的 Reddit 讨论帖）。
+    """
     ensure_role(actor, "admin", "data", "researcher")
     category = _category_or_404(db, code)
     import os
@@ -720,18 +765,24 @@ def trigger_crawl(code: str, db: Db, actor: WriteActor):
 
     scripts_dir = os.path.expanduser("~/.hermes/skills/productivity/hot-topic-crawler/scripts")
     runner = os.path.join(scripts_dir, "run_full_crawl.py")
+    reddit_runner = os.path.join(scripts_dir, "crawl_reddit_single.py")
     if not os.path.exists(runner):
         raise HTTPException(status_code=404, detail="Crawler script not found")
 
     env = os.environ.copy()
     env["ENCYCLOPEDIA_API_BASE"] = f"http://127.0.0.1:8010/api/v1"
     env["CRAWLER_USERNAME"] = env.get("CRAWLER_USERNAME", "admin")
-    # Read password from AUTH_USERS_JSON if available
-    import json
-    users_json = env.get("AUTH_USERS_JSON", "")
-    if users_json:
+    env["HTTP_PROXY"] = env.get("HTTP_PROXY", "http://127.0.0.1:7897")
+    env["HTTPS_PROXY"] = env.get("HTTPS_PROXY", "http://127.0.0.1:7897")
+    # Read password from .crawler_password file or AUTH_USERS_JSON
+    pass_file = os.path.expanduser("~/.hermes/skills/productivity/hot-topic-crawler/.crawler_password")
+    if os.path.exists(pass_file):
+        with open(pass_file) as f:
+            env["CRAWLER_PASSWORD"] = f.read().strip()
+    elif env.get("AUTH_USERS_JSON"):
+        import json
         try:
-            users = json.loads(users_json)
+            users = json.loads(env["AUTH_USERS_JSON"])
             for u in users:
                 if u.get("username") == "admin":
                     env["CRAWLER_PASSWORD"] = u.get("password", "")
@@ -739,6 +790,9 @@ def trigger_crawl(code: str, db: Db, actor: WriteActor):
         except Exception:
             pass
 
+    results = []
+
+    # Step 1: Run full crawl (YouTube + Bing News + Google Suggest)
     try:
         result = subprocess.run(
             ["python3", runner],
@@ -747,15 +801,39 @@ def trigger_crawl(code: str, db: Db, actor: WriteActor):
             timeout=300,
             env=env,
         )
-        return {
+        results.append({
+            "step": "full_crawl",
             "returncode": result.returncode,
-            "stdout": result.stdout[-3000:],
-            "stderr": result.stderr[-1000:],
-        }
+            "stdout": result.stdout[-2000:],
+            "stderr": result.stderr[-500:],
+        })
     except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=504, detail="Crawl timed out (5 min)")
+        results.append({"step": "full_crawl", "error": "timed out (5 min)"})
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        results.append({"step": "full_crawl", "error": str(exc)})
+
+    # Step 2: Run Reddit crawl for this category
+    if os.path.exists(reddit_runner) and env.get("CRAWLER_PASSWORD"):
+        try:
+            result = subprocess.run(
+                ["python3", reddit_runner, code],
+                capture_output=True,
+                text=True,
+                timeout=180,
+                env=env,
+            )
+            results.append({
+                "step": "reddit_crawl",
+                "returncode": result.returncode,
+                "stdout": result.stdout[-1500:],
+                "stderr": result.stderr[-500:],
+            })
+        except subprocess.TimeoutExpired:
+            results.append({"step": "reddit_crawl", "error": "timed out (3 min)"})
+        except Exception as exc:
+            results.append({"step": "reddit_crawl", "error": str(exc)})
+
+    return {"category": code, "results": results}
 
 
 @router.post("/imports/amazon")
