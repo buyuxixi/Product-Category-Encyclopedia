@@ -77,6 +77,7 @@ class TrendSignalCreate(BaseModel):
     signal_type: Literal[
         "search_volume", "best_seller_rank", "social_mention",
         "keyword_trend", "news_volume", "review_sentiment",
+        "product_insight", "user_pain_point",
     ]
     platform: Literal[
         "google", "amazon", "reddit", "youtube", "tiktok",
@@ -86,7 +87,7 @@ class TrendSignalCreate(BaseModel):
     title: str = Field(default="", max_length=500)
     metric_value: float | None = None
     metric_unit: str | None = Field(default=None, max_length=32)
-    trend_direction: Literal["up", "down", "stable", "new"] | None = None
+    trend_direction: Literal["up", "down", "stable", "new", "positive", "negative", "mixed"] | None = None
     summary: str = Field(default="", max_length=10000)
 
 
