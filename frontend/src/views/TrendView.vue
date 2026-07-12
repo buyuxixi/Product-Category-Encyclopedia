@@ -65,12 +65,35 @@ const platformDist = computed(() => {
 const categoryHotLinks = computed(() => {
   const topCats = categories.value.filter(c => !c.parent_code)
   return topCats.map(cat => {
-    // 统计该品类及其子品类的热点数
     const childCodes = categories.value.filter(c => c.parent_code === cat.code).map(c => c.code)
     const allCodes = [cat.code, ...childCodes]
-    const count = allHotLinks.value.filter(l => allCodes.includes(l.category_code || '')).length
-    return { name: cat.name, value: count }
+    const links = allHotLinks.value.filter(l => allCodes.includes(l.category_code || ''))
+    // 按平台分组统计
+    const byPlatform: Record<string, number> = {}
+    for (const l of links) {
+      byPlatform[l.platform] = (byPlatform[l.platform] || 0) + 1
+    }
+    return { name: cat.name, value: links.length, byPlatform }
   }).sort((a, b) => b.value - a.value)
+})
+
+// 平台×品类交叉统计 — 用于堆叠条形图
+const stackedByPlatform = computed(() => {
+  const topCats = categories.value.filter(c => !c.parent_code)
+  const platforms = ['youtube', 'reddit', 'amazon', 'news']
+  return {
+    categories: topCats.map(c => c.name),
+    series: platforms.map(p => ({
+      name: platformLabel(p),
+      type: 'bar',
+      stack: 'total',
+      data: topCats.map(cat => {
+        const childCodes = categories.value.filter(c => c.parent_code === cat.code).map(c => c.code)
+        const allCodes = [cat.code, ...childCodes]
+        return allHotLinks.value.filter(l => allCodes.includes(l.category_code || '') && l.platform === p).length
+      }),
+    })),
+  }
 })
 
 async function loadData() {
@@ -118,21 +141,22 @@ function renderCharts() {
     })
   }
 
-  // 2. 品类热点数横向条形图
+  // 2. 品类×平台堆叠条形图
   const barEl = document.getElementById('category-bar')
-  if (barEl && categoryHotLinks.value.length) {
+  if (barEl && stackedByPlatform.value.categories.length) {
     const chart = echarts.init(barEl)
-    const maxVal = Math.max(...categoryHotLinks.value.map(d => d.value)) || 1
     chart.setOption({
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      grid: { left: 110, right: 40, top: 10, bottom: 10 },
-      xAxis: { type: 'value', max: maxVal * 1.3, splitLine: { lineStyle: { color: '#f0f0f0' } }, axisLabel: { color: '#999' } },
-      yAxis: { type: 'category', data: categoryHotLinks.value.map(d => d.name), axisLabel: { fontSize: 12, color: '#666' } },
-      series: [{
-        type: 'bar', barWidth: 14, data: categoryHotLinks.value.map(d => d.value),
-        itemStyle: { color: '#2f6f55', borderRadius: [0, 3, 3, 0] },
-        label: { show: true, position: 'right', fontSize: 12, color: '#999' },
-      }],
+      legend: { top: 0, textStyle: { fontSize: 11, color: '#666' } },
+      grid: { left: 110, right: 30, top: 30, bottom: 10 },
+      xAxis: { type: 'value', splitLine: { lineStyle: { color: '#f0f0f0' } }, axisLabel: { color: '#999' } },
+      yAxis: { type: 'category', data: stackedByPlatform.value.categories, axisLabel: { fontSize: 12, color: '#666' } },
+      series: stackedByPlatform.value.series.map((s, i) => ({
+        ...s,
+        barWidth: 14,
+        itemStyle: { borderRadius: [0, 2, 2, 0] },
+      })),
+      color: ['#2f6f55', '#3b7ea1', '#b8860b', '#8b5a8c'],
     })
   }
 
@@ -158,7 +182,7 @@ onMounted(loadData)
 
       <!-- 品类热点数条形图 -->
       <div class="trend-chart-card">
-        <h3>🔥 各品类热点数量</h3>
+        <h3>🔥 各品类数据来源分布</h3>
         <div id="category-bar" class="chart-container"></div>
       </div>
     </div>
