@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { apiRequest, type Identity } from '../api'
 import type { CategorySummary, HotLink, TrendSignal } from '../types'
@@ -11,67 +11,6 @@ const loading = ref(false)
 const categories = ref<CategorySummary[]>([])
 const allHotLinks = ref<HotLink[]>([])
 const allTrends = ref<TrendSignal[]>([])
-const perCategoryStats = ref<Record<string, { hotLinks: number; trends: number; sources: number; sections: number; filled: number; updated: string | null }>>({})
-
-interface CategoryRow {
-  code: string
-  name: string
-  hotLinks: number
-  trends: number
-  sources: number
-  filled: number
-  total: number
-  updated: string | null
-  health: 'good' | 'fair' | 'poor'
-}
-
-const categoryRows = computed<CategoryRow[]>(() => {
-  return categories.value
-    .filter(c => !c.parent_code)
-    .map(c => {
-      const stats = perCategoryStats.value[c.code] || { hotLinks: 0, trends: 0, sources: 0, sections: 0, filled: 0, updated: null }
-      const children = categories.value.filter(ch => ch.parent_code === c.code)
-      const childStats = children.map(ch => perCategoryStats.value[ch.code] || { hotLinks: 0, trends: 0, sources: 0, sections: 0, filled: 0, updated: null })
-      const totalHot = stats.hotLinks + childStats.reduce((s, v) => s + v.hotLinks, 0)
-      const totalTrends = stats.trends + childStats.reduce((s, v) => s + v.trends, 0)
-      const totalSources = stats.sources + childStats.reduce((s, v) => s + v.sources, 0)
-      const totalFilled = stats.filled + childStats.reduce((s, v) => s + v.filled, 0)
-      const totalSections = stats.sections + childStats.reduce((s, v) => s + v.sections, 0)
-      const latestUpdate = [stats.updated, ...childStats.map(v => v.updated)].filter(Boolean).sort().pop() || null
-      const health: 'good' | 'fair' | 'poor' = totalHot >= 5 && totalFilled >= 6 ? 'good' : totalHot > 0 ? 'fair' : 'poor'
-      return { code: c.code, name: c.name, hotLinks: totalHot, trends: totalTrends, sources: totalSources, filled: totalFilled, total: totalSections, updated: latestUpdate, health }
-    })
-})
-
-const topHotLinks = computed(() =>
-  [...allHotLinks.value]
-    .sort((a, b) => (b.hotness_score || 0) - (a.hotness_score || 0))
-    .slice(0, 10)
-)
-
-// Reddit 讨论精选 — 只显示 Reddit 平台
-const topRedditPosts = computed(() =>
-  allHotLinks.value
-    .filter(l => l.platform === 'reddit')
-    .sort((a, b) => (b.hotness_score || 0) - (a.hotness_score || 0))
-    .slice(0, 10)
-)
-
-// Amazon 选品榜单 — 只显示 Amazon 产品
-const topAmazonProducts = computed(() =>
-  allHotLinks.value
-    .filter(l => l.platform === 'amazon')
-    .slice(0, 10)
-)
-
-// 数据更新日志 — 按更新时间排序
-const updateLog = computed(() => {
-  return categoryRows.value
-    .filter(r => r.updated)
-    .sort((a, b) => new Date(b.updated!).getTime() - new Date(a.updated!).getTime())
-    .map(r => ({ code: r.code, name: r.name, updated: r.updated }))
-    .slice(0, 5)
-})
 
 const categoryNameMap = computed(() => {
   const map: Record<string, string> = {}
@@ -81,6 +20,59 @@ const categoryNameMap = computed(() => {
 
 function categoryName(code: string): string { return categoryNameMap.value[code] || code }
 
+function platformLabel(p: string): string {
+  const labels: Record<string, string> = { google: 'Google', reddit: 'Reddit', youtube: 'YouTube', tiktok: 'TikTok', news: 'News', amazon: 'Amazon', other: 'Other' }
+  return labels[p] || p
+}
+
+function cleanTitle(title: string): string {
+  return (title || '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+}
+
+// 品类数据行
+interface CategoryRow {
+  code: string; name: string; health: string;
+  hotLinks: number; trends: number; sources: number; filled: number; total: number;
+  updated: string | null;
+}
+const categoryRows = ref<CategoryRow[]>([])
+
+function healthLabel(h: string) { return h === 'good' ? '健康' : h === 'fair' ? '一般' : '待更新' }
+function healthType(h: string) { return h === 'good' ? 'success' : h === 'fair' ? 'warning' : 'info' }
+function formatRelativeTime(dateStr: string | null): string {
+  if (!dateStr) return '—'
+  const hours = (Date.now() - new Date(dateStr).getTime()) / 3600000
+  if (hours < 1) return `${Math.floor(hours * 60)}分钟前`
+  if (hours < 24) return `${Math.floor(hours)}小时前`
+  return `${Math.floor(hours / 24)}天前`
+}
+
+function selectCategory(code: string) { emit('select', code) }
+
+// 最新视频 Top 3
+const latestVideos = computed(() =>
+  allHotLinks.value
+    .filter(l => l.platform === 'youtube' && l.hotness_score && l.hotness_score > 0)
+    .sort((a, b) => (b.hotness_score || 0) - (a.hotness_score || 0))
+    .slice(0, 3)
+)
+
+// 最新新闻 Top 3
+const latestNews = computed(() =>
+  allHotLinks.value
+    .filter(l => l.platform === 'news')
+    .slice(0, 3)
+)
+
+// 最新 Reddit 讨论 Top 3
+const latestReddit = computed(() =>
+  allHotLinks.value
+    .filter(l => l.platform === 'reddit')
+    .sort((a, b) => (b.hotness_score || 0) - (a.hotness_score || 0))
+    .slice(0, 3)
+)
+
+// Top 搜索词
 const topKeywords = computed(() => {
   const kts = allTrends.value.filter(t => t.signal_type === 'keyword_trend' && t.keyword)
   const seen = new Set<string>()
@@ -91,34 +83,29 @@ const topKeywords = computed(() => {
       result.push({ keyword: t.keyword, category: categoryName(t.category_code || '') })
     }
   }
-  return result.slice(0, 20)
+  return result.slice(0, 12)
 })
 
-function healthLabel(h: string) { return h === 'good' ? '健康' : h === 'fair' ? '一般' : '待更新' }
-function healthType(h: string) { return h === 'good' ? 'success' : h === 'fair' ? 'warning' : 'info' }
-
-function formatRelativeTime(dateStr: string | null): string {
-  if (!dateStr) return '—'
-  const hours = (Date.now() - new Date(dateStr).getTime()) / 3600000
-  if (hours < 1) return `${Math.floor(hours * 60)}分钟前`
-  if (hours < 24) return `${Math.floor(hours)}小时前`
-  return `${Math.floor(hours / 24)}天前`
-}
-
-function platformLabel(p: string): string {
-  const labels: Record<string, string> = { google: 'Google', reddit: 'Reddit', youtube: 'YouTube', tiktok: 'TikTok', news: 'News', other: 'Other' }
-  return labels[p] || p
-}
-
-function selectCategory(code: string) { emit('select', code) }
+// 平台分布
+const platformDist = computed(() => {
+  const counts: Record<string, number> = {}
+  for (const link of allHotLinks.value) {
+    counts[link.platform] = (counts[link.platform] || 0) + 1
+  }
+  return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([platform, count]) => ({ name: platformLabel(platform), value: count }))
+})
 
 async function loadDashboard() {
   loading.value = true
   try {
     const catResult = await apiRequest<{ items: CategorySummary[] }>('/categories')
+    const topCats = catResult.items.filter(c => !c.parent_code)
     categories.value = catResult.items
-    const codes = catResult.items.map(c => c.code)
-    const results = await Promise.all(codes.map(async (code) => {
+    const codes = topCats.map(c => c.code)
+    // 也请求子品类数据用于聚合
+    const childCodes = catResult.items.filter(c => c.parent_code).map(c => c.code)
+    const allCodes = [...codes, ...childCodes]
+    const results = await Promise.all(allCodes.map(async (code) => {
       try {
         const [cat, hl, ts] = await Promise.all([
           apiRequest<{ sections: Array<{ content: string }> } & { source_count: number }>(`/categories/${code}`),
@@ -136,7 +123,29 @@ async function loadDashboard() {
       }
     }))
     for (const r of results) {
-      perCategoryStats.value[r.code] = r.stats
+      // 跳过子品类（已聚合到一级品类）
+      if (catResult.items.find(c => c.code === r.code)?.parent_code) continue
+      const cat = topCats.find(c => c.code === r.code)
+      // 聚合子品类数据
+      const childCodes = catResult.items.filter(c => c.parent_code === r.code).map(c => c.code)
+      for (const childCode of childCodes) {
+        const childResult = results.find(res => res.code === childCode)
+        if (childResult) {
+          r.stats.hotLinks += childResult.stats.hotLinks
+          r.stats.trends += childResult.stats.trends
+          r.hotLinks.push(...childResult.hotLinks)
+          r.trends.push(...childResult.trends)
+        }
+      }
+      const health = r.stats.updated ? (Date.now() - new Date(r.stats.updated).getTime() < 86400000 ? 'good' : 'fair') : 'poor'
+      categoryRows.value.push({
+        code: r.code, name: cat?.name || r.code, health,
+        hotLinks: r.stats.hotLinks, trends: r.stats.trends, sources: r.stats.sources,
+        filled: r.stats.filled, total: r.stats.sections,
+        updated: r.stats.updated,
+      })
+      // 给 hot_links 加上 category_code
+      for (const hl of r.hotLinks) { (hl as any).category_code = r.code }
       allHotLinks.value.push(...r.hotLinks)
       allTrends.value.push(...r.trends)
     }
@@ -147,28 +156,13 @@ async function loadDashboard() {
   }
 }
 
-function cleanTitle(title: string): string {
-  return (title || '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-}
-
-// 搜索结果高亮
-function highlightText(text: string, query: string): string {
-  if (!query.trim()) return text
-  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>')
-}
-
-onMounted(loadDashboard)
-
-// 底部面板 tab 切换
-const bottomTab = ref<'reddit' | 'amazon'>('reddit')
-
-// 渲染迷你环形图
 function renderMiniCharts() {
+  const echarts = (window as any).echarts
+  if (!echarts) return
   for (const row of categoryRows.value) {
     const el = document.getElementById(`chart-${row.code}`)
     if (!el || !(window as any).echarts) continue
-    const chart = (window as any).echarts.init(el)
+    const chart = echarts.init(el)
     const total = row.hotLinks + row.trends + row.sources
     if (total === 0) {
       chart.setOption({ graphic: { type: 'text', style: { text: '无数据', fontSize: 12, fill: '#ccc' }, left: 'center', top: 'center' } })
@@ -176,12 +170,8 @@ function renderMiniCharts() {
     }
     chart.setOption({
       series: [{
-        type: 'pie',
-        radius: ['55%', '80%'],
-        center: ['50%', '50%'],
-        silent: true,
-        label: { show: false },
-        labelLine: { show: false },
+        type: 'pie', radius: ['55%', '80%'], center: ['50%', '50%'],
+        silent: true, label: { show: false }, labelLine: { show: false },
         data: [
           { value: row.hotLinks, name: '热点', itemStyle: { color: '#e74c3c' } },
           { value: row.trends, name: '趋势', itemStyle: { color: '#3b7ea1' } },
@@ -192,17 +182,16 @@ function renderMiniCharts() {
   }
 }
 
-// 数据加载完后渲染图表
-watch([loading, categoryRows], ([isLoading]) => {
-  if (!isLoading) {
-    setTimeout(renderMiniCharts, 100)
-  }
-}, { onTrigger: () => {} })
+watch(loading, (isLoading) => {
+  if (!isLoading) nextTick(() => setTimeout(renderMiniCharts, 100))
+})
+
+onMounted(loadDashboard)
 </script>
 
 <template>
   <main v-loading="loading" class="dashboard-page">
-    <!-- 品类卡片墙 — 每个品类一张紧凑卡片，含迷你环形图 -->
+    <!-- 品类卡片墙 -->
     <section class="cat-grid">
       <div
         v-for="row in categoryRows"
@@ -230,61 +219,78 @@ watch([loading, categoryRows], ([isLoading]) => {
       </div>
     </section>
 
-    <!-- Reddit 讨论 + Amazon 选品 tab 切换 -->
-    <section class="bottom-panel">
-      <div class="panel-header">
-        <div class="panel-tabs">
-          <button :class="{ active: bottomTab === 'reddit' }" @click="bottomTab = 'reddit'">💬 社区讨论</button>
-          <button :class="{ active: bottomTab === 'amazon' }" @click="bottomTab = 'amazon'">🛒 Amazon 选品</button>
+    <!-- 三列最新动态 — 精选，不重复06章节的完整列表 -->
+    <section class="latest-grid">
+      <!-- 最新视频 -->
+      <div class="latest-panel">
+        <div class="panel-header">
+          <h2>📺 最新视频</h2>
+          <span class="panel-hint">热度 Top 3</span>
         </div>
-        <span class="panel-hint">{{ bottomTab === 'reddit' ? 'Reddit 真实用户讨论' : '搜索排名 Top 产品' }}</span>
+        <div v-if="latestVideos.length" class="hot-list">
+          <a v-for="link in latestVideos" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-row">
+            <div class="hot-row-main">
+              <div class="hot-row-title">{{ cleanTitle(link.title) }}</div>
+              <div class="hot-row-meta">
+                <el-tag size="small" effect="plain">YouTube</el-tag>
+                <span class="hot-row-cat" v-if="categoryName(link.category_code || '')">{{ categoryName(link.category_code || '') }}</span>
+                <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
+              </div>
+            </div>
+          </a>
+        </div>
+        <el-empty v-else description="暂无视频" :image-size="50" />
       </div>
-      <div class="panel-body">
-        <!-- Reddit 讨论 -->
-        <div v-if="bottomTab === 'reddit'">
-          <div v-if="topRedditPosts.length" class="hot-list">
-            <a
-              v-for="link in topRedditPosts"
-              :key="link.id"
-              :href="link.url"
-              target="_blank"
-              rel="noreferrer noopener"
-              class="hot-row"
-            >
-              <div class="hot-row-main">
-                <div class="hot-row-title">{{ cleanTitle(link.title) }}</div>
-                <div class="hot-row-meta">
-                  <el-tag size="small" effect="plain">{{ platformLabel(link.platform) }}</el-tag>
-                  <span class="hot-row-cat" v-if="categoryName(link.category_code)">{{ categoryName(link.category_code) }}</span>
-                  <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
-                </div>
-              </div>
-              <span class="hot-row-time">{{ formatRelativeTime(link.collected_at) }}</span>
-            </a>
-          </div>
-          <el-empty v-else description="暂无 Reddit 讨论数据" :image-size="60" />
+
+      <!-- 最新讨论 -->
+      <div class="latest-panel">
+        <div class="panel-header">
+          <h2>💬 热门讨论</h2>
+          <span class="panel-hint">Reddit Top 3</span>
         </div>
-        <!-- Amazon 选品 -->
-        <div v-else>
-          <div v-if="topAmazonProducts.length" class="hot-list">
-            <a
-              v-for="link in topAmazonProducts"
-              :key="link.id"
-              :href="link.url"
-              target="_blank"
-              rel="noreferrer noopener"
-              class="hot-row"
-            >
-              <div class="hot-row-main">
-                <div class="hot-row-title">{{ cleanTitle(link.title) }}</div>
-                <div class="hot-row-meta">
-                  <el-tag size="small" effect="plain" type="success">Amazon</el-tag>
-                  <span class="hot-row-cat" v-if="categoryName(link.category_code)">{{ categoryName(link.category_code) }}</span>
-                </div>
+        <div v-if="latestReddit.length" class="hot-list">
+          <a v-for="link in latestReddit" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-row">
+            <div class="hot-row-main">
+              <div class="hot-row-title">{{ cleanTitle(link.title) }}</div>
+              <div class="hot-row-meta">
+                <el-tag size="small" effect="plain">Reddit</el-tag>
+                <span class="hot-row-cat" v-if="categoryName(link.category_code || '')">{{ categoryName(link.category_code || '') }}</span>
+                <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
               </div>
-            </a>
+            </div>
+          </a>
+        </div>
+        <el-empty v-else description="暂无讨论" :image-size="50" />
+      </div>
+
+      <!-- 搜索趋势词 -->
+      <div class="latest-panel">
+        <div class="panel-header">
+          <h2>🔑 搜索趋势词</h2>
+          <span class="panel-hint">Google Top 12</span>
+        </div>
+        <div v-if="topKeywords.length" class="kw-tag-list">
+          <span v-for="(kw, i) in topKeywords" :key="i" class="kw-tag" @click="selectCategory(categories.find(c => c.name === kw.category)?.code || '')">
+            {{ kw.keyword }}<small>{{ kw.category }}</small>
+          </span>
+        </div>
+        <el-empty v-else description="暂无关键词" :image-size="50" />
+      </div>
+    </section>
+
+    <!-- 平台分布概览 -->
+    <section class="platform-overview">
+      <div class="panel-header">
+        <h2>📡 数据来源分布</h2>
+        <span class="panel-hint">{{ allHotLinks.length }} 条总数据</span>
+      </div>
+      <div class="platform-bars">
+        <div v-for="p in platformDist" :key="p.name" class="platform-bar">
+          <span class="platform-name">{{ p.name }}</span>
+          <div class="platform-bar-track">
+            <div class="platform-bar-fill" :style="{ width: `${(p.value / Math.max(...platformDist.map(d => d.value)) * 100)}%` }"></div>
           </div>
-          <el-empty v-else description="暂无 Amazon 产品数据" :image-size="60" />
+          <span class="platform-count">{{ p.value }}</span>
         </div>
       </div>
     </section>

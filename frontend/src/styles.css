@@ -1603,7 +1603,40 @@ footer .stale {
 /* ── Dashboard ── */
 .dashboard-page { padding: 20px 24px; flex: 1; width: 100%; overflow-y: auto; }
 
-/* 品类卡片墙 — 6列网格，第一行3张各占2列，第二行2张各占3列 */
+/* 三列最新动态 */
+.latest-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.latest-panel {
+  background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+  border-radius: 8px; padding: 14px 16px; height: 320px;
+  display: flex; flex-direction: column;
+}
+.latest-panel .hot-list { overflow-y: auto; flex: 1; }
+.latest-panel .el-empty { flex: 1; display: flex; align-items: center; justify-content: center; }
+
+/* 搜索趋势词标签 */
+.kw-tag-list { display: flex; flex-wrap: wrap; gap: 6px; overflow-y: auto; flex: 1; }
+.kw-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 4px; font-size: 12px;
+  background: #f5f5f5; color: var(--text-secondary); cursor: pointer;
+  transition: background .12s;
+}
+.kw-tag:hover { background: #e8f3ef; color: var(--brand-green, #2f6650); }
+.kw-tag small { font-size: 10px; color: var(--text-quaternary); margin-left: 4px; }
+
+/* 平台分布条形图 */
+.platform-overview {
+  background: var(--surface); box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+  border-radius: 8px; padding: 16px;
+}
+.platform-bars { display: flex; flex-direction: column; gap: 8px; }
+.platform-bar { display: flex; align-items: center; gap: 12px; }
+.platform-name { width: 80px; font-size: 13px; color: var(--ink); font-weight: 500; flex-shrink: 0; }
+.platform-bar-track { flex: 1; height: 20px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+.platform-bar-fill { height: 100%; border-radius: 4px; background: var(--brand-green, #2f6650); transition: width .4s; }
+.platform-count { width: 40px; font-size: 13px; color: var(--text-secondary); text-align: right; flex-shrink: 0; }
+
+/* 品类卡片墙 */
 .cat-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
