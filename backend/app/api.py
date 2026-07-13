@@ -286,7 +286,9 @@ def search(
         .where(
             or_(
                 HotLink.title.contains(keyword),
+                HotLink.title_zh.contains(keyword),
                 HotLink.description.contains(keyword),
+                HotLink.description_zh.contains(keyword),
                 HotLink.url.contains(keyword),
             )
         )
@@ -294,12 +296,14 @@ def search(
         .limit(limit)
     ).all()
     for link, category in hotlink_rows:
+        display_title = link.title_zh or link.title
+        display_description = link.description_zh or link.description
         items.append(
             {
                 "kind": "hotlink",
                 "category_code": category.code,
-                "title": f"🔗 {link.title}",
-                "snippet": f"{link.platform} · {link.description[:100]}" if link.description else link.platform,
+                "title": f"🔗 {display_title}",
+                "snippet": f"{link.platform} · {display_description[:100]}" if display_description else link.platform,
                 "section_key": "market",
             }
         )
@@ -310,19 +314,24 @@ def search(
         .where(
             or_(
                 TrendSignal.keyword.contains(keyword),
+                TrendSignal.title.contains(keyword),
+                TrendSignal.title_zh.contains(keyword),
                 TrendSignal.summary.contains(keyword),
+                TrendSignal.summary_zh.contains(keyword),
             )
         )
         .order_by(TrendSignal.collected_at.desc())
         .limit(limit)
     ).all()
     for signal, category in trend_rows:
+        display_title = signal.title_zh or signal.title or signal.keyword
+        display_summary = signal.summary_zh or signal.summary
         items.append(
             {
                 "kind": "trend",
                 "category_code": category.code,
-                "title": f"📊 {signal.keyword or signal.title}",
-                "snippet": f"{signal.platform} · {signal.summary[:100]}" if signal.summary else signal.platform,
+                "title": f"📊 {display_title}",
+                "snippet": f"{signal.platform} · {display_summary[:100]}" if display_summary else signal.platform,
                 "section_key": "market",
             }
         )
@@ -401,10 +410,12 @@ def create_trend_signal(body: TrendSignalCreate, db: Db, actor: WriteActor):
         platform=body.platform,
         keyword=body.keyword,
         title=body.title,
+        title_zh=body.title_zh,
         metric_value=body.metric_value,
         metric_unit=body.metric_unit,
         trend_direction=body.trend_direction,
         summary=body.summary,
+        summary_zh=body.summary_zh,
     )
     db.add(signal)
     db.commit()
@@ -429,10 +440,12 @@ def create_trend_signals_batch(body: TrendSignalBatch, db: Db, actor: WriteActor
             platform=item.platform,
             keyword=item.keyword,
             title=item.title,
+            title_zh=item.title_zh,
             metric_value=item.metric_value,
             metric_unit=item.metric_unit,
             trend_direction=item.trend_direction,
             summary=item.summary,
+            summary_zh=item.summary_zh,
         )
         db.add(signal)
         db.flush()
@@ -474,10 +487,12 @@ def list_trend_signals(
                 "platform": item.platform,
                 "keyword": item.keyword,
                 "title": item.title,
+                "title_zh": item.title_zh,
                 "metric_value": item.metric_value,
                 "metric_unit": item.metric_unit,
                 "trend_direction": item.trend_direction,
                 "summary": item.summary,
+                "summary_zh": item.summary_zh,
                 "collected_at": item.collected_at,
             }
             for item in rows
@@ -499,8 +514,10 @@ def create_hot_link(body: HotLinkCreate, db: Db, actor: WriteActor):
         link_type=body.link_type,
         platform=body.platform,
         title=body.title,
+        title_zh=body.title_zh,
         url=str(body.url),
         description=body.description,
+        description_zh=body.description_zh,
         hotness_score=body.hotness_score,
         is_hot=body.is_hot,
     )
@@ -526,8 +543,10 @@ def create_hot_links_batch(body: HotLinkBatch, db: Db, actor: WriteActor):
             link_type=item.link_type,
             platform=item.platform,
             title=item.title,
+            title_zh=item.title_zh,
             url=str(item.url),
             description=item.description,
+            description_zh=item.description_zh,
             hotness_score=item.hotness_score,
             is_hot=item.is_hot,
         )
@@ -572,8 +591,10 @@ def list_hot_links(
                 "link_type": item.link_type,
                 "platform": item.platform,
                 "title": item.title,
+                "title_zh": item.title_zh,
                 "url": item.url,
                 "description": item.description,
+                "description_zh": item.description_zh,
                 "hotness_score": item.hotness_score,
                 "is_hot": item.is_hot,
                 "collected_at": item.collected_at,
