@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
+from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -48,7 +50,7 @@ from app.security import (
     get_actor,
     revoke_session,
 )
-from app.services.agent_service import AgentError, chat as agent_chat, run_scan
+from app.services.agent_service import AgentError, chat as agent_chat, chat_stream as agent_chat_stream, run_scan
 from app.services.content_service import ContentError, save_section
 
 
@@ -401,10 +403,12 @@ def create_trend_signal(body: TrendSignalCreate, db: Db, actor: WriteActor):
         platform=body.platform,
         keyword=body.keyword,
         title=body.title,
+        title_zh=body.title_zh,
         metric_value=body.metric_value,
         metric_unit=body.metric_unit,
         trend_direction=body.trend_direction,
         summary=body.summary,
+        summary_zh=body.summary_zh,
     )
     db.add(signal)
     db.commit()
@@ -429,10 +433,12 @@ def create_trend_signals_batch(body: TrendSignalBatch, db: Db, actor: WriteActor
             platform=item.platform,
             keyword=item.keyword,
             title=item.title,
+            title_zh=item.title_zh,
             metric_value=item.metric_value,
             metric_unit=item.metric_unit,
             trend_direction=item.trend_direction,
             summary=item.summary,
+            summary_zh=item.summary_zh,
         )
         db.add(signal)
         db.flush()
@@ -474,10 +480,12 @@ def list_trend_signals(
                 "platform": item.platform,
                 "keyword": item.keyword,
                 "title": item.title,
+                "title_zh": item.title_zh,
                 "metric_value": item.metric_value,
                 "metric_unit": item.metric_unit,
                 "trend_direction": item.trend_direction,
                 "summary": item.summary,
+                "summary_zh": item.summary_zh,
                 "collected_at": item.collected_at,
             }
             for item in rows
@@ -499,8 +507,10 @@ def create_hot_link(body: HotLinkCreate, db: Db, actor: WriteActor):
         link_type=body.link_type,
         platform=body.platform,
         title=body.title,
+        title_zh=body.title_zh,
         url=str(body.url),
         description=body.description,
+        description_zh=body.description_zh,
         hotness_score=body.hotness_score,
         is_hot=body.is_hot,
     )
@@ -526,8 +536,10 @@ def create_hot_links_batch(body: HotLinkBatch, db: Db, actor: WriteActor):
             link_type=item.link_type,
             platform=item.platform,
             title=item.title,
+            title_zh=item.title_zh,
             url=str(item.url),
             description=item.description,
+            description_zh=item.description_zh,
             hotness_score=item.hotness_score,
             is_hot=item.is_hot,
         )
@@ -572,8 +584,10 @@ def list_hot_links(
                 "link_type": item.link_type,
                 "platform": item.platform,
                 "title": item.title,
+                "title_zh": item.title_zh,
                 "url": item.url,
                 "description": item.description,
+                "description_zh": item.description_zh,
                 "hotness_score": item.hotness_score,
                 "is_hot": item.is_hot,
                 "collected_at": item.collected_at,
@@ -876,6 +890,32 @@ def agent_scan_chat(scan_id: int, body: AgentChatRequest, db: Db, actor: WriteAc
         return {"content": result["content"], "usage": result.get("usage", {})}
     except AgentError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@router.post("/agent/scans/{scan_id}/chat/stream")
+def agent_scan_chat_stream(scan_id: int, body: AgentChatRequest, actor: WriteActor):
+    """流式多轮对话（SSE）。不长期持有 DB 连接。"""
+    ensure_role(actor, "admin", "data", "researcher")
+
+    def generate() -> Iterator[str]:
+        try:
+            for event in agent_chat_stream(scan_id, body.message):
+                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as exc:  # noqa: BLE001 — SSE 内兜底，避免连接悬挂
+            payload = {"event": "error", "data": {"message": str(exc)[:240]}}
+            yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+            yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/agent/scans/{scan_id}/discoveries")

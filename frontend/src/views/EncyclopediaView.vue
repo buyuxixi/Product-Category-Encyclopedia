@@ -48,8 +48,12 @@ const groupedHotLinks = computed(() => {
   for (const link of filteredHotLinks.value) {
     const type = link.link_type
     if (!groups[type]) groups[type] = []
-    // 清理 description 中的 HTML 实体
-    const cleaned = { ...link, description: link.description ? cleanHtmlEntities(link.description) : link.description }
+    // 清理 description / description_zh 中的 HTML 实体
+    const cleaned = {
+      ...link,
+      description: link.description ? cleanHtmlEntities(link.description) : link.description,
+      description_zh: link.description_zh ? cleanHtmlEntities(link.description_zh) : link.description_zh,
+    }
     groups[type].push(cleaned)
   }
   // 产品按热度降序排序
@@ -80,6 +84,15 @@ const linkTypeLabels: Record<string, string> = {
   news: '📰 新闻动态',
   keyword: '🔑 关键词',
 }
+
+/** 社区讨论 Tab：Reddit discussion + 小红书 social_post */
+const discussionHotLinks = computed(() => {
+  const links = [
+    ...(groupedHotLinks.value['discussion'] || []),
+    ...(groupedHotLinks.value['social_post'] || []),
+  ]
+  return links.sort((a, b) => (b.hotness_score || 0) - (a.hotness_score || 0))
+})
 
 const lastHotLinkUpdate = computed(() => {
   if (!hotLinks.value.length) return null
@@ -153,6 +166,7 @@ function signalTypeLabel(type: string): string {
     keyword_trend: '关键词趋势',
     news_volume: '新闻量',
     review_sentiment: '评论情感',
+    user_pain_point: '用户痛点',
   }
   return labels[type] || type
 }
@@ -166,7 +180,8 @@ function trendDirectionLabel(dir: string | null): string {
 function platformLabel(p: string): string {
   const labels: Record<string, string> = {
     google: 'Google', amazon: 'Amazon', reddit: 'Reddit',
-    youtube: 'YouTube', tiktok: 'TikTok', x: 'X', facebook: 'Facebook', news: 'News', other: 'Other',
+    youtube: 'YouTube', tiktok: 'TikTok', xiaohongshu: '小红书',
+    x: 'X', facebook: 'Facebook', news: 'News', other: 'Other',
   }
   return labels[p] || p
 }
@@ -203,11 +218,16 @@ function renderMarkdown(md: string): string {
       inList = null
     }
   }
+  function isTableSeparator(line: string): boolean {
+    // GFM separator: each cell is only dashes with optional leading/trailing colon
+    // e.g. |---|:---:|-|  — must NOT match data rows that merely contain "-"
+    const cells = splitTableRow(line)
+    return cells.length > 0 && cells.every((c) => /^:?-{1,}:?$/.test(c))
+  }
+
   function flushTable() {
     if (tableBuffer.length >= 2) {
-      // Find separator line index
-      const sepIdx = tableBuffer.findIndex((l) => l.trim().startsWith('|') && /[-:]/.test(l) && !l.includes('---'))
-      const realSepIdx = sepIdx >= 0 ? sepIdx : (tableBuffer.length > 1 && /[-:]/.test(tableBuffer[1]) ? 1 : -1)
+      const realSepIdx = tableBuffer.findIndex((l) => isTableSeparator(l))
 
       if (realSepIdx > 0) {
         const headerCells = splitTableRow(tableBuffer[0])
@@ -216,7 +236,7 @@ function renderMarkdown(md: string): string {
         for (const cell of headerCells) t += `<th>${inlineFormat(cell)}</th>`
         t += '</tr></thead><tbody>'
         for (const row of bodyRows) {
-          if (!row.trim()) continue
+          if (!row.trim() || isTableSeparator(row)) continue
           const cells = splitTableRow(row)
           t += '<tr>'
           for (const cell of cells) t += `<td>${inlineFormat(cell)}</td>`
@@ -292,18 +312,30 @@ function renderMarkdown(md: string): string {
           flushTable()
         }
 
-        // Sub-section headings (### and deeper) — wrap in card
+        // Sub-section headings (### and deeper)
+        // Only numbered majors like "### 3.1 xxx" / "### 4.2 xxx" open a new card.
+        // Nested titles ("### 药盒功能需求", "#### 1. ...") stay inside the current card,
+        // so the parent title is not left alone in an empty block.
         if (/^#{3,6}\s/.test(trimmed)) {
           flushList()
-          closeCard()
           const match = trimmed.match(/^(#{3,6})\s+(.+)/)
           if (match) {
             const level = match[1].length
             const text = match[2]
             const tag = level === 3 ? 'h4' : level === 4 ? 'h5' : 'h6'
-            html.push('<div class="md-subsection">')
-            inCard = true
-            html.push(`<${tag} class="md-subheading">${inlineFormat(text)}</${tag}>`)
+            const isMajorCard = level === 3 && /^\d+\.\d+\s/.test(text)
+            if (isMajorCard) {
+              closeCard()
+              html.push('<div class="md-subsection">')
+              inCard = true
+              html.push(`<${tag} class="md-subheading">${inlineFormat(text)}</${tag}>`)
+            } else {
+              if (!inCard) {
+                html.push('<div class="md-subsection">')
+                inCard = true
+              }
+              html.push(`<${tag} class="md-subheading md-subheading-nested">${inlineFormat(text)}</${tag}>`)
+            }
           }
           i++
           continue
@@ -522,7 +554,7 @@ function buildSectionMarkdown(): string {
     for (const group of Object.entries(groupedHotLinks.value)) {
       md += `### ${linkTypeLabels[group[0]] || group[0]}\n\n`
       for (const link of group[1]) {
-        md += `- [${link.title}](${link.url}) — ${platformLabel(link.platform)}${link.hotness_score ? ` (热度 ${link.hotness_score})` : ''}\n`
+        md += `- [${link.title_zh || link.title}](${link.url}) — ${platformLabel(link.platform)}${link.hotness_score ? ` (热度 ${link.hotness_score})` : ''}\n`
       }
       md += '\n'
     }
@@ -851,7 +883,8 @@ onMounted(() => {
                 <div v-if="groupedHotLinks['product']" class="hot-link-group">
                   <div class="hot-links-list">
                     <a v-for="link in groupedHotLinks['product'].filter(l => l.description && !l.description.includes('\$?') && !l.description.includes('0 reviews')).slice(0, 20)" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
-                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title }}</div>
+                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title_zh || link.title }}</div>
+                      <div v-if="link.title_zh && link.title" class="hot-link-title-en">{{ link.title }}</div>
                       <div class="hot-link-meta">
                         <el-tag size="small" effect="plain" type="success">Amazon</el-tag>
                         <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
@@ -871,13 +904,14 @@ onMounted(() => {
                 <div v-if="groupedHotLinks['video']" class="hot-link-group">
                   <div class="hot-links-list">
                     <a v-for="link in groupedHotLinks['video']" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
-                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title }}</div>
+                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title_zh || link.title }}</div>
+                      <div v-if="link.title_zh && link.title" class="hot-link-title-en">{{ link.title }}</div>
                       <div class="hot-link-meta">
                         <el-tag size="small" effect="plain">YouTube</el-tag>
                         <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
                         <button class="fav-btn" :class="{ active: isFavorited(link.url) }" @click.prevent="toggleFavorite(link.url)">⭐</button>
                       </div>
-                      <div v-if="link.description" class="hot-link-desc">{{ link.description }}</div>
+                      <div v-if="link.description_zh || link.description" class="hot-link-desc">{{ link.description_zh || link.description }}</div>
                       <small class="hot-link-date">{{ formatDate(link.collected_at) }}</small>
                     </a>
                   </div>
@@ -885,24 +919,25 @@ onMounted(() => {
                 <el-empty v-else description="暂无 YouTube 视频数据" :image-size="60" />
               </div>
 
-              <!-- 社区讨论 (Reddit) -->
+              <!-- 社区讨论 (Reddit + 小红书 social_post) -->
               <div v-if="activeSectionKey === 'market' && marketTab === 'discussions'" class="hot-links-section">
                 <div class="hot-links-header"><span class="evidence-label">💬 社区讨论</span></div>
-                <div v-if="groupedHotLinks['discussion']" class="hot-link-group">
+                <div v-if="discussionHotLinks.length" class="hot-link-group">
                   <div class="hot-links-list">
-                    <a v-for="link in groupedHotLinks['discussion']" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
-                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title }}</div>
+                    <a v-for="link in discussionHotLinks" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
+                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title_zh || link.title }}</div>
+                      <div v-if="link.title_zh && link.title" class="hot-link-title-en">{{ link.title }}</div>
                       <div class="hot-link-meta">
-                        <el-tag size="small" effect="plain">Reddit</el-tag>
+                        <el-tag size="small" effect="plain">{{ platformLabel(link.platform) }}</el-tag>
                         <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
                         <button class="fav-btn" :class="{ active: isFavorited(link.url) }" @click.prevent="toggleFavorite(link.url)">⭐</button>
                       </div>
-                      <div v-if="link.description" class="hot-link-desc">{{ link.description }}</div>
+                      <div v-if="link.description_zh || link.description" class="hot-link-desc">{{ link.description_zh || link.description }}</div>
                       <small class="hot-link-date">{{ formatDate(link.collected_at) }}</small>
                     </a>
                   </div>
                 </div>
-                <el-empty v-else description="暂无 Reddit 讨论数据" :image-size="60" />
+                <el-empty v-else description="暂无社区讨论数据" :image-size="60" />
               </div>
 
               <!-- 趋势信号 -->
@@ -915,13 +950,14 @@ onMounted(() => {
                       <span class="trend-signal-platform">{{ platformLabel(signal.platform) }}</span>
                       <span v-if="signal.trend_direction" class="trend-signal-direction" :class="`dir-${signal.trend_direction}`">{{ trendDirectionLabel(signal.trend_direction) }}</span>
                     </div>
-                    <div v-if="signal.title" class="trend-signal-title">{{ signal.title }}</div>
+                    <div v-if="signal.title" class="trend-signal-title">{{ signal.title_zh || signal.title }}</div>
+                    <div v-if="signal.title_zh && signal.title" class="trend-signal-title-en">{{ signal.title }}</div>
                     <div v-if="signal.keyword" class="trend-signal-keyword">关键词：{{ signal.keyword }}</div>
                     <div v-if="signal.metric_value !== null && signal.metric_value !== undefined" class="trend-signal-metric">
                       <span class="metric-value">{{ signal.metric_value }}</span>
                       <span v-if="signal.metric_unit" class="metric-unit">{{ signal.metric_unit }}</span>
                     </div>
-                    <div v-if="signal.summary" class="trend-signal-summary">{{ signal.summary }}</div>
+                    <div v-if="signal.summary_zh || signal.summary" class="trend-signal-summary">{{ signal.summary_zh || signal.summary }}</div>
                     <small class="trend-signal-date">{{ formatDate(signal.collected_at) }}</small>
                   </div>
                 </div>
@@ -949,13 +985,14 @@ onMounted(() => {
                     <div class="hot-link-group-title">{{ linkTypeLabels[type] || type }}</div>
                     <div class="hot-links-list">
                       <a v-for="link in groupedHotLinks[type]" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
-                        <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title }}</div>
+                        <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title_zh || link.title }}</div>
+                      <div v-if="link.title_zh && link.title" class="hot-link-title-en">{{ link.title }}</div>
                         <div class="hot-link-meta">
                           <el-tag size="small" effect="plain">{{ platformLabel(link.platform) }}</el-tag>
                           <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
                           <button class="fav-btn" :class="{ active: isFavorited(link.url) }" @click.prevent="toggleFavorite(link.url)">⭐</button>
                         </div>
-                        <div v-if="link.description" class="hot-link-desc">{{ link.description }}</div>
+                        <div v-if="type === 'product' ? link.description : (link.description_zh || link.description)" class="hot-link-desc">{{ type === 'product' ? link.description : (link.description_zh || link.description) }}</div>
                         <small class="hot-link-date">{{ formatDate(link.collected_at) }}</small>
                       </a>
                     </div>
@@ -976,13 +1013,14 @@ onMounted(() => {
                         <span class="trend-signal-platform">{{ platformLabel(signal.platform) }}</span>
                         <span v-if="signal.trend_direction" class="trend-signal-direction" :class="`dir-${signal.trend_direction}`">{{ trendDirectionLabel(signal.trend_direction) }}</span>
                       </div>
-                      <div v-if="signal.title" class="trend-signal-title">{{ signal.title }}</div>
+                      <div v-if="signal.title" class="trend-signal-title">{{ signal.title_zh || signal.title }}</div>
+                      <div v-if="signal.title_zh && signal.title" class="trend-signal-title-en">{{ signal.title }}</div>
                       <div v-if="signal.keyword" class="trend-signal-keyword">关键词：{{ signal.keyword }}</div>
                       <div v-if="signal.metric_value !== null && signal.metric_value !== undefined" class="trend-signal-metric">
                         <span class="metric-value">{{ signal.metric_value }}</span>
                         <span v-if="signal.metric_unit" class="metric-unit">{{ signal.metric_unit }}</span>
                       </div>
-                      <div v-if="signal.summary" class="trend-signal-summary">{{ signal.summary }}</div>
+                      <div v-if="signal.summary_zh || signal.summary" class="trend-signal-summary">{{ signal.summary_zh || signal.summary }}</div>
                       <small class="trend-signal-date">{{ formatDate(signal.collected_at) }}</small>
                     </div>
                   </div>

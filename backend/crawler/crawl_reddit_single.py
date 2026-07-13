@@ -13,10 +13,8 @@
 """
 from __future__ import annotations
 
-import json
 import os
 import sys
-import time
 
 # 必须先设置脚本路径
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -26,11 +24,11 @@ sys.path.insert(0, SCRIPTS_DIR)
 API_BASE = os.getenv("ENCYCLOPEDIA_API_BASE", "http://localhost:8010/api/v1")
 os.environ["ENCYCLOPEDIA_API_BASE"] = API_BASE
 
-from crawl_reddit import REDDIT_SOURCES, crawl_reddit, _try_rss_search
+from crawl_reddit import REDDIT_SOURCES, crawl_reddit
 
 
 def crawl_single_category(category_code: str) -> dict:
-    """爬取单个品类的 Reddit 数据。"""
+    """爬取单个品类的 Reddit 数据，优先使用 OAuth，失败时回退 RSS。"""
     sources = REDDIT_SOURCES.get(category_code, [])
     if not sources:
         print(f"[ERROR] Unknown category: {category_code}")
@@ -39,83 +37,12 @@ def crawl_single_category(category_code: str) -> dict:
 
     print(f"=== Reddit crawl: {category_code} ===")
     print(f"  Sources: {len(sources)} subreddit(s)")
-
-    all_hot_links = []
-    all_trend_signals = []
-
-    for i, source in enumerate(sources):
-        sub = source["subreddit"]
-        kw = source["keyword"]
-
-        # 第一个请求前也等 5 秒（防止和上一个 cron job 的请求撞车）
-        if i == 0:
-            time.sleep(5)
-
-        print(f"  [{i+1}/{len(sources)}] r/{sub} q={kw} ...")
-        posts = _try_rss_search(sub, kw)
-
-        if not posts:
-            print(f"    -> 0 posts (rate-limited or no results)")
-            # 请求间隔 35 秒
-            if i < len(sources) - 1:
-                print(f"    waiting 35s before next request...")
-                time.sleep(35)
-            continue
-
-        print(f"    -> {len(posts)} posts")
-        for post in posts[:3]:
-            print(f"       {post['title'][:60]}")
-
-        # 用 crawl_reddit 的评分逻辑
-        from crawl_reddit import _score_post
-        total_interactions = 0
-        valid_posts = 0
-
-        for post in posts:
-            comments = post.get("num_comments", 0)
-            ups = post.get("ups", 0)
-            days_ago = post.get("days_ago")
-
-            score, is_hot = _score_post(comments, ups, days_ago)
-            if score < 0:
-                continue
-
-            total_interactions += comments + ups
-            valid_posts += 1
-
-            all_hot_links.append({
-                "category_code": category_code,
-                "section_key": "users",
-                "link_type": "discussion",
-                "platform": "reddit",
-                "title": post["title"][:500],
-                "url": post["permalink"],
-                "description": f"r/{sub} · {post.get('desc', '')[:200]}" if post.get("desc") else f"r/{sub}",
-                "hotness_score": score,
-                "is_hot": is_hot,
-            })
-
-        if valid_posts > 0:
-            all_trend_signals.append({
-                "category_code": category_code,
-                "section_key": "market",
-                "signal_type": "social_mention",
-                "platform": "reddit",
-                "keyword": kw,
-                "title": f"Reddit r/{sub}: {kw}",
-                "metric_value": float(total_interactions),
-                "metric_unit": "interactions",
-                "trend_direction": "up" if total_interactions > 10 else "stable",
-                "summary": f"r/{sub}: {valid_posts} 帖, 总互动 {total_interactions}",
-            })
-
-        # 请求间隔 40 秒（Reddit 限流严格）
-        if i < len(sources) - 1:
-            print(f"    waiting 40s before next request...")
-            time.sleep(40)
-
-    print(f"\n  Total: {len(all_hot_links)} hot_links, {len(all_trend_signals)} trend_signals")
-    return {"hot_links": all_hot_links, "trend_signals": all_trend_signals}
+    result = crawl_reddit(category_code, sources)
+    print(
+        f"\n  Total: {len(result['hot_links'])} hot_links, "
+        f"{len(result['trend_signals'])} trend_signals"
+    )
+    return result
 
 
 def push_single(category_code: str, crawl_result: dict) -> dict:
@@ -177,6 +104,15 @@ def push_single(category_code: str, crawl_result: dict) -> dict:
     # 推送新的 hot_links
     hot_links = crawl_result.get("hot_links", [])
     trend_signals = crawl_result.get("trend_signals", [])
+
+    # LLM 中文标签（与 push_all 对齐；SKIP_TRANSLATION=1 可跳过）
+    if os.getenv("SKIP_TRANSLATION", "").lower() not in {"1", "true", "yes"}:
+        if hot_links or trend_signals:
+            print("  Translating Chinese labels...")
+            from translate_zh import translate_crawl_result
+            translate_crawl_result({"hot_links": hot_links, "trend_signals": trend_signals})
+    else:
+        print("  Skipping translation (SKIP_TRANSLATION=1)")
 
     if hot_links:
         resp = httpx.post(

@@ -23,6 +23,10 @@ import sys
 
 import httpx
 
+# 翻译管道（同目录 import）
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from translate_zh import translate_crawl_result  # noqa: E402
+
 API_BASE = os.getenv("ENCYCLOPEDIA_API_BASE", "http://localhost:8010/api/v1")
 BATCH_SIZE = 500
 FEISHU_WEBHOOK_URL = os.getenv("FEISHU_WEBHOOK_URL", "")
@@ -195,6 +199,13 @@ def push_all(crawl_result: dict, cookies: dict | None = None) -> dict:
             # keyword_trend 保留多一些(8), 其他类型限 3
             limit = 8 if stype == "keyword_trend" else 3
             filtered_signals.extend(type_sigs[:limit])
+
+    # Step 1.5: LLM 翻译 — 为 hot_links 和 trend_signals 生成中文标签
+    if os.getenv("SKIP_TRANSLATION", "").lower() not in {"1", "true", "yes"}:
+        print(f"\n🌐 Translating to Chinese labels...")
+        translate_crawl_result({"hot_links": filtered_links, "trend_signals": filtered_signals})
+    else:
+        print("\n⏭️  Skipping translation (SKIP_TRANSLATION=1)")
 
     # Step 2: 推送新数据
     print(f"\n📤 Pushing to encyclopedia API ({API_BASE})...")

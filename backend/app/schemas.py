@@ -53,10 +53,12 @@ class TrendSignalCreate(BaseModel):
     ]
     keyword: str = Field(default="", max_length=500)
     title: str = Field(default="", max_length=500)
+    title_zh: str | None = Field(default=None, max_length=200)
     metric_value: float | None = None
     metric_unit: str | None = Field(default=None, max_length=32)
     trend_direction: Literal["up", "down", "stable", "new", "positive", "negative", "mixed"] | None = None
     summary: str = Field(default="", max_length=10000)
+    summary_zh: str | None = Field(default=None, max_length=10000)
 
 
 class HotLinkCreate(BaseModel):
@@ -70,8 +72,10 @@ class HotLinkCreate(BaseModel):
         "x", "facebook", "news", "other",
     ]
     title: str = Field(default="", max_length=500)
+    title_zh: str | None = Field(default=None, max_length=200)
     url: HttpUrl
     description: str = Field(default="", max_length=10000)
+    description_zh: str | None = Field(default=None, max_length=10000)
     hotness_score: float | None = None
     is_hot: bool = False
 

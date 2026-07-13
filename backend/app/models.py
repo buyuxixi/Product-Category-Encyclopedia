@@ -159,10 +159,12 @@ class TrendSignal(TimestampMixin, Base):
     platform: Mapped[str] = mapped_column(String(40), index=True)
     keyword: Mapped[str] = mapped_column(String(500), default="")
     title: Mapped[str] = mapped_column(String(500), default="")
+    title_zh: Mapped[str | None] = mapped_column(String(200), nullable=True)
     metric_value: Mapped[float | None] = mapped_column(Float, nullable=True)
     metric_unit: Mapped[str | None] = mapped_column(String(32), nullable=True)
     trend_direction: Mapped[str | None] = mapped_column(String(16), nullable=True)
     summary: Mapped[str] = mapped_column(Text, default="")
+    summary_zh: Mapped[str | None] = mapped_column(Text, nullable=True)
     collected_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True
     )
@@ -188,8 +190,10 @@ class HotLink(TimestampMixin, Base):
     link_type: Mapped[str] = mapped_column(String(40), index=True)
     platform: Mapped[str] = mapped_column(String(40), index=True)
     title: Mapped[str] = mapped_column(String(500), default="")
+    title_zh: Mapped[str | None] = mapped_column(String(200), nullable=True)
     url: Mapped[str] = mapped_column(Text)
     description: Mapped[str] = mapped_column(Text, default="")
+    description_zh: Mapped[str | None] = mapped_column(Text, nullable=True)
     hotness_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     is_hot: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     collected_at: Mapped[datetime] = mapped_column(
