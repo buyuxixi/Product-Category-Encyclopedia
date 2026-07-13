@@ -583,6 +583,21 @@ button { color: inherit; cursor: pointer; }
   font-size: 13px;
   line-height: 1.75;
 }
+.section-content .md-quote a {
+  display: inline-flex;
+  align-items: center;
+  margin: 2px 4px;
+  padding: 3px 9px;
+  border: 1px solid #cfe0d5;
+  border-radius: var(--r-xs);
+  background: var(--surface);
+  font-weight: 600;
+}
+.section-content .md-quote a:hover {
+  border-color: var(--primary);
+  background: #fff;
+  text-decoration: none;
+}
 .section-content .md-ul,
 .section-content .md-ol {
   margin: 8px 0;
@@ -1106,6 +1121,7 @@ button { color: inherit; cursor: pointer; }
   margin-top: 10px;
 }
 .trend-signal-card {
+  min-width: 0;
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: var(--r-md);
@@ -1282,6 +1298,16 @@ footer .stale {
   overflow: hidden;
   line-height: 1.5;
 }
+.hot-link-desc .inline-link,
+.trend-signal-summary .inline-link {
+  color: #409eff;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.hot-link-desc .inline-link:hover,
+.trend-signal-summary .inline-link:hover {
+  text-decoration: underline;
+}
 .hot-link-date {
   font-size: 11px;
   color: var(--text-quaternary);
@@ -1293,6 +1319,23 @@ footer .stale {
 }
 .fav-btn:hover { opacity: 1; transform: scale(1.2); }
 .fav-btn.active { opacity: 1; }
+
+/* ── Keyword tags (领域关键词) ── */
+.hl-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.hl-keyword-tag {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  white-space: nowrap;
+  line-height: 1.6;
+}
 
 /* ── Related categories ── */
 .related-cats { margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0f0f0; }

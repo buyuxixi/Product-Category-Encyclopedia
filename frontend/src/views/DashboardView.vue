@@ -29,6 +29,10 @@ function cleanTitle(title: string): string {
   return (title || '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
 }
 
+function hotLinkTitle(link: HotLink): string {
+  return cleanTitle(link.title_zh?.trim() || link.title)
+}
+
 // 品类数据行
 interface CategoryRow {
   code: string; name: string; health: string;
@@ -223,7 +227,7 @@ onMounted(loadDashboard)
         <div v-if="latestVideos.length" class="hot-list">
           <a v-for="link in latestVideos" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-row">
             <div class="hot-row-main">
-              <div class="hot-row-title">{{ cleanTitle(link.title) }}</div>
+              <div class="hot-row-title">{{ hotLinkTitle(link) }}</div>
               <div class="hot-row-meta">
                 <el-tag size="small" effect="plain">YouTube</el-tag>
                 <span class="hot-row-cat" v-if="categoryName(link.category_code || '')">{{ categoryName(link.category_code || '') }}</span>
@@ -244,7 +248,7 @@ onMounted(loadDashboard)
         <div v-if="latestReddit.length" class="hot-list">
           <a v-for="link in latestReddit" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-row">
             <div class="hot-row-main">
-              <div class="hot-row-title">{{ cleanTitle(link.title) }}</div>
+              <div class="hot-row-title">{{ hotLinkTitle(link) }}</div>
               <div class="hot-row-meta">
                 <el-tag size="small" effect="plain">Reddit</el-tag>
                 <span class="hot-row-cat" v-if="categoryName(link.category_code || '')">{{ categoryName(link.category_code || '') }}</span>

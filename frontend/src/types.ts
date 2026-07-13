@@ -71,8 +71,10 @@ export interface HotLink {
   link_type: string
   platform: string
   title: string
+  title_zh: string | null
   url: string
   description: string
+  description_zh: string | null
   hotness_score: number | null
   is_hot: boolean
   collected_at: string
@@ -86,10 +88,12 @@ export interface TrendSignal {
   platform: string
   keyword: string
   title: string
+  title_zh: string | null
   metric_value: number | null
   metric_unit: string | null
   trend_direction: string | null
   summary: string
+  summary_zh: string | null
   collected_at: string
 }
 
