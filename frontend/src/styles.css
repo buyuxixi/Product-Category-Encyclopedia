@@ -559,6 +559,16 @@ button { color: inherit; cursor: pointer; }
   border-radius: var(--r-md);
 }
 .section-content .md-subsection:first-child { margin-top: 0; }
+.section-content .md-subheading-nested {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line-soft);
+}
+.section-content .md-subsection > .md-subheading-nested:first-of-type {
+  margin-top: 8px;
+  padding-top: 0;
+  border-top: none;
+}
 .section-content .md-subheading {
   margin: 0 0 10px;
   font-size: 14px;
@@ -1158,6 +1168,12 @@ button { color: inherit; cursor: pointer; }
   color: var(--ink);
   margin-bottom: 4px;
 }
+.trend-signal-title-en {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  opacity: 0.7;
+}
 .trend-signal-keyword {
   font-size: 12px;
   color: var(--text-regular);
@@ -1272,6 +1288,16 @@ footer .stale {
   -webkit-box-orient: vertical;
   overflow: hidden;
   color: var(--ink);
+}
+.hot-link-title-en {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  opacity: 0.7;
 }
 .hot-badge {
   margin-right: 4px;
@@ -1501,16 +1527,13 @@ footer .stale {
 .platform-bar-fill { height: 100%; border-radius: 4px; background: var(--brand-green, #2f6650); transition: width .4s; }
 .platform-count { width: 40px; font-size: 13px; color: var(--text-secondary); text-align: right; flex-shrink: 0; }
 
-/* 品类卡片墙 — Bento Grid 布局 */
+/* 品类卡片墙 — 均匀三列，5 个自然 3+2；20–30 个时配合 Top12 截断 */
+.cat-section { margin-bottom: 24px; }
 .cat-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-auto-rows: minmax(160px, auto);
+  grid-template-columns: repeat(3, 1fr);
   gap: 14px;
-  margin-bottom: 24px;
 }
-.cat-card:nth-child(1), .cat-card:nth-child(2) { grid-column: span 3; }
-.cat-card:nth-child(3), .cat-card:nth-child(4), .cat-card:nth-child(5) { grid-column: span 2; }
 .cat-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -1519,6 +1542,7 @@ footer .stale {
   cursor: pointer;
   transition: box-shadow .2s, transform .2s, border-color .2s;
   display: flex; flex-direction: column; gap: 12px;
+  min-height: 148px;
 }
 .cat-card:hover {
   border-color: rgba(0,0,0,0.16);
@@ -1528,9 +1552,15 @@ footer .stale {
 .cat-card.health-good { border-left: 3px solid #1aae39; }
 .cat-card.health-fair { border-left: 3px solid #dd5b00; }
 .cat-card.health-poor { border-left: 3px solid #a39e98; }
-.cat-card-header { display: flex; align-items: center; justify-content: space-between; }
-.cat-card-name { font-size: 15px; font-weight: 600; color: var(--ink); }
-.cat-card-stats { display: flex; gap: 4px; }
+.cat-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.cat-card-title { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cat-card-parent { font-size: 11px; color: var(--text-quaternary); line-height: 1.2; }
+.cat-card-name { font-size: 15px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-card.is-child {
+  background: #fafbfa;
+  border-style: dashed;
+}
+.cat-card.is-child .cat-card-name { font-size: 14px; }
 .cat-card-body { display: flex; align-items: center; gap: 12px; }
 .cat-mini-chart { width: 70px; height: 70px; flex-shrink: 0; }
 .cat-card-stats { display: flex; gap: 0; flex: 1; }
@@ -1540,6 +1570,22 @@ footer .stale {
 .cat-stat-label { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
 .cat-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-quaternary); }
 .cat-card-arrow { color: var(--brand-green, #1e6650); font-size: 14px; }
+.cat-view-all {
+  display: block; width: 100%; margin-top: 12px; padding: 10px 14px;
+  border: 1px dashed var(--line); border-radius: 10px;
+  background: transparent; color: var(--brand-green, #1e6650);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.cat-view-all:hover { background: rgba(30,102,80,0.04); border-color: rgba(30,102,80,0.35); }
+
+@media (max-width: 900px) {
+  .cat-grid { grid-template-columns: repeat(2, 1fr); }
+  .latest-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .cat-grid { grid-template-columns: 1fr; }
+}
 
 /* 数据更新日志 */
 .update-log {

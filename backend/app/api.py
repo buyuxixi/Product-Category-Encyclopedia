@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
+from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -48,7 +50,7 @@ from app.security import (
     get_actor,
     revoke_session,
 )
-from app.services.agent_service import AgentError, chat as agent_chat, run_scan
+from app.services.agent_service import AgentError, chat as agent_chat, chat_stream as agent_chat_stream, run_scan
 from app.services.content_service import ContentError, save_section
 
 
@@ -958,6 +960,32 @@ def agent_scan_chat(scan_id: int, body: AgentChatRequest, db: Db, actor: WriteAc
         return {"content": result["content"], "usage": result.get("usage", {})}
     except AgentError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@router.post("/agent/scans/{scan_id}/chat/stream")
+def agent_scan_chat_stream(scan_id: int, body: AgentChatRequest, actor: WriteActor):
+    """流式多轮对话（SSE）。不长期持有 DB 连接。"""
+    ensure_role(actor, "admin", "data", "researcher")
+
+    def generate() -> Iterator[str]:
+        try:
+            for event in agent_chat_stream(scan_id, body.message):
+                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as exc:  # noqa: BLE001 — SSE 内兜底，避免连接悬挂
+            payload = {"event": "error", "data": {"message": str(exc)[:240]}}
+            yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+            yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/agent/scans/{scan_id}/discoveries")

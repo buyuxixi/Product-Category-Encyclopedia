@@ -88,6 +88,21 @@ CRAWLER_PASSWORD=xxx \
   --push
 ```
 
+### Reddit OAuth 配置（推荐）
+
+单品类和定时爬取会优先调用 Reddit OAuth API；未配置或调用失败时才回退 RSS。
+
+1. 在 [Reddit app preferences](https://www.reddit.com/prefs/apps) 创建 `script` 类型应用，Redirect URI 可填写 `http://localhost:8080`。
+2. 将应用的 client ID、secret 和可识别的 user agent 仅配置在运行环境中：
+
+```bash
+export REDDIT_CLIENT_ID="..."
+export REDDIT_CLIENT_SECRET="..."
+export REDDIT_USER_AGENT="python:category-encyclopedia:1.0 (by /u/<reddit_username>)"
+```
+
+3. 安装依赖后执行单品类命令；日志出现 `Using Reddit OAuth API` 即表示 OAuth 已生效。
+
 ### 3. API 触发
 
 `POST /api/v1/categories/{code}/crawl` — 后端通过 subprocess 调用 `run_full_crawl.py` + `crawl_reddit_single.py`。
@@ -105,11 +120,12 @@ CRAWLER_PASSWORD=xxx \
 | `MAX_HOTLINKS_PER_CATEGORY` | `10` | 每品类最大 hot_links 数 |
 | `REDDIT_CLIENT_ID` | — | Reddit OAuth (可选, 避免限流) |
 | `REDDIT_CLIENT_SECRET` | — | Reddit OAuth (可选) |
+| `REDDIT_USER_AGENT` | `python:encyclopedia_crawler:1.0 (by /u/encyclopedia_dev)` | Reddit OAuth 请求标识 |
 
 ## 依赖
 
 ```bash
-cd backend && .venv/bin/pip install feedparser
+cd backend && .venv/bin/pip install -r requirements.txt
 # TikTok/Amazon Playwright (可选):
 .venv/bin/pip install playwright && python -m playwright install chromium
 ```

@@ -279,6 +279,7 @@ onMounted(loadSession)
           v-if="activeView === 'dashboard'"
           :identity="identity"
           @select="selectCategory"
+          @browse="activeView = 'encyclopedia'"
         />
         <!-- Trend view -->
         <TrendView

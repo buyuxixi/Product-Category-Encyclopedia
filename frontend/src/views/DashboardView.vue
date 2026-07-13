@@ -5,7 +5,10 @@ import { apiRequest, type Identity } from '../api'
 import type { CategorySummary, HotLink, TrendSignal } from '../types'
 
 const props = defineProps<{ identity: Identity }>()
-const emit = defineEmits<{ select: [code: string] }>()
+const emit = defineEmits<{ select: [code: string]; browse: [] }>()
+
+/** 总览首屏最多展示的品类数；超过后显示「查看全部」 */
+const CAT_PREVIEW_LIMIT = 12
 
 const loading = ref(false)
 const categories = ref<CategorySummary[]>([])
@@ -21,7 +24,7 @@ const categoryNameMap = computed(() => {
 function categoryName(code: string): string { return categoryNameMap.value[code] || code }
 
 function platformLabel(p: string): string {
-  const labels: Record<string, string> = { google: 'Google', reddit: 'Reddit', youtube: 'YouTube', tiktok: 'TikTok', news: 'News', amazon: 'Amazon', other: 'Other' }
+  const labels: Record<string, string> = { google: 'Google', reddit: 'Reddit', youtube: 'YouTube', tiktok: 'TikTok', xiaohongshu: '小红书', news: 'News', amazon: 'Amazon', other: 'Other' }
   return labels[p] || p
 }
 
@@ -38,6 +41,8 @@ interface CategoryRow {
   code: string; name: string; health: string;
   hotLinks: number; trends: number; sources: number; filled: number; total: number;
   updated: string | null;
+  parentCode: string | null;
+  parentName: string | null;
 }
 const categoryRows = ref<CategoryRow[]>([])
 
@@ -52,6 +57,30 @@ function formatRelativeTime(dateStr: string | null): string {
 }
 
 function selectCategory(code: string) { emit('select', code) }
+function browseAllCategories() { emit('browse') }
+
+function activityScore(row: CategoryRow) {
+  return row.hotLinks * 2 + row.trends + row.sources
+}
+
+/** 一级按活跃度排序，其子品类紧跟在父品类后 */
+const sortedCategoryRows = computed(() => {
+  const tops = categoryRows.value.filter(r => !r.parentCode).sort((a, b) => activityScore(b) - activityScore(a))
+  const result: CategoryRow[] = []
+  for (const top of tops) {
+    result.push(top)
+    const children = categoryRows.value
+      .filter(r => r.parentCode === top.code)
+      .sort((a, b) => activityScore(b) - activityScore(a))
+    result.push(...children)
+  }
+  return result
+})
+const visibleCategoryRows = computed(() => sortedCategoryRows.value.slice(0, CAT_PREVIEW_LIMIT))
+const hasMoreCategories = computed(() => categoryRows.value.length > CAT_PREVIEW_LIMIT)
+const hiddenCategoryCount = computed(() => Math.max(0, categoryRows.value.length - CAT_PREVIEW_LIMIT))
+const topCategoryCount = computed(() => categoryRows.value.filter(r => !r.parentCode).length)
+const childCategoryCount = computed(() => categoryRows.value.filter(r => r.parentCode).length)
 
 // 最新视频 Top 3
 const latestVideos = computed(() =>
@@ -61,10 +90,10 @@ const latestVideos = computed(() =>
     .slice(0, 3)
 )
 
-// 最新 Reddit 讨论 Top 3
+// 最新社区讨论 Top 3（Reddit + 小红书）
 const latestReddit = computed(() =>
   allHotLinks.value
-    .filter(l => l.platform === 'reddit')
+    .filter(l => l.platform === 'reddit' || l.platform === 'xiaohongshu' || l.link_type === 'social_post')
     .sort((a, b) => (b.hotness_score || 0) - (a.hotness_score || 0))
     .slice(0, 3)
 )
@@ -94,6 +123,9 @@ const platformDist = computed(() => {
 
 async function loadDashboard() {
   loading.value = true
+  categoryRows.value = []
+  allHotLinks.value = []
+  allTrends.value = []
   try {
     const catResult = await apiRequest<{ items: CategorySummary[] }>('/categories')
     const topCats = catResult.items.filter(c => !c.parent_code)
@@ -120,16 +152,21 @@ async function loadDashboard() {
       }
     }))
     for (const r of results) {
-      // 跳过子品类（已聚合到一级品类）
-      if (catResult.items.find(c => c.code === r.code)?.parent_code) continue
+      // 跳过子品类：父品类卡片做聚合，子品类单独追加
+      const meta = catResult.items.find(c => c.code === r.code)
+      if (!meta || meta.parent_code) continue
       const cat = topCats.find(c => c.code === r.code)
-      // 聚合子品类数据
-      const childCodes = catResult.items.filter(c => c.parent_code === r.code).map(c => c.code)
-      for (const childCode of childCodes) {
-        const childResult = results.find(res => res.code === childCode)
+      const childMetas = catResult.items.filter(c => c.parent_code === r.code)
+      // 聚合子品类数据到一级品类
+      for (const childMeta of childMetas) {
+        const childResult = results.find(res => res.code === childMeta.code)
         if (childResult) {
           r.stats.hotLinks += childResult.stats.hotLinks
           r.stats.trends += childResult.stats.trends
+          r.stats.sources += childResult.stats.sources
+          if (childResult.stats.updated && (!r.stats.updated || childResult.stats.updated > r.stats.updated)) {
+            r.stats.updated = childResult.stats.updated
+          }
           r.hotLinks.push(...childResult.hotLinks)
           r.trends.push(...childResult.trends)
         }
@@ -140,11 +177,34 @@ async function loadDashboard() {
         hotLinks: r.stats.hotLinks, trends: r.stats.trends, sources: r.stats.sources,
         filled: r.stats.filled, total: r.stats.sections,
         updated: r.stats.updated,
+        parentCode: null, parentName: null,
       })
-      // 给 hot_links 加上 category_code
+      // 给 hot_links 加上 category_code（聚合列表用父 code，便于下方动态区归类）
       for (const hl of r.hotLinks) { (hl as any).category_code = r.code }
       allHotLinks.value.push(...r.hotLinks)
       allTrends.value.push(...r.trends)
+
+      // 子品类独立卡片（用自身统计，不二次聚合）
+      for (const childMeta of childMetas) {
+        const childResult = results.find(res => res.code === childMeta.code)
+        if (!childResult) continue
+        const childHealth = childResult.stats.updated
+          ? (Date.now() - new Date(childResult.stats.updated).getTime() < 86400000 ? 'good' : 'fair')
+          : 'poor'
+        categoryRows.value.push({
+          code: childMeta.code,
+          name: childMeta.name,
+          health: childHealth,
+          hotLinks: childResult.stats.hotLinks,
+          trends: childResult.stats.trends,
+          sources: childResult.stats.sources,
+          filled: childResult.stats.filled,
+          total: childResult.stats.sections,
+          updated: childResult.stats.updated,
+          parentCode: r.code,
+          parentName: cat?.name || r.code,
+        })
+      }
     }
   } catch (error) {
     ElMessage.error((error as Error).message)
@@ -156,7 +216,7 @@ async function loadDashboard() {
 function renderMiniCharts() {
   const echarts = (window as any).echarts
   if (!echarts) return
-  for (const row of categoryRows.value) {
+  for (const row of visibleCategoryRows.value) {
     const el = document.getElementById(`chart-${row.code}`)
     if (!el || !(window as any).echarts) continue
     const chart = echarts.init(el)
@@ -188,32 +248,47 @@ onMounted(loadDashboard)
 
 <template>
   <main v-loading="loading" class="dashboard-page">
-    <!-- 品类卡片墙 -->
-    <section class="cat-grid">
-      <div
-        v-for="row in categoryRows"
-        :key="row.code"
-        class="cat-card"
-        :class="`health-${row.health}`"
-        @click="selectCategory(row.code)"
-      >
-        <div class="cat-card-header">
-          <span class="cat-card-name">{{ row.name }}</span>
-          <el-tag :type="healthType(row.health)" size="small" effect="plain">{{ healthLabel(row.health) }}</el-tag>
-        </div>
-        <div class="cat-card-body">
-          <div :id="`chart-${row.code}`" class="cat-mini-chart"></div>
-          <div class="cat-card-stats">
-            <div class="cat-stat"><span class="cat-stat-num">{{ row.hotLinks }}</span><span class="cat-stat-label">热点</span></div>
-            <div class="cat-stat"><span class="cat-stat-num">{{ row.trends }}</span><span class="cat-stat-label">趋势</span></div>
-            <div class="cat-stat"><span class="cat-stat-num">{{ row.sources }}</span><span class="cat-stat-label">来源</span></div>
+    <!-- 品类卡片墙：一级 + 子品类；子卡紧跟父卡 -->
+    <section class="cat-section">
+      <div class="panel-header">
+        <h2>品类概览</h2>
+        <span class="panel-hint">
+          {{ topCategoryCount }} 个一级
+          <template v-if="childCategoryCount"> · {{ childCategoryCount }} 个子品类</template>
+        </span>
+      </div>
+      <div class="cat-grid">
+        <div
+          v-for="row in visibleCategoryRows"
+          :key="row.code"
+          class="cat-card"
+          :class="[`health-${row.health}`, { 'is-child': !!row.parentCode }]"
+          @click="selectCategory(row.code)"
+        >
+          <div class="cat-card-header">
+            <div class="cat-card-title">
+              <span v-if="row.parentName" class="cat-card-parent">{{ row.parentName }}</span>
+              <span class="cat-card-name">{{ row.name }}</span>
+            </div>
+            <el-tag :type="healthType(row.health)" size="small" effect="plain">{{ healthLabel(row.health) }}</el-tag>
+          </div>
+          <div class="cat-card-body">
+            <div :id="`chart-${row.code}`" class="cat-mini-chart"></div>
+            <div class="cat-card-stats">
+              <div class="cat-stat"><span class="cat-stat-num">{{ row.hotLinks }}</span><span class="cat-stat-label">热点</span></div>
+              <div class="cat-stat"><span class="cat-stat-num">{{ row.trends }}</span><span class="cat-stat-label">趋势</span></div>
+              <div class="cat-stat"><span class="cat-stat-num">{{ row.sources }}</span><span class="cat-stat-label">来源</span></div>
+            </div>
+          </div>
+          <div class="cat-card-footer">
+            <span>{{ formatRelativeTime(row.updated) }}</span>
+            <span class="cat-card-arrow">→</span>
           </div>
         </div>
-        <div class="cat-card-footer">
-          <span>{{ formatRelativeTime(row.updated) }}</span>
-          <span class="cat-card-arrow">→</span>
-        </div>
       </div>
+      <button v-if="hasMoreCategories" type="button" class="cat-view-all" @click="browseAllCategories">
+        查看全部 {{ categoryRows.length }} 个品类（还有 {{ hiddenCategoryCount }} 个）→
+      </button>
     </section>
 
     <!-- 三列最新动态 — 精选，不重复06章节的完整列表 -->
@@ -243,14 +318,14 @@ onMounted(loadDashboard)
       <div class="latest-panel">
         <div class="panel-header">
           <h2>💬 热门讨论</h2>
-          <span class="panel-hint">Reddit Top 3</span>
+          <span class="panel-hint">社区 Top 3</span>
         </div>
         <div v-if="latestReddit.length" class="hot-list">
           <a v-for="link in latestReddit" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-row">
             <div class="hot-row-main">
               <div class="hot-row-title">{{ hotLinkTitle(link) }}</div>
               <div class="hot-row-meta">
-                <el-tag size="small" effect="plain">Reddit</el-tag>
+                <el-tag size="small" effect="plain">{{ platformLabel(link.platform) }}</el-tag>
                 <span class="hot-row-cat" v-if="categoryName(link.category_code || '')">{{ categoryName(link.category_code || '') }}</span>
                 <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
               </div>
