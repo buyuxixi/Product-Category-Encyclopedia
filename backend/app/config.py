@@ -73,9 +73,15 @@ def get_settings() -> Settings:
         ),
         llm_model=os.getenv("LLM_MODEL", "qwen-plus"),
         crawler_enabled=os.getenv("CRAWLER_ENABLED", "false").lower() in {"1", "true", "yes"},
-        crawler_scripts_dir=os.getenv("CRAWLER_SCRIPTS_DIR", "").strip(),
+        crawler_scripts_dir=os.getenv(
+            "CRAWLER_SCRIPTS_DIR",
+            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "crawler"),
+        ).strip(),
         crawler_api_base=os.getenv("CRAWLER_API_BASE", "http://backend:8000/api/v1").strip(),
-        crawler_password_file=os.getenv("CRAWLER_PASSWORD_FILE", "").strip(),
+        crawler_password_file=os.getenv(
+            "CRAWLER_PASSWORD_FILE",
+            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".crawler_password"),
+        ).strip(),
         crawler_http_proxy=os.getenv("CRAWLER_HTTP_PROXY", "").strip(),
         crawler_https_proxy=os.getenv("CRAWLER_HTTPS_PROXY", "").strip(),
     )

@@ -1,0 +1,154 @@
+# 爬取配置
+# 爬取 Agent 每日运行时读取此文件决定哪些源启用、如何评分
+
+api_base_url: "http://localhost:8010/api/v1"
+
+# 品类列表 + 目标 section
+categories:
+  - code: "HEAT_THERAPY"
+    section_key: "market"
+  - code: "SHOULDER_NECK_HEAT_THERAPY"
+    section_key: "market"
+  - code: "FAR_INFRARED"
+    section_key: "market"
+  - code: "TENS_THERAPY"
+    section_key: "market"
+  - code: "NIGHT_LIGHT"
+    section_key: "market"
+  - code: "MEDICATION_MANAGEMENT"
+    section_key: "market"
+  - code: "SEAT_CUSHION"
+    section_key: "market"
+
+# 数据源开关 + 爬取方式
+sources:
+  google_news:
+    enabled: true
+    priority: P1
+    method: rss
+    max_results_per_keyword: 10
+    # 修复: 使用 Google 搜索 URL 替代失效的 Google News article URL
+    url_strategy: "google_search_with_publisher_domain"
+    # 权威出版商加分
+    authority_publisher_bonus: 10
+  google_trends:
+    enabled: true
+    priority: P0
+    method: pytrends
+    sleep_between_keywords: 1
+    # 修复: 只产生 trend_signals, 不产生 hot_links
+    output_type: "trend_signals_only"
+  reddit:
+    enabled: true
+    priority: P1
+    method: json_api
+    max_results_per_sub: 10
+    time_filter: day
+    # 修复: 优先 JSON API, 403 时回退 RSS
+    fallback: "rss_with_zero_metrics"
+    # 退避间隔（秒）
+    backoff_seconds: 2
+  youtube:
+    enabled: true
+    priority: P2
+    method: youtube_api
+    max_results_per_keyword: 5
+    # 需要环境变量 YOUTUBE_API_KEY
+    # 频道订阅数加分（>1M 订阅）
+    subscriber_bonus_threshold: 1000000
+    subscriber_bonus_points: 10
+  amazon:
+    enabled: false  # 可选，需要 Playwright，常被拦截
+    priority: P0
+    method: playwright
+    max_results_per_keyword: 10
+    delay_seconds: [3, 5]
+  tiktok:
+    enabled: false  # 需要申请 Research API
+    priority: P2
+    method: playwright
+  x_twitter:
+    enabled: false  # API v2 需付费
+    priority: P2
+    method: xurl
+
+# 热度评分 (多维评分算法)
+scoring:
+  is_hot_threshold: 50.0  # 降低阈值（从 60 → 50），因维度增多
+  max_hot_links_per_category: 10  # 每品类最多保留 10 条
+  max_trend_signals_per_category: 30
+  dimensions:
+    source_authority:
+      major_publisher: 15  # CNN, NBC, NYT, Forbes 等
+      niche_blog: 5
+      youtube: 10
+      reddit: 7
+    freshness:
+      within_24h: 20
+      within_3d: 12
+      within_7d: 6
+    social_engagement:
+      upvotes_per_100_max: 20
+      comments_per_50_max: 15
+      views_per_10000_max: 20
+    platform_diversity:
+      multi_platform_bonus: 10  # 同一故事在 2+ 平台出现
+
+# 权威出版商域名集合 (~50 个)
+publisher_authority:
+  - cnn.com
+  - nytimes.com
+  - washingtonpost.com
+  - nbcnews.com
+  - cbsnews.com
+  - abcnews.go.com
+  - reuters.com
+  - apnews.com
+  - bloomberg.com
+  - forbes.com
+  - wsj.com
+  - ft.com
+  - economist.com
+  - time.com
+  - newsweek.com
+  - usatoday.com
+  - npr.org
+  - pbs.org
+  - foxnews.com
+  - cnbc.com
+  - businessinsider.com
+  - marketwatch.com
+  - bbc.com
+  - bbc.co.uk
+  - theguardian.com
+  - independent.co.uk
+  - techcrunch.com
+  - theverge.com
+  - wired.com
+  - arstechnica.com
+  - engadget.com
+  - cnet.com
+  - health.com
+  - webmd.com
+  - medicalnewstoday.com
+  - mayoclinic.org
+  - healthline.com
+  - medscape.com
+  - statnews.com
+  - esquire.com
+  - gq.com
+  - vogue.com
+  - huffpost.com
+  - vox.com
+  - nationalgeographic.com
+  - scientificamerican.com
+  - nature.com
+  - sciencedaily.com
+
+# 去重策略
+dedup:
+  strategy: "url_plus_date"  # URL + 当日日期组合去重
+
+# 批量推送
+push:
+  batch_size: 500  # API 单批最大 500 条

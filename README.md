@@ -98,3 +98,46 @@ cd frontend && pnpm typecheck && pnpm build
 ```
 
 本地直接启动后端时，需要把 `DATABASE_URL`、`AUTH_MODE` 和 `AUTH_USERS_JSON` 配置到当前 shell。爬虫相关配置见 `.env.example`，默认不会执行采集。
+
+## 打包数据库给同事（macOS）
+
+数据库导入器会把当前 MySQL 中的全部业务表数据嵌入一个 macOS 可执行文件。目标电脑需要已安装并正在运行 MySQL 8.0 服务；Navicat 只是数据库客户端，不能替代 MySQL 服务。导入器本身不包含项目密钥，也不会访问外部网络。
+
+首次在本机准备构建依赖：
+
+```bash
+cd backend
+.venv/bin/pip install -r requirements-build.txt
+cd ..
+```
+
+从当前数据库构建 arm64 版本：
+
+```bash
+DATABASE_URL='mysql+pymysql://用户名:密码@127.0.0.1:3308/category_encyclopedia?charset=utf8mb4' \
+backend/.venv/bin/python backend/scripts/build_database_bundle.py
+```
+
+产物默认在 `dist/database-bundle/category-encyclopedia-import-macos-arm64`。如果同事使用 Intel Mac，需要在 Intel Mac 或对应的 x86_64 Python 环境中重新构建：
+
+```bash
+backend/.venv/bin/python backend/scripts/build_database_bundle.py \
+  --target-architecture x86_64
+```
+
+同事执行导入器时，默认连接 `127.0.0.1:3308`、用户 `root`、数据库 `category_encyclopedia`，并隐藏式询问 MySQL 密码：
+
+```bash
+./category-encyclopedia-import-macos-arm64
+```
+
+也可以显式指定连接地址：
+
+```bash
+./category-encyclopedia-import-macos-arm64 \
+  --database-url 'mysql+pymysql://root:密码@127.0.0.1:3308/category_encyclopedia?charset=utf8mb4'
+```
+
+导入器会自动创建数据库和当前版本表结构，清空目标库中的项目表，恢复全部快照记录，并写入当前 Alembic 版本。默认会要求输入 `OVERWRITE` 确认；只有确定目标库可以被覆盖时才使用 `--yes`。
+
+“全部数据”包含 `users`、`auth_sessions` 和 `audit_events`。分发产物前请确认同事可以接触这些数据，并在需要时修改本地登录密码或清理会话。

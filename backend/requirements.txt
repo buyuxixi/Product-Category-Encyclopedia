@@ -7,4 +7,5 @@ cryptography>=44,<47
 pydantic>=2.10,<3.0
 pytest>=8.3,<10.0
 httpx>=0.28,<1.0
+feedparser>=6.0,<7.0
 
