@@ -427,31 +427,57 @@ def create_trend_signal(body: TrendSignalCreate, db: Db, actor: WriteActor):
 def create_trend_signals_batch(body: TrendSignalBatch, db: Db, actor: WriteActor):
     ensure_role(actor, "admin", "data", "researcher")
     inserted: list[int] = []
+    updated: list[int] = []
     skipped: list[str] = []
+    category_codes = {item.category_code for item in body.items}
+    categories = {
+        category.code: category
+        for category in db.scalars(
+            select(Category).where(Category.code.in_(category_codes))
+        )
+    }
     for item in body.items:
-        category = db.scalar(select(Category).where(Category.code == item.category_code))
+        category = categories.get(item.category_code)
         if category is None:
             skipped.append(f"Category not found: {item.category_code}")
             continue
-        signal = TrendSignal(
-            category_id=category.id,
-            section_key=item.section_key,
-            signal_type=item.signal_type,
-            platform=item.platform,
-            keyword=item.keyword,
-            title=item.title,
-            title_zh=item.title_zh,
-            metric_value=item.metric_value,
-            metric_unit=item.metric_unit,
-            trend_direction=item.trend_direction,
-            summary=item.summary,
-            summary_zh=item.summary_zh,
-        )
-        db.add(signal)
+        signal = db.scalars(
+            select(TrendSignal)
+            .where(
+                TrendSignal.category_id == category.id,
+                TrendSignal.platform == item.platform,
+                TrendSignal.title == item.title,
+            )
+            .limit(1)
+        ).first()
+        if signal is None:
+            signal = TrendSignal(category_id=category.id)
+            db.add(signal)
+            is_new = True
+        else:
+            is_new = False
+        signal.section_key = item.section_key
+        signal.signal_type = item.signal_type
+        signal.platform = item.platform
+        signal.keyword = item.keyword
+        signal.title = item.title
+        signal.title_zh = item.title_zh
+        signal.metric_value = item.metric_value
+        signal.metric_unit = item.metric_unit
+        signal.trend_direction = item.trend_direction
+        signal.summary = item.summary
+        signal.summary_zh = item.summary_zh
+        signal.collected_at = datetime.now(UTC)
         db.flush()
-        inserted.append(signal.id)
+        (inserted if is_new else updated).append(signal.id)
     db.commit()
-    return {"inserted_count": len(inserted), "inserted_ids": inserted, "skipped": skipped}
+    return {
+        "inserted_count": len(inserted),
+        "inserted_ids": inserted,
+        "updated_count": len(updated),
+        "updated_ids": updated,
+        "skipped": skipped,
+    }
 
 
 @router.get("/categories/{code}/trend-signals")
@@ -531,30 +557,57 @@ def create_hot_link(body: HotLinkCreate, db: Db, actor: WriteActor):
 def create_hot_links_batch(body: HotLinkBatch, db: Db, actor: WriteActor):
     ensure_role(actor, "admin", "data", "researcher")
     inserted: list[int] = []
+    updated: list[int] = []
     skipped: list[str] = []
+    category_codes = {item.category_code for item in body.items}
+    categories = {
+        category.code: category
+        for category in db.scalars(
+            select(Category).where(Category.code.in_(category_codes))
+        )
+    }
     for item in body.items:
-        category = db.scalar(select(Category).where(Category.code == item.category_code))
+        category = categories.get(item.category_code)
         if category is None:
             skipped.append(f"Category not found: {item.category_code}")
             continue
-        link = HotLink(
-            category_id=category.id,
-            section_key=item.section_key,
-            link_type=item.link_type,
-            platform=item.platform,
-            title=item.title,
-            title_zh=item.title_zh,
-            url=str(item.url),
-            description=item.description,
-            description_zh=item.description_zh,
-            hotness_score=item.hotness_score,
-            is_hot=item.is_hot,
-        )
-        db.add(link)
+        url = str(item.url)
+        link = db.scalars(
+            select(HotLink)
+            .where(
+                HotLink.category_id == category.id,
+                HotLink.platform == item.platform,
+                HotLink.url == url,
+            )
+            .limit(1)
+        ).first()
+        if link is None:
+            link = HotLink(category_id=category.id)
+            db.add(link)
+            is_new = True
+        else:
+            is_new = False
+        link.section_key = item.section_key
+        link.link_type = item.link_type
+        link.platform = item.platform
+        link.title = item.title
+        link.title_zh = item.title_zh
+        link.url = url
+        link.description = item.description
+        link.description_zh = item.description_zh
+        link.hotness_score = item.hotness_score
+        link.is_hot = item.is_hot
+        link.collected_at = datetime.now(UTC)
         db.flush()
-        inserted.append(link.id)
+        (inserted if is_new else updated).append(link.id)
     db.commit()
-    return {"inserted_count": len(inserted), "inserted_ids": inserted, "skipped": skipped}
+    return {
+        "inserted_count": len(inserted),
+        "inserted_ids": inserted,
+        "updated_count": len(updated),
+        "updated_ids": updated,
+        "skipped": skipped,
+    }
 
 
 @router.get("/categories/{code}/hot-links")
@@ -616,12 +669,20 @@ def delete_hot_link(link_id: int, db: Db, actor: WriteActor):
 
 
 @router.delete("/categories/{code}/trend-signals")
-def clear_trend_signals(code: str, db: Db, actor: WriteActor):
-    """删除某品类的全部旧 trend_signals，实现覆盖模式。"""
+def clear_trend_signals(
+    code: str,
+    db: Db,
+    actor: WriteActor,
+    platform: Annotated[str | None, Query(max_length=40)] = None,
+):
+    """删除某品类指定平台的旧趋势信号；未传平台时保持全量清理。"""
     ensure_role(actor, "admin", "data")
     category = _category_or_404(db, code)
+    filters = [TrendSignal.category_id == category.id]
+    if platform:
+        filters.append(TrendSignal.platform == platform)
     rows = db.scalars(
-        select(TrendSignal).where(TrendSignal.category_id == category.id)
+        select(TrendSignal).where(*filters)
     ).all()
     count = len(rows)
     for row in rows:

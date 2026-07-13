@@ -160,7 +160,7 @@ def select_comments(
     return candidates[:limit]
 
 
-def hot_link_from_note(note: dict[str, Any], category_id: int) -> HotLink:
+def hot_link_from_note(note: dict[str, Any], category_code: str) -> dict[str, Any]:
     likes = number(note.get("liked_count"))
     comments = number(note.get("comment_count"))
     collections = number(note.get("collected_count"))
@@ -168,26 +168,26 @@ def hot_link_from_note(note: dict[str, Any], category_id: int) -> HotLink:
     keyword = str(note.get("search_keyword") or "").strip()
     title = str(note["title"]).strip()
     description = f"[{author}] | ❤ {likes} | 💬 {comments} | ⭐ {collections} | 搜索词: {keyword}"
-    return HotLink(
-        category_id=category_id,
-        section_key="market",
-        link_type="social_post",
-        platform="xiaohongshu",
-        title=title,
-        title_zh=title,
-        url=str(note["note_url"]).strip(),
-        description=description,
-        description_zh=description,
-        hotness_score=likes,
-        is_hot=likes >= 1000,
-    )
+    return {
+        "category_code": category_code,
+        "section_key": "market",
+        "link_type": "social_post",
+        "platform": "xiaohongshu",
+        "title": title,
+        "title_zh": title,
+        "url": str(note["note_url"]).strip(),
+        "description": description,
+        "description_zh": description,
+        "hotness_score": likes,
+        "is_hot": likes >= 1000,
+    }
 
 
 def trend_signal_from_comment(
     comment: dict[str, Any],
     note: dict[str, Any],
-    category_id: int,
-) -> TrendSignal:
+    category_code: str,
+) -> dict[str, Any]:
     content = re.sub(r"\s+", " ", str(comment.get("content") or "")).strip()
     likes = number(comment.get("like_count"))
     note_title = str(note.get("title") or "").strip()
@@ -195,20 +195,58 @@ def trend_signal_from_comment(
     positive_review = bool(re.search(r"好用|推荐|同款|舒服|有效", content))
     pain_signal = bool(re.search(r"疼|痛|烫|过敏|不好|没用|吐槽|难受|太紧|太松", content))
     summary = f"小红书笔记《{note_title}》热评（{likes}赞）：{content}。原文链接: {note_url}"
-    return TrendSignal(
-        category_id=category_id,
-        section_key="market",
-        signal_type="review_sentiment" if positive_review and not pain_signal else "user_pain_point",
-        platform="xiaohongshu",
-        keyword=str(note.get("search_keyword") or "").strip(),
-        title=content[:500],
-        title_zh=content[:500],
-        metric_value=likes,
-        metric_unit="likes",
-        trend_direction="positive" if positive_review and not pain_signal else ("up" if likes >= 10 else "stable"),
-        summary=summary,
-        summary_zh=summary,
-    )
+    return {
+        "category_code": category_code,
+        "section_key": "market",
+        "signal_type": "review_sentiment" if positive_review and not pain_signal else "user_pain_point",
+        "platform": "xiaohongshu",
+        "keyword": str(note.get("search_keyword") or "").strip(),
+        "title": content[:500],
+        "title_zh": content[:500],
+        "metric_value": likes,
+        "metric_unit": "likes",
+        "trend_direction": "positive" if positive_review and not pain_signal else ("up" if likes >= 10 else "stable"),
+        "summary": summary,
+        "summary_zh": summary,
+    }
+
+
+def build_crawl_result(
+    data_dir: Path,
+    note_limit: int = 10,
+    comment_limit: int = 2,
+    sources: list[CategorySource] | None = None,
+) -> dict[str, list[dict[str, Any]]]:
+    """将 cleaned JSON 转换为 crawler 统一结果，不访问数据库。"""
+    result: dict[str, list[dict[str, Any]]] = {
+        "hot_links": [],
+        "trend_signals": [],
+    }
+    for source in sources or SOURCES:
+        notes_path = data_dir / source.notes_file
+        comments_path = data_dir / source.comments_file
+        notes = json.loads(notes_path.read_text(encoding="utf-8"))
+        selected = select_notes(notes, source, note_limit)
+        notes_by_id = {
+            str(note["note_id"]): note
+            for note in notes
+            if note.get("note_id")
+            and str(note.get("note_url") or "").startswith("https://www.xiaohongshu.com/explore/")
+        }
+        selected_comments = select_comments(
+            load_comments(comments_path, source.comment_format),
+            notes_by_id,
+            source,
+            comment_limit,
+        )
+        result["hot_links"].extend(
+            hot_link_from_note(note, source.code) for note in selected
+        )
+        result["trend_signals"].extend(
+            trend_signal_from_comment(comment, note, source.code)
+            for comment, note in selected_comments
+        )
+    return result
 
 
 def run(data_dir: Path, note_limit: int, comment_limit: int, apply: bool) -> None:
@@ -238,49 +276,51 @@ def run(data_dir: Path, note_limit: int, comment_limit: int, apply: bool) -> Non
             for match in re.finditer(r"https://www\.xiaohongshu\.com/explore/[0-9a-f]+", summary or "")
         }
 
+        crawl_result = build_crawl_result(data_dir, note_limit, comment_limit)
         pending_links: list[HotLink] = []
         pending_signals: list[TrendSignal] = []
-        for source in SOURCES:
-            notes_path = data_dir / source.notes_file
-            comments_path = data_dir / source.comments_file
-            notes = json.loads(notes_path.read_text(encoding="utf-8"))
-            selected = select_notes(notes, source, note_limit)
-            notes_by_id = {
-                str(note["note_id"]): note
-                for note in notes
-                if note.get("note_id")
-                and str(note.get("note_url") or "").startswith("https://www.xiaohongshu.com/explore/")
-            }
-            selected_comments = select_comments(
-                load_comments(comments_path, source.comment_format),
-                notes_by_id,
-                source,
-                comment_limit,
+        for item in crawl_result["hot_links"]:
+            if item["url"] in existing_urls:
+                continue
+            values = {key: value for key, value in item.items() if key != "category_code"}
+            pending_links.append(
+                HotLink(category_id=categories[item["category_code"]].id, **values)
+            )
+        for item in crawl_result["trend_signals"]:
+            source_url = next(
+                (
+                    match.group(0).rstrip("。")
+                    for match in re.finditer(
+                        r"https://www\.xiaohongshu\.com/explore/[0-9a-f]+",
+                        item["summary"],
+                    )
+                ),
+                "",
+            )
+            if item["title"] in existing_signal_titles or source_url in existing_signal_urls:
+                continue
+            values = {key: value for key, value in item.items() if key != "category_code"}
+            pending_signals.append(
+                TrendSignal(category_id=categories[item["category_code"]].id, **values)
             )
 
-            new_links = [
-                hot_link_from_note(note, categories[source.code].id)
-                for note in selected
-                if note["note_url"] not in existing_urls
+        for source in SOURCES:
+            links = [
+                item for item in crawl_result["hot_links"]
+                if item["category_code"] == source.code
             ]
+            signals = [
+                item for item in crawl_result["trend_signals"]
+                if item["category_code"] == source.code
+            ]
+            new_links = [item for item in links if item["url"] not in existing_urls]
             new_signals = [
-                trend_signal_from_comment(comment, note, categories[source.code].id)
-                for comment, note in selected_comments
-                if comment.get("content") not in existing_signal_titles
-                and note["note_url"] not in existing_signal_urls
+                item for item in signals if item["title"] not in existing_signal_titles
             ]
-            pending_links.extend(new_links)
-            pending_signals.extend(new_signals)
-
-            print(f"\n{source.code}: 选中笔记 {len(selected)}，新增 {len(new_links)}，评论信号新增 {len(new_signals)}")
-            for note in selected:
-                status = "SKIP 已存在" if note["note_url"] in existing_urls else "ADD"
-                print(
-                    f"  [{status}] ❤{number(note.get('liked_count')):>6} "
-                    f"{str(note['title'])[:42]} | {note['note_url']}"
-                )
-            for signal in new_signals:
-                print(f"  [ADD SIGNAL] ❤{int(signal.metric_value or 0):>4} {signal.title[:60]}")
+            print(
+                f"\n{source.code}: 选中笔记 {len(links)}，"
+                f"新增 {len(new_links)}，评论信号新增 {len(new_signals)}"
+            )
 
         print(f"\n汇总：待新增 hot_links={len(pending_links)}，trend_signals={len(pending_signals)}")
         if not apply:

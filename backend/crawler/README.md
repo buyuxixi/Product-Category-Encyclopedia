@@ -18,6 +18,7 @@ backend/crawler/
 ├── crawl_tiktok.py            # TikTok 爬取 (Playwright, 常被反爬)
 ├── dedup_and_score.py         # 去重 + 热度评分 (多维度 0-100)
 ├── push_to_encyclopedia.py    # 推送到百科后端 (Batch API)
+├── xhs_cleaned_adapter.py     # 小红书 cleaned JSON → 统一结果 / 增量 upsert
 ├── cron_crawl.sh              # Cron 全量爬取 wrapper
 ├── cron_reddit_crawl.sh       # Cron Reddit 单品类轮转 wrapper
 ├── references/                # 各数据源技术细节、URL 质量指南等
@@ -28,7 +29,7 @@ backend/crawler/
 ## 数据流
 
 ```
-爬取脚本 → dedup_and_score (去重+评分) → push_to_encyclopedia (清旧→写新→通知)
+爬取脚本 → dedup_and_score (去重+评分) → push_to_encyclopedia (按平台清旧→写新→通知)
                                               ↓
                                     POST /api/v1/hot-links/batch
                                     POST /api/v1/trend-signals/batch
@@ -36,6 +37,8 @@ backend/crawler/
                                     hot_links 表 / trend_signals 表
                                               ↓
                                     前端: 品类百科 / 总览 / 趋势看板 / 选品Agent
+
+小红书 cleaned JSON → xhs_cleaned_adapter → push_incremental (不清旧→Batch upsert)
 ```
 
 ## 执行方式
@@ -72,6 +75,17 @@ HTTPS_PROXY=http://127.0.0.1:7897 \
 HTTP_PROXY=http://127.0.0.1:7897 \
 HTTPS_PROXY=http://127.0.0.1:7897 \
 .venv/bin/python crawler/crawl_amazon_bsr.py
+
+# 预览小红书 cleaned JSON 的统一 crawler 结果
+.venv/bin/python crawler/xhs_cleaned_adapter.py \
+  --data-dir ../data/cleaned \
+  --output /tmp/xhs-crawl-result.json
+
+# 确认预览后，通过 Batch API 增量 upsert
+CRAWLER_PASSWORD=xxx \
+.venv/bin/python crawler/xhs_cleaned_adapter.py \
+  --data-dir ../data/cleaned \
+  --push
 ```
 
 ### 3. API 触发
@@ -105,7 +119,13 @@ cd backend && .venv/bin/pip install feedparser
 - **`hot_links`** — 热点跳转链接 (产品/视频/讨论/新闻)
 - **`trend_signals`** — 趋势信号 (搜索量/社媒提及/关键词趋势/新闻量/产品洞察/用户痛点)
 
-每次爬取前清除旧数据 (覆盖模式, 非累积)。
+全量爬虫仅清除本次成功产出结果的“品类 + 平台”旧数据，再写入新结果；
+其它平台和失败数据源的历史记录会保留。小红书适配器使用增量模式，不执行清理：
+
+- `hot_links` 按“品类 + 平台 + URL”upsert。
+- `trend_signals` 按“品类 + 平台 + 标题”upsert。
+- 默认只转换和预览；仅 `--push` 会调用后端 API。
+- cleaned 输入兼容历史 `api` 评论结构和新的 `grouped` 评论结构。
 
 ## 展示界面
 

@@ -49,7 +49,7 @@ class TrendSignalCreate(BaseModel):
     ]
     platform: Literal[
         "google", "amazon", "reddit", "youtube", "tiktok",
-        "x", "facebook", "news", "other",
+        "xiaohongshu", "x", "facebook", "news", "other",
     ]
     keyword: str = Field(default="", max_length=500)
     title: str = Field(default="", max_length=500)
@@ -65,11 +65,11 @@ class HotLinkCreate(BaseModel):
     category_code: str
     section_key: str = Field(max_length=80)
     link_type: Literal[
-        "product", "discussion", "video", "news", "trend", "keyword",
+        "product", "discussion", "video", "social_post", "news", "trend", "keyword",
     ]
     platform: Literal[
         "google", "amazon", "reddit", "youtube", "tiktok",
-        "x", "facebook", "news", "other",
+        "xiaohongshu", "x", "facebook", "news", "other",
     ]
     title: str = Field(default="", max_length=500)
     title_zh: str | None = Field(default=None, max_length=200)
