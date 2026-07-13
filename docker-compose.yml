@@ -30,8 +30,6 @@ services:
       SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-12}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-encyclopedia_session}
-      IMPORT_ROOTS: /imports
-      PUBLICATION_PROVIDER: ${PUBLICATION_PROVIDER:-local}
       FEISHU_APP_ID: ${FEISHU_APP_ID:-}
       FEISHU_APP_SECRET: ${FEISHU_APP_SECRET:-}
       FEISHU_REDIRECT_URI: ${FEISHU_REDIRECT_URI:-}
@@ -40,12 +38,18 @@ services:
       FEISHU_DEFAULT_ROLE: ${FEISHU_DEFAULT_ROLE:-researcher}
       FEISHU_ROLE_MAP_JSON: ${FEISHU_ROLE_MAP_JSON:-}
       FEISHU_ALLOWED_OPEN_IDS: ${FEISHU_ALLOWED_OPEN_IDS:-}
-      FEISHU_PARENT_FOLDER_TOKEN: ${FEISHU_PARENT_FOLDER_TOKEN:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://llm-4ky3t9l8il29a1dv.cn-beijing.maas.aliyuncs.com/compatible-mode/v1}
+      LLM_MODEL: ${LLM_MODEL:-qwen-plus}
+      CRAWLER_ENABLED: ${CRAWLER_ENABLED:-false}
+      CRAWLER_SCRIPTS_DIR: ${CRAWLER_SCRIPTS_DIR:-}
+      CRAWLER_API_BASE: ${CRAWLER_API_BASE:-http://backend:8000/api/v1}
+      CRAWLER_PASSWORD_FILE: ${CRAWLER_PASSWORD_FILE:-}
+      CRAWLER_HTTP_PROXY: ${CRAWLER_HTTP_PROXY:-}
+      CRAWLER_HTTPS_PROXY: ${CRAWLER_HTTPS_PROXY:-}
     ports:
       # 本机 8000 已被其他服务占用，宿主机映射到 8010；容器内仍为 8000
       - "8010:8000"
-    volumes:
-      - ${IMPORT_DATA_PATH:-./sample-data}:/imports:ro
     depends_on:
       mysql:
         condition: service_healthy

@@ -3,18 +3,14 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from functools import lru_cache
-from pathlib import Path
 
 
 @dataclass(frozen=True)
 class Settings:
     database_url: str
     auth_mode: str
-    import_roots: tuple[Path, ...]
-    publication_provider: str
     feishu_app_id: str | None
     feishu_app_secret: str | None
-    feishu_parent_folder_token: str | None
     feishu_redirect_uri: str | None
     feishu_scope: str
     feishu_frontend_url: str
@@ -26,15 +22,20 @@ class Settings:
     session_ttl_hours: int
     cookie_secure: bool
     allowed_origins: tuple[str, ...]
+    # 选品Agent LLM配置
+    llm_api_key: str
+    llm_base_url: str
+    llm_model: str
+    crawler_enabled: bool
+    crawler_scripts_dir: str
+    crawler_api_base: str
+    crawler_password_file: str
+    crawler_http_proxy: str
+    crawler_https_proxy: str
 
 
 @lru_cache
 def get_settings() -> Settings:
-    roots = tuple(
-        Path(item.strip()).expanduser().resolve()
-        for item in os.getenv("IMPORT_ROOTS", "/imports").split(",")
-        if item.strip()
-    )
     return Settings(
         database_url=os.getenv(
             "DATABASE_URL",
@@ -42,11 +43,8 @@ def get_settings() -> Settings:
             "category_encyclopedia?charset=utf8mb4",
         ),
         auth_mode=os.getenv("AUTH_MODE", "local").strip().lower(),
-        import_roots=roots,
-        publication_provider=os.getenv("PUBLICATION_PROVIDER", "local"),
         feishu_app_id=os.getenv("FEISHU_APP_ID") or None,
         feishu_app_secret=os.getenv("FEISHU_APP_SECRET") or None,
-        feishu_parent_folder_token=os.getenv("FEISHU_PARENT_FOLDER_TOKEN") or None,
         feishu_redirect_uri=os.getenv("FEISHU_REDIRECT_URI") or None,
         feishu_scope=os.getenv("FEISHU_SCOPE", "").strip(),
         feishu_frontend_url=os.getenv("FEISHU_FRONTEND_URL", "/"),
@@ -68,4 +66,16 @@ def get_settings() -> Settings:
             ).split(",")
             if item.strip()
         ),
+        llm_api_key=os.getenv("LLM_API_KEY", ""),
+        llm_base_url=os.getenv(
+            "LLM_BASE_URL",
+            "https://llm-4ky3t9l8il29a1dv.cn-beijing.maas.aliyuncs.com/compatible-mode/v1",
+        ),
+        llm_model=os.getenv("LLM_MODEL", "qwen-plus"),
+        crawler_enabled=os.getenv("CRAWLER_ENABLED", "false").lower() in {"1", "true", "yes"},
+        crawler_scripts_dir=os.getenv("CRAWLER_SCRIPTS_DIR", "").strip(),
+        crawler_api_base=os.getenv("CRAWLER_API_BASE", "http://backend:8000/api/v1").strip(),
+        crawler_password_file=os.getenv("CRAWLER_PASSWORD_FILE", "").strip(),
+        crawler_http_proxy=os.getenv("CRAWLER_HTTP_PROXY", "").strip(),
+        crawler_https_proxy=os.getenv("CRAWLER_HTTPS_PROXY", "").strip(),
     )

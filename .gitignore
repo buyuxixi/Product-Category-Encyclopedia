@@ -13,3 +13,6 @@ frontend/dist/
 *.tsbuildinfo
 *.log
 .DS_Store
+.wrangler/
+dist/
+node_modules/

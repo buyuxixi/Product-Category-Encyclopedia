@@ -57,13 +57,6 @@ const latestVideos = computed(() =>
     .slice(0, 3)
 )
 
-// 最新新闻 Top 3
-const latestNews = computed(() =>
-  allHotLinks.value
-    .filter(l => l.platform === 'news')
-    .slice(0, 3)
-)
-
 // 最新 Reddit 讨论 Top 3
 const latestReddit = computed(() =>
   allHotLinks.value

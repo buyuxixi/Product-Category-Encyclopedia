@@ -200,11 +200,10 @@ def main() -> None:
                     EncyclopediaSection.category_id == category.id,
                     EncyclopediaSection.section_key == section_key,
                 )
-            )
+                )
             if section:
                 section.content = content
                 section.generation_mode = "generated"
-                section.review_status = "draft"
                 section.updated_by = "system_seed"
                 total_sections += 1
         db.flush()

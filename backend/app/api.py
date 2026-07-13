@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from typing import Annotated
 
 import httpx
@@ -19,28 +18,25 @@ from app.integrations.feishu_auth import (
     verify_state,
 )
 from app.models import (
+    AgentMessage,
+    AgentScan,
     Category,
     EncyclopediaSection,
-    EncyclopediaVersion,
     HotLink,
-    ImportJob,
-    ListingSnapshot,
-    PublicationRecord,
+    ProductDiscovery,
     SourceMaterial,
     TrendSignal,
 )
 from app.schemas import (
-    AmazonImportRequest,
+    AgentChatRequest,
+    AgentScanRequest,
     CategoryUpdate,
-    DraftRequest,
+    DiscoveryUpdateRequest,
     HotLinkBatch,
     HotLinkCreate,
     LocalLoginRequest,
-    PublishRequest,
-    ReviewRequest,
     SectionUpdate,
     SourceMaterialCreate,
-    SubmitReviewRequest,
     TrendSignalBatch,
     TrendSignalCreate,
 )
@@ -52,20 +48,8 @@ from app.security import (
     get_actor,
     revoke_session,
 )
-from app.services.draft_service import generate_draft
-from app.services.import_service import (
-    ImportValidationError,
-    import_amazon_directories,
-    list_import_catalog,
-)
-from app.services.workflow_service import (
-    WorkflowError,
-    publish_version,
-    render_version_markdown,
-    review_version,
-    save_section,
-    submit_for_review,
-)
+from app.services.agent_service import AgentError, chat as agent_chat, run_scan
+from app.services.content_service import ContentError, save_section
 
 
 router = APIRouter(prefix="/api/v1")
@@ -82,7 +66,6 @@ def auth_config():
         "local_enabled": settings.auth_mode == "local" and bool(settings.auth_users_json.strip()),
         "feishu_enabled": settings.auth_mode == "feishu"
         and bool(settings.feishu_app_id and settings.feishu_app_secret),
-        "feishu_publish_enabled": bool(settings.feishu_app_id and settings.feishu_app_secret),
         "session_cookie_name": settings.session_cookie_name,
     }
 
@@ -177,18 +160,7 @@ def _section_payload(section: EncyclopediaSection, db: Session | None = None) ->
             "locator": evidence.locator,
             "source": None,
         }
-        if db is not None and evidence.source_type == "listing_snapshot":
-            listing = db.get(ListingSnapshot, evidence.source_id)
-            if listing is not None:
-                item["source"] = {
-                    "title": listing.title,
-                    "asin": listing.asin,
-                    "brand": listing.brand,
-                    "marketplace": listing.marketplace,
-                    "scraped_at": listing.scraped_at,
-                    "url": listing.source_url,
-                }
-        elif db is not None and evidence.source_type == "source_material":
+        if db is not None and evidence.source_type == "source_material":
             source = db.get(SourceMaterial, evidence.source_id)
             if source is not None:
                 item["source"] = {
@@ -206,7 +178,6 @@ def _section_payload(section: EncyclopediaSection, db: Session | None = None) ->
         "content": section.content,
         "generation_mode": section.generation_mode,
         "locked_by_human": section.locked_by_human,
-        "review_status": section.review_status,
         "updated_by": section.updated_by,
         "updated_at": section.updated_at,
         "evidence": evidence_payload,
@@ -225,14 +196,13 @@ def _category_payload(
         "included_items": category.included_items,
         "excluded_items": category.excluded_items,
         "status": category.status,
-        "workflow_status": category.workflow_status,
         "parent_code": category.parent.code if category.parent else None,
         "children": [
             {
                 "id": child.id,
                 "code": child.code,
                 "name": child.name,
-                "workflow_status": child.workflow_status,
+                "status": child.status,
             }
             for child in sorted(category.children, key=lambda item: item.name)
         ],
@@ -245,60 +215,13 @@ def _category_payload(
     return payload
 
 
-def _job_payload(job: ImportJob) -> dict:
-    return {
-        "id": job.id,
-        "status": job.status,
-        "source_path": Path(job.source_path).name or "configured import root",
-        "requested_directories": job.requested_directories,
-        "total_count": job.total_count,
-        "inserted_count": job.inserted_count,
-        "duplicate_count": job.duplicate_count,
-        "failed_count": job.failed_count,
-        "skipped_count": job.skipped_count,
-        "errors": job.errors,
-        "created_by": job.created_by,
-        "created_at": job.created_at,
-    }
-
-
-def _version_payload(version: EncyclopediaVersion) -> dict:
-    return {
-        "id": version.id,
-        "category_id": version.category_id,
-        "category_code": version.category.code if version.category else None,
-        "category_name": version.category.name if version.category else None,
-        "version_number": version.version_number,
-        "status": version.status,
-        "created_by": version.created_by,
-        "reviewed_by": version.reviewed_by,
-        "review_comment": version.review_comment,
-        "created_at": version.created_at,
-        "reviewed_at": version.reviewed_at,
-        "published_at": version.published_at,
-    }
-
-
 @router.get("/dashboard")
 def dashboard(db: Db, actor: ReadActor):
     category_count = db.scalar(select(func.count()).select_from(Category)) or 0
-    listing_count = db.scalar(select(func.count()).select_from(ListingSnapshot)) or 0
     source_count = db.scalar(select(func.count()).select_from(SourceMaterial)) or 0
-    pending_count = (
-        db.scalar(
-            select(func.count())
-            .select_from(EncyclopediaVersion)
-            .where(EncyclopediaVersion.status == "pending_review")
-        )
-        or 0
-    )
-    recent_imports = db.scalars(select(ImportJob).order_by(ImportJob.id.desc()).limit(5)).all()
     return {
         "category_count": category_count,
-        "listing_count": listing_count,
         "source_count": source_count,
-        "pending_review_count": pending_count,
-        "recent_imports": [_job_payload(item) for item in recent_imports],
     }
 
 
@@ -439,14 +362,6 @@ def categories(db: Db, actor: ReadActor, q: str | None = Query(default=None, max
 @router.get("/categories/{code}")
 def category_detail(code: str, db: Db, actor: ReadActor):
     category = _category_or_404(db, code)
-    listing_count = (
-        db.scalar(
-            select(func.count())
-            .select_from(ListingSnapshot)
-            .where(ListingSnapshot.category_id == category.id)
-        )
-        or 0
-    )
     source_count = (
         db.scalar(
             select(func.count())
@@ -456,7 +371,7 @@ def category_detail(code: str, db: Db, actor: ReadActor):
         or 0
     )
     payload = _category_payload(category, include_sections=True, db=db)
-    payload.update({"listing_count": listing_count, "source_count": source_count})
+    payload.update({"source_count": source_count})
     return payload
 
 
@@ -464,68 +379,11 @@ def category_detail(code: str, db: Db, actor: ReadActor):
 def update_category(code: str, body: CategoryUpdate, db: Db, actor: WriteActor):
     ensure_role(actor, "admin", "researcher")
     category = _category_or_404(db, code)
-    if category.workflow_status in {"pending_review", "approved", "published"}:
-        raise HTTPException(status_code=409, detail="当前版本已锁定，请先创建新的草稿版本")
     for field, value in body.model_dump(exclude_unset=True).items():
         setattr(category, field, value)
-    category.workflow_status = "draft"
     db.commit()
     db.refresh(category)
     return _category_payload(category, include_sections=True, db=db)
-
-
-@router.get("/categories/{code}/listings")
-def category_listings(
-    code: str,
-    db: Db,
-    actor: ReadActor,
-    q: str | None = Query(default=None, max_length=200),
-    brand: str | None = Query(default=None, max_length=255),
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
-):
-    category = _category_or_404(db, code)
-    filters = [ListingSnapshot.category_id == category.id]
-    if q:
-        filters.append(
-            or_(
-                ListingSnapshot.asin.contains(q),
-                ListingSnapshot.title.contains(q),
-                ListingSnapshot.brand.contains(q),
-            )
-        )
-    if brand:
-        filters.append(ListingSnapshot.brand == brand)
-    total = db.scalar(select(func.count()).select_from(ListingSnapshot).where(*filters)) or 0
-    rows = db.scalars(
-        select(ListingSnapshot)
-        .where(*filters)
-        .order_by(ListingSnapshot.bsr_rank.is_(None), ListingSnapshot.bsr_rank, ListingSnapshot.asin)
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-    ).all()
-    return {
-        "total": total,
-        "page": page,
-        "page_size": page_size,
-        "items": [
-            {
-                "id": item.id,
-                "asin": item.asin,
-                "title": item.title,
-                "brand": item.brand,
-                "rating_value": item.rating_value,
-                "rating_count": item.rating_count,
-                "current_price": item.current_price,
-                "currency": item.currency,
-                "bsr_rank": item.bsr_rank,
-                "bsr_category": item.bsr_category,
-                "scraped_at": item.scraped_at,
-                "source_url": item.source_url,
-            }
-            for item in rows
-        ],
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -759,23 +617,30 @@ def trigger_crawl(code: str, db: Db, actor: WriteActor):
     然后执行 crawl_reddit_single.py（当前品类的 Reddit 讨论帖）。
     """
     ensure_role(actor, "admin", "data", "researcher")
+    settings = get_settings()
+    if not settings.crawler_enabled:
+        raise HTTPException(status_code=503, detail="爬虫入口当前已关闭")
+    if not settings.crawler_scripts_dir:
+        raise HTTPException(status_code=503, detail="爬虫脚本目录尚未配置")
     category = _category_or_404(db, code)
     import os
     import subprocess
 
-    scripts_dir = os.path.expanduser("~/.hermes/skills/productivity/hot-topic-crawler/scripts")
+    scripts_dir = os.path.expanduser(settings.crawler_scripts_dir)
     runner = os.path.join(scripts_dir, "run_full_crawl.py")
     reddit_runner = os.path.join(scripts_dir, "crawl_reddit_single.py")
     if not os.path.exists(runner):
         raise HTTPException(status_code=404, detail="Crawler script not found")
 
     env = os.environ.copy()
-    env["ENCYCLOPEDIA_API_BASE"] = f"http://127.0.0.1:8010/api/v1"
+    env["ENCYCLOPEDIA_API_BASE"] = settings.crawler_api_base
     env["CRAWLER_USERNAME"] = env.get("CRAWLER_USERNAME", "admin")
-    env["HTTP_PROXY"] = env.get("HTTP_PROXY", "http://127.0.0.1:7897")
-    env["HTTPS_PROXY"] = env.get("HTTPS_PROXY", "http://127.0.0.1:7897")
+    if settings.crawler_http_proxy:
+        env["HTTP_PROXY"] = settings.crawler_http_proxy
+    if settings.crawler_https_proxy:
+        env["HTTPS_PROXY"] = settings.crawler_https_proxy
     # Read password from .crawler_password file or AUTH_USERS_JSON
-    pass_file = os.path.expanduser("~/.hermes/skills/productivity/hot-topic-crawler/.crawler_password")
+    pass_file = os.path.expanduser(settings.crawler_password_file)
     if os.path.exists(pass_file):
         with open(pass_file) as f:
             env["CRAWLER_PASSWORD"] = f.read().strip()
@@ -836,48 +701,6 @@ def trigger_crawl(code: str, db: Db, actor: WriteActor):
     return {"category": code, "results": results}
 
 
-@router.post("/imports/amazon")
-def import_amazon(body: AmazonImportRequest, db: Db, actor: WriteActor):
-    ensure_role(actor, "admin", "data")
-    try:
-        job = import_amazon_directories(
-            db,
-            root_path=body.root_path,
-            requested_directories=body.directories,
-            actor=actor.name,
-        )
-        return _job_payload(job)
-    except ImportValidationError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-
-@router.get("/imports/catalog")
-def import_catalog(
-    db: Db,
-    actor: ReadActor,
-    root_path: str = Query(default="/imports", max_length=500),
-):
-    del db, actor
-    try:
-        return {"root_path": root_path, "items": list_import_catalog(root_path)}
-    except ImportValidationError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-
-@router.get("/imports")
-def list_imports(db: Db, actor: ReadActor):
-    rows = db.scalars(select(ImportJob).order_by(ImportJob.id.desc()).limit(50)).all()
-    return {"items": [_job_payload(item) for item in rows]}
-
-
-@router.get("/imports/{job_id}")
-def import_detail(job_id: int, db: Db, actor: ReadActor):
-    job = db.get(ImportJob, job_id)
-    if job is None:
-        raise HTTPException(status_code=404, detail="Import job not found")
-    return _job_payload(job)
-
-
 @router.post("/source-materials")
 def add_source_material(body: SourceMaterialCreate, db: Db, actor: WriteActor):
     ensure_role(actor, "admin", "researcher")
@@ -923,22 +746,6 @@ def list_source_materials(code: str, db: Db, actor: ReadActor):
     }
 
 
-@router.post("/categories/{code}/drafts")
-def create_draft(code: str, body: DraftRequest, db: Db, actor: WriteActor):
-    ensure_role(actor, "admin", "researcher")
-    category = _category_or_404(db, code)
-    try:
-        return generate_draft(
-            db,
-            category,
-            body.listing_limit,
-            listing_ids=body.listing_ids,
-            source_material_ids=body.source_material_ids,
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-
 @router.put("/categories/{code}/sections/{section_key}")
 def update_section(
     code: str, section_key: str, body: SectionUpdate, db: Db, actor: WriteActor
@@ -951,7 +758,6 @@ def update_section(
             category=category,
             section_key=section_key,
             content=body.content,
-            evidence_listing_ids=body.evidence_listing_ids,
             generation_mode=body.generation_mode,
             actor=actor.name,
             evidence_source_ids=body.evidence_source_ids,
@@ -962,163 +768,161 @@ def update_section(
             .where(EncyclopediaSection.id == section.id)
         )
         return _section_payload(section, db)
-    except WorkflowError as exc:
+    except ContentError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
-@router.post("/categories/{code}/submit-review")
-def submit_review(code: str, body: SubmitReviewRequest, db: Db, actor: WriteActor):
-    ensure_role(actor, "admin", "researcher")
-    category = _category_or_404(db, code)
-    try:
-        return _version_payload(
-            submit_for_review(db, category=category, actor=actor.name, note=body.note)
-        )
-    except WorkflowError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+# ---------------------------------------------------------------------------
+# 选品Agent
+# ---------------------------------------------------------------------------
+
+def _discovery_payload(d: ProductDiscovery) -> dict:
+    return {
+        "id": d.id,
+        "scan_id": d.scan_id,
+        "product_name": d.product_name,
+        "category_code": d.category_code,
+        "opportunity_type": d.opportunity_type,
+        "opportunity_score": d.opportunity_score,
+        "reasoning": d.reasoning,
+        "market_signals": d.market_signals,
+        "keywords": d.keywords,
+        "source_links": d.source_links,
+        "status": d.status,
+        "user_note": d.user_note,
+        "created_at": d.created_at,
+    }
 
 
-@router.get("/versions")
-def list_versions(
-    db: Db,
-    actor: ReadActor,
-    status: str | None = Query(default=None, max_length=32),
-    category_code: str | None = Query(default=None, max_length=80),
-):
-    statement = select(EncyclopediaVersion).options(selectinload(EncyclopediaVersion.category))
-    if status:
-        statement = statement.where(EncyclopediaVersion.status == status)
-    if category_code:
-        statement = statement.join(Category).where(Category.code == category_code)
-    rows = db.scalars(statement.order_by(EncyclopediaVersion.id.desc()).limit(100)).all()
-    return {"items": [_version_payload(item) for item in rows]}
-
-
-@router.get("/versions/{version_id}")
-def version_detail(version_id: int, db: Db, actor: ReadActor):
-    version = db.scalar(
-        select(EncyclopediaVersion)
-        .options(selectinload(EncyclopediaVersion.category))
-        .where(EncyclopediaVersion.id == version_id)
-    )
-    if version is None:
-        raise HTTPException(status_code=404, detail="Version not found")
-    payload = _version_payload(version)
-    payload["content_snapshot"] = version.content_snapshot
+def _scan_payload(scan: AgentScan, *, include_details: bool = False, db: Session | None = None) -> dict:
+    payload = {
+        "id": scan.id,
+        "scan_type": scan.scan_type,
+        "category_code": scan.category_code,
+        "topic": scan.topic,
+        "status": scan.status,
+        "triggered_by": scan.triggered_by,
+        "report": scan.report,
+        "stats": scan.stats,
+        "error_message": scan.error_message,
+        "created_at": scan.created_at,
+        "completed_at": scan.completed_at,
+    }
+    if include_details and db is not None:
+        discoveries = db.scalars(
+            select(ProductDiscovery).where(ProductDiscovery.scan_id == scan.id)
+            .order_by(ProductDiscovery.opportunity_score.desc())
+        ).all()
+        payload["discoveries"] = [_discovery_payload(d) for d in discoveries]
+        messages = db.scalars(
+            select(AgentMessage).where(AgentMessage.scan_id == scan.id)
+            .order_by(AgentMessage.id)
+        ).all()
+        payload["messages"] = [
+            {
+                "id": m.id,
+                "role": m.role,
+                "content": m.content,
+                "created_at": m.created_at,
+            }
+            for m in messages
+        ]
     return payload
 
 
-@router.get("/versions/{version_id}/diff")
-def version_diff(version_id: int, db: Db, actor: ReadActor):
-    version = db.get(EncyclopediaVersion, version_id)
-    if version is None:
-        raise HTTPException(status_code=404, detail="Version not found")
-    previous = db.scalar(
-        select(EncyclopediaVersion)
-        .where(
-            EncyclopediaVersion.category_id == version.category_id,
-            EncyclopediaVersion.version_number < version.version_number,
-        )
-        .order_by(EncyclopediaVersion.version_number.desc())
-    )
-    current_sections = {
-        item["section_key"]: item for item in version.content_snapshot.get("sections", [])
-    }
-    previous_sections = (
-        {item["section_key"]: item for item in previous.content_snapshot.get("sections", [])}
-        if previous
-        else {}
-    )
-    changes = []
-    for section_key in sorted(set(current_sections) | set(previous_sections)):
-        before = previous_sections.get(section_key, {}).get("content", "")
-        after = current_sections.get(section_key, {}).get("content", "")
-        if before == after:
-            continue
-        changes.append(
-            {
-                "section_key": section_key,
-                "title": current_sections.get(section_key, previous_sections.get(section_key, {})).get(
-                    "title", section_key
-                ),
-                "before": before,
-                "after": after,
-            }
-        )
-    return {
-        "version_id": version.id,
-        "previous_version_id": previous.id if previous else None,
-        "changes": changes,
-    }
-
-
-@router.post("/versions/{version_id}/review")
-def decide_review(version_id: int, body: ReviewRequest, db: Db, actor: WriteActor):
-    ensure_role(actor, "admin", "reviewer")
-    version = db.get(EncyclopediaVersion, version_id)
-    if version is None:
-        raise HTTPException(status_code=404, detail="Version not found")
+@router.post("/agent/scan")
+def trigger_agent_scan(body: AgentScanRequest, db: Db, actor: WriteActor):
+    """触发选品Agent扫描。"""
+    ensure_role(actor, "admin", "data", "researcher")
+    if body.category_code and db.scalar(select(Category.id).where(Category.code == body.category_code)) is None:
+        raise HTTPException(status_code=404, detail="Category not found")
     try:
-        return _version_payload(
-            review_version(
-                db,
-                version=version,
-                decision=body.decision,
-                comment=body.comment,
-                actor=actor.name,
-            )
+        scan = run_scan(
+            db,
+            scan_type=body.scan_type,
+            category_code=body.category_code,
+            topic=body.topic,
+            actor=actor.name,
         )
-    except WorkflowError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return _scan_payload(scan, include_details=True, db=db)
+    except AgentError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
-@router.get("/versions/{version_id}/publication-preview")
-def publication_preview(version_id: int, db: Db, actor: ReadActor):
-    version = db.get(EncyclopediaVersion, version_id)
-    if version is None:
-        raise HTTPException(status_code=404, detail="Version not found")
-    return {"version_id": version.id, "content": render_version_markdown(version)}
+@router.get("/agent/scans")
+def list_agent_scans(db: Db, actor: ReadActor, limit: int = Query(default=20, ge=1, le=100)):
+    """列出选品Agent扫描历史。"""
+    rows = db.scalars(
+        select(AgentScan).order_by(AgentScan.id.desc()).limit(limit)
+    ).all()
+    return {"items": [_scan_payload(s) for s in rows]}
 
 
-@router.post("/versions/{version_id}/publish")
-def publish(version_id: int, body: PublishRequest, db: Db, actor: WriteActor):
-    ensure_role(actor, "admin", "reviewer")
-    version = db.get(EncyclopediaVersion, version_id)
-    if version is None:
-        raise HTTPException(status_code=404, detail="Version not found")
+@router.get("/agent/scans/{scan_id}")
+def agent_scan_detail(scan_id: int, db: Db, actor: ReadActor):
+    """获取扫描详情（含discoveries和messages）。"""
+    scan = db.get(AgentScan, scan_id)
+    if scan is None:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    return _scan_payload(scan, include_details=True, db=db)
+
+
+@router.post("/agent/scans/{scan_id}/chat")
+def agent_scan_chat(scan_id: int, body: AgentChatRequest, db: Db, actor: WriteActor):
+    """在扫描会话中进行多轮对话。"""
+    ensure_role(actor, "admin", "data", "researcher")
     try:
-        record = publish_version(
-            db, version=version, provider_name=body.provider, actor=actor.name
-        )
-        return {
-            "id": record.id,
-            "status": record.status,
-            "provider": record.provider,
-            "external_doc_id": record.external_doc_id,
-            "external_url": record.external_url,
-            "error_message": record.error_message,
-            "preview_content": record.preview_content,
-        }
-    except WorkflowError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+        result = agent_chat(db, scan_id, body.message)
+        return {"content": result["content"], "usage": result.get("usage", {})}
+    except AgentError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
-@router.get("/publications")
-def list_publications(db: Db, actor: ReadActor):
-    rows = db.scalars(select(PublicationRecord).order_by(PublicationRecord.id.desc()).limit(100)).all()
-    return {
-        "items": [
-            {
-                "id": item.id,
-                "category_id": item.category_id,
-                "version_id": item.version_id,
-                "provider": item.provider,
-                "status": item.status,
-                "external_doc_id": item.external_doc_id,
-                "external_url": item.external_url,
-                "error_message": item.error_message,
-                "created_at": item.created_at,
-            }
-            for item in rows
-        ]
-    }
+@router.get("/agent/scans/{scan_id}/discoveries")
+def list_discoveries(scan_id: int, db: Db, actor: ReadActor):
+    """获取某次扫描发现的产品/机会点。"""
+    scan = db.get(AgentScan, scan_id)
+    if scan is None:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    rows = db.scalars(
+        select(ProductDiscovery).where(ProductDiscovery.scan_id == scan_id)
+        .order_by(ProductDiscovery.opportunity_score.desc())
+    ).all()
+    return {"items": [_discovery_payload(d) for d in rows]}
+
+
+@router.patch("/agent/discoveries/{discovery_id}")
+def update_discovery(discovery_id: int, body: DiscoveryUpdateRequest, db: Db, actor: WriteActor):
+    """更新发现状态或添加备注。"""
+    ensure_role(actor, "admin", "data", "researcher")
+    discovery = db.get(ProductDiscovery, discovery_id)
+    if discovery is None:
+        raise HTTPException(status_code=404, detail="Discovery not found")
+    if body.status is not None:
+        discovery.status = body.status
+    if body.user_note is not None:
+        discovery.user_note = body.user_note
+    db.commit()
+    db.refresh(discovery)
+    return _discovery_payload(discovery)
+
+
+@router.get("/agent/discoveries")
+def all_discoveries(
+    db: Db,
+    actor: ReadActor,
+    status: str | None = Query(default=None),
+    opportunity_type: str | None = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=500),
+):
+    """跨扫描汇总查看所有发现。"""
+    stmt = select(ProductDiscovery).order_by(ProductDiscovery.opportunity_score.desc()).limit(limit)
+    filters = []
+    if status:
+        filters.append(ProductDiscovery.status == status)
+    if opportunity_type:
+        filters.append(ProductDiscovery.opportunity_type == opportunity_type)
+    if filters:
+        stmt = stmt.where(*filters)
+    rows = db.scalars(stmt).all()
+    return {"items": [_discovery_payload(d) for d in rows]}

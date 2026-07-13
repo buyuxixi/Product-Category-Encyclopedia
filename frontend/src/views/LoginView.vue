@@ -54,7 +54,7 @@ async function login() {
         <div class="login-copy">
           <div class="eyebrow">内部工作台</div>
           <h1>登录后开始研究</h1>
-          <p>统一查看品类、竞品数据、研究来源和审核版本。</p>
+          <p>统一查看品类、热点趋势、研究来源和选品分析。</p>
         </div>
 
         <el-alert v-if="props.authError" type="warning" :closable="false" show-icon class="login-alert">
@@ -80,7 +80,7 @@ async function login() {
         </el-button>
 
         <el-empty v-if="!props.localEnabled && !props.feishuEnabled" description="管理员尚未配置登录方式" :image-size="90" />
-        <p class="login-footnote">你的编辑、审核和发布操作都会记录在版本历史中。</p>
+        <p class="login-footnote">你的编辑和数据操作会记录在审计日志中。</p>
       </div>
     </section>
   </main>

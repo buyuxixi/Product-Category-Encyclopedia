@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { DataBoard, Document, Search, TrendCharts, EditPen, ArrowDown, ArrowRight, FolderOpened } from '@element-plus/icons-vue'
+import { DataBoard, Document, Search, TrendCharts, EditPen, ArrowDown, ArrowRight, FolderOpened, Promotion } from '@element-plus/icons-vue'
 import { ApiError, apiRequest, type Identity } from './api'
 import DashboardView from './views/DashboardView.vue'
 import EncyclopediaView from './views/EncyclopediaView.vue'
+import AgentView from './views/AgentView.vue'
 import LoginView from './views/LoginView.vue'
 import NotesView from './views/NotesView.vue'
 import TrendView from './views/TrendView.vue'
 import type { CategorySummary, Role, SearchResult } from './types'
 
-type ViewName = 'dashboard' | 'encyclopedia' | 'trends' | 'notes'
+type ViewName = 'dashboard' | 'encyclopedia' | 'trends' | 'notes' | 'agent'
 type AuthConfig = { mode: string; local_enabled: boolean; feishu_enabled: boolean }
 type CurrentUser = { id: number; name: string; role: Role; provider: string }
 
@@ -26,7 +27,6 @@ const authLoading = ref(true)
 const authenticated = ref(false)
 const authConfig = ref<AuthConfig>({ mode: 'local', local_enabled: false, feishu_enabled: false })
 const user = ref<CurrentUser | null>(null)
-const sidebarCollapsed = ref(false)
 const collapsedTrees = ref<Set<string>>(new Set())
 
 function toggleTree(code: string) {
@@ -34,12 +34,6 @@ function toggleTree(code: string) {
   if (next.has(code)) next.delete(code)
   else next.add(code)
   collapsedTrees.value = next
-}
-
-function statusColor(status: string) {
-  if (status === 'published' || status === 'approved') return '#1aae39'
-  if (status === 'pending_review') return '#dd5b00'
-  return '#a39e98'
 }
 
 const identity = computed<Identity>(() => ({
@@ -134,10 +128,21 @@ function selectCategory(code: string) {
   activeView.value = 'encyclopedia'
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function highlightSearch(text: string): string {
-  if (!query.value.trim() || !text) return text
-  const escaped = query.value.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>')
+  if (!text) return ''
+  const safeText = escapeHtml(text)
+  if (!query.value.trim()) return safeText
+  const safeQuery = escapeHtml(query.value.trim()).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return safeText.replace(new RegExp(`(${safeQuery})`, 'gi'), '<mark>$1</mark>')
 }
 
 function searchKindLabel(kind: string): string {
@@ -227,6 +232,9 @@ onMounted(loadSession)
             <button :class="{ active: activeView === 'notes' }" @click="activeView = 'notes'">
               <el-icon><EditPen /></el-icon><span>选品笔记</span>
             </button>
+            <button :class="{ active: activeView === 'agent' }" @click="activeView = 'agent'">
+              <el-icon><Promotion /></el-icon><span>选品Agent</span>
+            </button>
           </div>
 
           <div v-if="activeView === 'encyclopedia'" class="nav-section nav-cats">
@@ -247,14 +255,14 @@ onMounted(loadSession)
                   <button class="nav-tree-btn" :class="{ active: selectedCode === root.code }" @click="selectCategory(root.code)">
                     <el-icon class="nav-tree-icon"><FolderOpened /></el-icon>
                     <span class="nav-tree-text">{{ root.name }}</span>
-                    <span class="nav-tree-dot" :style="{ background: statusColor(root.workflow_status) }"></span>
+                    <span class="nav-tree-dot" :style="{ background: root.status === 'active' ? '#1aae39' : '#a39e98' }"></span>
                   </button>
                 </div>
                 <div v-if="root.children.length && !collapsedTrees.has(root.code)" class="nav-tree-children">
                   <button v-for="child in root.children" :key="child.code" class="nav-tree-btn nav-tree-child" :class="{ active: selectedCode === child.code }" @click="selectCategory(child.code)">
                     <el-icon class="nav-tree-icon"><Document /></el-icon>
                     <span class="nav-tree-text">{{ child.name }}</span>
-                    <span class="nav-tree-dot small" :style="{ background: statusColor(child.workflow_status) }"></span>
+                    <span class="nav-tree-dot small" :style="{ background: child.status === 'active' ? '#1aae39' : '#a39e98' }"></span>
                   </button>
                 </div>
               </div>
@@ -285,6 +293,11 @@ onMounted(loadSession)
           :categories="categories"
           :preset-category="noteCategoryCode"
           @select="selectCategory"
+        />
+        <!-- Agent view -->
+        <AgentView
+          v-else-if="activeView === 'agent'"
+          :identity="identity"
         />
         <!-- Encyclopedia -->
         <EncyclopediaView

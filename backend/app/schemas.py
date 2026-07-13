@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 
 Role = Literal["admin", "data", "researcher", "reviewer"]
@@ -21,11 +21,6 @@ class CategoryUpdate(BaseModel):
     excluded_items: list[str] | None = None
 
 
-class AmazonImportRequest(BaseModel):
-    root_path: str = "/imports"
-    directories: list[str] | None = None
-
-
 class SourceMaterialCreate(BaseModel):
     category_code: str
     source_type: Literal[
@@ -38,37 +33,10 @@ class SourceMaterialCreate(BaseModel):
     collected_at: datetime | None = None
 
 
-class DraftRequest(BaseModel):
-    listing_limit: int = Field(default=100, ge=1, le=500)
-    listing_ids: list[int] = Field(default_factory=list, max_length=500)
-    source_material_ids: list[int] = Field(default_factory=list, max_length=100)
-
-
 class SectionUpdate(BaseModel):
     content: str = Field(max_length=200000)
-    evidence_listing_ids: list[int] = Field(default_factory=list, max_length=100)
     evidence_source_ids: list[int] = Field(default_factory=list, max_length=100)
     generation_mode: Literal["human", "generated"] = "human"
-
-
-class SubmitReviewRequest(BaseModel):
-    note: str | None = Field(default=None, max_length=2000)
-
-
-class ReviewRequest(BaseModel):
-    decision: Literal["approve", "reject"]
-    comment: str = Field(default="", max_length=5000)
-
-    @field_validator("comment")
-    @classmethod
-    def rejection_requires_comment(cls, value: str, info):
-        if info.data.get("decision") == "reject" and not value.strip():
-            raise ValueError("Rejecting a version requires a comment")
-        return value
-
-
-class PublishRequest(BaseModel):
-    provider: Literal["local", "feishu"] = "local"
 
 
 class TrendSignalCreate(BaseModel):
@@ -114,3 +82,30 @@ class TrendSignalBatch(BaseModel):
 
 class HotLinkBatch(BaseModel):
     items: list[HotLinkCreate] = Field(min_length=1, max_length=500)
+
+
+class AgentScanRequest(BaseModel):
+    scan_type: Literal["full", "category", "topic"] = "full"
+    category_code: str | None = Field(default=None, max_length=80)
+    topic: str | None = Field(default=None, max_length=2000)
+
+    @model_validator(mode="after")
+    def validate_scope(self):
+        if self.scan_type == "category" and not self.category_code:
+            raise ValueError("category 扫描必须指定 category_code")
+        if self.scan_type == "topic" and (not self.topic or not self.topic.strip()):
+            raise ValueError("topic 扫描必须指定非空 topic")
+        if self.scan_type != "category" and self.category_code is not None:
+            raise ValueError("只有 category 扫描可以指定 category_code")
+        if self.scan_type != "topic" and self.topic is not None:
+            raise ValueError("只有 topic 扫描可以指定 topic")
+        return self
+
+
+class AgentChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=5000)
+
+
+class DiscoveryUpdateRequest(BaseModel):
+    status: Literal["new", "reviewed", "selected", "archived"] | None = None
+    user_note: str | None = Field(default=None, max_length=5000)

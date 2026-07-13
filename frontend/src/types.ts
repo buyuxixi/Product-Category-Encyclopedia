@@ -9,9 +9,8 @@ export interface CategorySummary {
   included_items: string[]
   excluded_items: string[]
   status: string
-  workflow_status: string
   parent_code: string | null
-  children: Array<{ id: number; code: string; name: string; workflow_status: string }>
+  children: Array<{ id: number; code: string; name: string; status: string }>
   updated_at: string
 }
 
@@ -22,10 +21,6 @@ export interface Evidence {
   locator: string | null
   source: {
     title?: string
-    asin?: string
-    brand?: string
-    marketplace?: string
-    scraped_at?: string
     collected_at?: string
     published_at?: string | null
     source_type?: string
@@ -40,7 +35,6 @@ export interface EncyclopediaSection {
   content: string
   generation_mode: string
   locked_by_human: boolean
-  review_status: string
   updated_by: string | null
   updated_at: string
   evidence: Evidence[]
@@ -57,16 +51,6 @@ export interface SearchResult {
   title: string
   snippet: string
   section_key: string | null
-}
-
-export interface DraftSuggestion {
-  section_key: string
-  title: string
-  content: string
-  evidence_listing_ids: number[]
-  evidence_source_ids: number[]
-  missing_evidence: boolean
-  selected?: boolean
 }
 
 export interface SourceMaterial {
@@ -107,4 +91,47 @@ export interface TrendSignal {
   trend_direction: string | null
   summary: string
   collected_at: string
+}
+
+export interface ProductDiscovery {
+  id: number
+  scan_id: number
+  product_name: string
+  category_code: string | null
+  opportunity_type: string
+  opportunity_score: number | null
+  reasoning: string
+  market_signals: Record<string, unknown>
+  keywords: string[]
+  source_links: Array<{ title: string; url: string; platform: string }>
+  status: string
+  user_note: string | null
+  created_at: string
+}
+
+export interface AgentMessage {
+  id: number
+  role: string
+  content: string
+  created_at: string
+}
+
+export interface AgentScan {
+  id: number
+  scan_type: string
+  category_code: string | null
+  topic: string | null
+  status: string
+  triggered_by: string
+  report: {
+    summary?: string
+    market_overview?: Record<string, unknown>
+    recommendations?: string[]
+  }
+  stats: Record<string, unknown>
+  error_message: string | null
+  created_at: string
+  completed_at: string | null
+  discoveries?: ProductDiscovery[]
+  messages?: AgentMessage[]
 }

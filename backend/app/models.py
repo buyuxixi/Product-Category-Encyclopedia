@@ -77,7 +77,6 @@ class Category(TimestampMixin, Base):
     excluded_items: Mapped[list[str]] = mapped_column(JSON, default=list)
     description: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(32), default="active", index=True)
-    workflow_status: Mapped[str] = mapped_column(String(32), default="data_preparation", index=True)
 
     parent: Mapped[Category | None] = relationship(
         "Category", remote_side="Category.id", back_populates="children"
@@ -86,41 +85,6 @@ class Category(TimestampMixin, Base):
     sections: Mapped[list[EncyclopediaSection]] = relationship(
         "EncyclopediaSection", back_populates="category", cascade="all, delete-orphan"
     )
-
-
-class ListingSnapshot(TimestampMixin, Base):
-    __tablename__ = "listing_snapshots"
-    __table_args__ = (
-        UniqueConstraint("marketplace", "asin", "scraped_at", name="uq_listing_snapshot"),
-        Index("ix_listing_category_brand", "category_id", "brand"),
-    )
-
-    id: Mapped[int] = mapped_column(BIGINT_PK, primary_key=True, autoincrement=True)
-    marketplace: Mapped[str] = mapped_column(String(16), default="US", index=True)
-    asin: Mapped[str] = mapped_column(String(20), index=True)
-    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), index=True)
-    scraped_at: Mapped[datetime] = mapped_column(DateTime, index=True)
-    title: Mapped[str] = mapped_column(Text, default="")
-    brand: Mapped[str] = mapped_column(String(255), default="", index=True)
-    rating_value: Mapped[float | None] = mapped_column(Float, nullable=True)
-    rating_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    current_price: Mapped[float | None] = mapped_column(Float, nullable=True)
-    currency: Mapped[str | None] = mapped_column(String(8), nullable=True)
-    bsr_rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    bsr_category: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    bullet_points: Mapped[list[Any]] = mapped_column(JSON, default=list)
-    product_info: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
-    attributes: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
-    images: Mapped[Any] = mapped_column(JSON, default=dict)
-    videos: Mapped[Any] = mapped_column(JSON, default=dict)
-    customers_say: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
-    qa_content: Mapped[list[Any]] = mapped_column(JSON, default=list)
-    aplus_content: Mapped[Any] = mapped_column(JSON, default=dict)
-    source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    content_hash: Mapped[str] = mapped_column(String(64), index=True)
-    raw_payload: Mapped[dict[str, Any]] = mapped_column(JSON)
-
-    category: Mapped[Category] = relationship("Category")
 
 
 class SourceMaterial(TimestampMixin, Base):
@@ -153,7 +117,6 @@ class EncyclopediaSection(TimestampMixin, Base):
     content: Mapped[str] = mapped_column(Text, default="")
     generation_mode: Mapped[str] = mapped_column(String(32), default="empty")
     locked_by_human: Mapped[bool] = mapped_column(Boolean, default=False)
-    review_status: Mapped[str] = mapped_column(String(32), default="draft")
     updated_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
     category: Mapped[Category] = relationship("Category", back_populates="sections")
@@ -175,40 +138,6 @@ class EvidenceLink(TimestampMixin, Base):
     section: Mapped[EncyclopediaSection] = relationship(
         "EncyclopediaSection", back_populates="evidence"
     )
-
-
-class EncyclopediaVersion(TimestampMixin, Base):
-    __tablename__ = "encyclopedia_versions"
-    __table_args__ = (UniqueConstraint("category_id", "version_number", name="uq_category_version"),)
-
-    id: Mapped[int] = mapped_column(BIGINT_PK, primary_key=True, autoincrement=True)
-    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), index=True)
-    version_number: Mapped[int] = mapped_column(Integer)
-    status: Mapped[str] = mapped_column(String(32), index=True)
-    content_snapshot: Mapped[dict[str, Any]] = mapped_column(JSON)
-    created_by: Mapped[str] = mapped_column(String(120))
-    reviewed_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    review_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
-    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-
-    category: Mapped[Category] = relationship("Category")
-
-
-class ImportJob(TimestampMixin, Base):
-    __tablename__ = "import_jobs"
-
-    id: Mapped[int] = mapped_column(BIGINT_PK, primary_key=True, autoincrement=True)
-    status: Mapped[str] = mapped_column(String(32), index=True)
-    source_path: Mapped[str] = mapped_column(Text)
-    requested_directories: Mapped[list[str]] = mapped_column(JSON, default=list)
-    total_count: Mapped[int] = mapped_column(Integer, default=0)
-    inserted_count: Mapped[int] = mapped_column(Integer, default=0)
-    duplicate_count: Mapped[int] = mapped_column(Integer, default=0)
-    failed_count: Mapped[int] = mapped_column(Integer, default=0)
-    skipped_count: Mapped[int] = mapped_column(Integer, default=0)
-    errors: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
-    created_by: Mapped[str] = mapped_column(String(120))
 
 
 class TrendSignal(TimestampMixin, Base):
@@ -270,23 +199,6 @@ class HotLink(TimestampMixin, Base):
     category: Mapped[Category] = relationship("Category")
 
 
-class PublicationRecord(TimestampMixin, Base):
-    __tablename__ = "publication_records"
-    __table_args__ = (UniqueConstraint("provider", "version_id", name="uq_provider_version"),)
-
-    id: Mapped[int] = mapped_column(BIGINT_PK, primary_key=True, autoincrement=True)
-    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), index=True)
-    version_id: Mapped[int] = mapped_column(ForeignKey("encyclopedia_versions.id"), index=True)
-    provider: Mapped[str] = mapped_column(String(32))
-    external_doc_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    external_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(32), index=True)
-    error_code: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    preview_content: Mapped[str] = mapped_column(Text, default="")
-    published_by: Mapped[str] = mapped_column(String(120))
-
-
 class AuditEvent(Base):
     __tablename__ = "audit_events"
 
@@ -294,8 +206,96 @@ class AuditEvent(Base):
     actor: Mapped[str] = mapped_column(String(120), index=True)
     action: Mapped[str] = mapped_column(String(120), index=True)
     entity_type: Mapped[str] = mapped_column(String(80), index=True)
-    entity_id: Mapped[str] = mapped_column(String(80), index=True)
+    entity_id: Mapped[str] = mapped_column(String(80))
     metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+
+class AgentScan(TimestampMixin, Base):
+    """选品Agent的一次扫描会话。
+
+    记录扫描的类型(全站/指定品类/自由话题)、LLM生成的分析报告、
+    以及扫描时收集的数据快照。
+    """
+
+    __tablename__ = "agent_scans"
+
+    id: Mapped[int] = mapped_column(BIGINT_PK, primary_key=True, autoincrement=True)
+    scan_type: Mapped[str] = mapped_column(String(40), index=True)  # full|category|topic
+    category_code: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
+    topic: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="running", index=True)  # running|completed|failed
+    triggered_by: Mapped[str] = mapped_column(String(120))
+    # LLM生成的结构化分析报告
+    report: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    # 扫描期间收集的原始数据摘要
+    data_snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    # 扫描期间收集的统计
+    stats: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    discoveries: Mapped[list["ProductDiscovery"]] = relationship(
+        "ProductDiscovery", back_populates="scan", cascade="all, delete-orphan"
+    )
+    messages: Mapped[list["AgentMessage"]] = relationship(
+        "AgentMessage", back_populates="scan", cascade="all, delete-orphan"
+    )
+
+
+class ProductDiscovery(TimestampMixin, Base):
+    """选品Agent发现的产品/机会点。
+
+    每个发现包含：产品名称、品类、市场信号、机会评分、推荐理由、
+    来源数据（Amazon BSR排名、趋势关键词、社媒热度等）。
+    """
+
+    __tablename__ = "product_discoveries"
+    __table_args__ = (
+        Index("ix_discovery_scan_opportunity", "scan_id", "opportunity_type"),
+    )
+
+    id: Mapped[int] = mapped_column(BIGINT_PK, primary_key=True, autoincrement=True)
+    scan_id: Mapped[int] = mapped_column(ForeignKey("agent_scans.id"), index=True)
+    # 产品/机会名称
+    product_name: Mapped[str] = mapped_column(String(500))
+    # 关联品类code (可为空，代表新品类)
+    category_code: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
+    # 机会类型: hot_product|rising_trend|gap_opportunity|emerging_category
+    opportunity_type: Mapped[str] = mapped_column(String(40), index=True)
+    # LLM评估的机会评分 0-100
+    opportunity_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # 推荐理由
+    reasoning: Mapped[str] = mapped_column(Text, default="")
+    # 市场信号数据（BSR、价格、评分等）
+    market_signals: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    # 趋势关键词
+    keywords: Mapped[list[str]] = mapped_column(JSON, default=list)
+    # 来源链接
+    source_links: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    # 状态: new|reviewed|selected|archived
+    status: Mapped[str] = mapped_column(String(32), default="new", index=True)
+    # 用户备注
+    user_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    scan: Mapped["AgentScan"] = relationship("AgentScan", back_populates="discoveries")
+
+
+class AgentMessage(TimestampMixin, Base):
+    """选品Agent与用户的对话消息流。
+
+    支持多轮对话：用户可以追问Agent的发现，请求深入分析某个产品等。
+    """
+
+    __tablename__ = "agent_messages"
+
+    id: Mapped[int] = mapped_column(BIGINT_PK, primary_key=True, autoincrement=True)
+    scan_id: Mapped[int] = mapped_column(ForeignKey("agent_scans.id"), index=True)
+    role: Mapped[str] = mapped_column(String(16))  # user|assistant
+    content: Mapped[str] = mapped_column(Text, default="")
+    # 附带的LLM元数据（模型、token用量等）
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+
+    scan: Mapped["AgentScan"] = relationship("AgentScan", back_populates="messages")

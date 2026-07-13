@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { EditPen, MagicStick, Refresh, View, CopyDocument, Download } from '@element-plus/icons-vue'
+import { EditPen, Refresh, View, CopyDocument, Download } from '@element-plus/icons-vue'
 import { apiRequest, type Identity } from '../api'
 import type {
   CategoryDetail,
   CategorySummary,
-  DraftSuggestion,
   EncyclopediaSection,
   HotLink,
   SourceMaterial,
@@ -175,9 +174,6 @@ const editVisible = ref(false)
 const editSection = ref<EncyclopediaSection | null>(null)
 const editContent = ref('')
 const selectedSourceIds = ref<number[]>([])
-const draftVisible = ref(false)
-const draftLoading = ref(false)
-const suggestions = ref<DraftSuggestion[]>([])
 const sourceVisible = ref(false)
 const sourceForm = ref({ source_type: 'manual', title: '', url: '', content: '' })
 const boundaryVisible = ref(false)
@@ -244,6 +240,7 @@ function renderMarkdown(md: string): string {
   }
 
   function inlineFormat(text: string): string {
+    text = escapeHtml(text)
     // Bold labels like **药盒类型**: → render as section label (before table/list)
     // This is handled in the main loop, not here
     // Links [text](url) — only allow http(s) protocols to prevent XSS
@@ -381,30 +378,15 @@ function renderMarkdown(md: string): string {
       return html.join('\n')
 }
 
-function renderedContent(section: EncyclopediaSection): string {
-  return renderMarkdown(section.content)
-}
-
 const canEdit = computed(() => ['admin', 'researcher'].includes(props.identity.role))
-const canEditContent = computed(
-  () => canEdit.value && ['data_preparation', 'draft', 'rejected'].includes(category.value?.workflow_status || ''),
-)
+const canEditContent = computed(() => canEdit.value)
 
-function workflowLabel(status: string) {
-  const labels: Record<string, string> = {
-    data_preparation: '数据准备中',
-    draft: '草稿',
-    pending_review: '待审核',
-    approved: '已通过',
-    published: '已发布',
-  }
-  return labels[status] || status
+function statusLabel(status: string) {
+  return status === 'active' ? '持续更新' : '已停用'
 }
 
 function statusType(status: string) {
-  if (status === 'published' || status === 'approved') return 'success'
-  if (status === 'pending_review') return 'warning'
-  return 'info'
+  return status === 'active' ? 'success' : 'info'
 }
 
 function sourceTypeLabel(type: string) {
@@ -516,9 +498,6 @@ async function saveEdit() {
         method: 'PUT',
         body: JSON.stringify({
           content: editContent.value,
-          evidence_listing_ids: editSection.value.evidence
-            .filter((item) => item.source_type === 'listing_snapshot')
-            .map((item) => item.source_id),
           evidence_source_ids: selectedSourceIds.value,
           generation_mode: 'human',
         }),
@@ -617,62 +596,6 @@ function downloadFullCategory() {
   link.click()
   URL.revokeObjectURL(url)
   ElMessage.success('已下载完整百科 Markdown')
-}
-
-async function generateDraft() {
-  if (!category.value) return
-  draftLoading.value = true
-  draftVisible.value = true
-  try {
-    const result = await apiRequest<{ listing_count: number; suggestions: DraftSuggestion[] }>(
-      `/categories/${category.value.code}/drafts`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ listing_limit: 100, source_material_ids: sources.value.map((item) => item.id) }),
-      },
-    )
-    suggestions.value = result.suggestions.map((item) => ({ ...item, selected: true }))
-  } catch (error) {
-    ElMessage.error((error as Error).message)
-    draftVisible.value = false
-  } finally {
-    draftLoading.value = false
-  }
-}
-
-async function applyDraft() {
-  if (!category.value) return
-  const selected = suggestions.value.filter((item) => item.selected)
-  if (!selected.length) return
-  let applied = 0
-  const skipped: string[] = []
-  for (const item of selected) {
-    try {
-      await apiRequest(
-        `/categories/${category.value.code}/sections/${item.section_key}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify({
-            content: item.content,
-            evidence_listing_ids: item.evidence_listing_ids,
-            evidence_source_ids: item.evidence_source_ids,
-            generation_mode: 'generated',
-          }),
-        },
-      )
-      applied += 1
-    } catch {
-      skipped.push(item.title)
-    }
-  }
-  draftVisible.value = false
-  await loadCategory()
-  emit('changed')
-  if (skipped.length) {
-    ElMessage.warning(`已应用 ${applied} 个模块；人工锁定未覆盖：${skipped.join('、')}`)
-  } else {
-    ElMessage.success(`已应用 ${applied} 个草稿模块`)
-  }
 }
 
 async function addSource() {
@@ -805,14 +728,13 @@ onMounted(() => {
           <div class="eyebrow">{{ category.parent_code ? '子品类' : '一级品类' }} · {{ category.code }}</div>
           <div class="title-row">
             <h1>{{ category.name }}</h1>
-            <el-tag :type="statusType(category.workflow_status)" size="small">{{ workflowLabel(category.workflow_status) }}</el-tag>
+            <el-tag :type="statusType(category.status)" size="small">{{ statusLabel(category.status) }}</el-tag>
           </div>
           <p>{{ category.description }}</p>
         </div>
         <div class="header-actions">
           <el-button :icon="Refresh" @click="loadCategory">刷新</el-button>
           <el-button text :icon="Download" @click="downloadFullCategory">导出全文</el-button>
-          <el-button v-if="canEditContent" :icon="MagicStick" @click="generateDraft">生成草稿</el-button>
           <el-button text :icon="EditPen" @click="goToNotes">📝 添加笔记</el-button>
         </div>
       </header>
@@ -1008,7 +930,7 @@ onMounted(() => {
               <!-- 分析正文 -->
               <div v-if="activeSectionKey === 'market' && marketTab === 'analysis'">
                 <div v-if="activeSection.content" class="section-content" v-html="enhanceGlossary(renderMarkdown(renderedContentWithoutTimestamp))"></div>
-                <div v-else class="section-empty">暂无内容。可以补充材料或生成草稿。</div>
+                <div v-else class="section-empty">暂无内容。可以补充材料或编辑章节。</div>
               </div>
 
               <!-- 非 market 章节 — 保持原有逻辑 -->
@@ -1067,10 +989,10 @@ onMounted(() => {
                 </div>
                 <!-- 📝 分析内容 -->
                 <div v-if="activeSection.content" class="section-content" v-html="enhanceGlossary(renderMarkdown(renderedContentWithoutTimestamp))"></div>
-                <div v-else class="section-empty">暂无内容。可以补充材料或生成草稿。</div>
+                <div v-else class="section-empty">暂无内容。可以补充材料或编辑章节。</div>
               </div>
               <footer>
-                <span>{{ activeSection.generation_mode === 'human' ? '人工编辑' : activeSection.generation_mode === 'generated' ? '系统草稿' : '未填写' }}</span>
+                <span>{{ activeSection.generation_mode === 'human' ? '人工编辑' : activeSection.generation_mode === 'generated' ? '已填充' : '未填写' }}</span>
                 <span v-if="activeSection.locked_by_human">已锁定</span>
                 <span>{{ activeSection.evidence.length }} 条证据</span>
                 <span v-if="activeSection.updated_by">更新人：{{ activeSection.updated_by }}</span>
@@ -1089,7 +1011,7 @@ onMounted(() => {
                   class="evidence-chip"
                 >
                   {{ evidence.source?.title || `${evidence.source_type} #${evidence.source_id}` }}
-                  <small>{{ evidence.source?.asin || formatDate(evidence.source?.collected_at || evidence.source?.scraped_at) }}</small>
+                  <small>{{ formatDate(evidence.source?.collected_at) }}</small>
                 </a>
               </div>
             </section>
@@ -1110,23 +1032,6 @@ onMounted(() => {
           <el-button type="primary" @click="saveEdit">保存并锁定</el-button>
         </template>
       </el-dialog>
-
-      <el-drawer v-model="draftVisible" title="百科草稿建议" size="min(720px, 92vw)">
-        <div v-loading="draftLoading" class="draft-list">
-          <div v-for="item in suggestions" :key="item.section_key" class="draft-item">
-            <el-checkbox v-model="item.selected">
-              <strong>{{ item.title }}</strong>
-            </el-checkbox>
-            <el-tag v-if="item.missing_evidence" type="warning" size="small">证据待补充</el-tag>
-            <p>{{ item.content }}</p>
-            <span>{{ item.evidence_listing_ids.length }} 条证据 · {{ item.evidence_source_ids.length }} 条来源</span>
-          </div>
-        </div>
-        <template #footer>
-          <el-button @click="draftVisible = false">取消</el-button>
-          <el-button type="primary" @click="applyDraft">应用选中模块</el-button>
-        </template>
-      </el-drawer>
 
       <el-dialog v-model="sourceVisible" title="登记来源材料" width="min(620px, 92vw)">
         <el-form label-position="top">
