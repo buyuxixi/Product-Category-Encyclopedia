@@ -113,6 +113,15 @@ const linkTypeLabels: Record<string, string> = {
   keyword: '🔑 关键词',
 }
 
+/** 社区讨论 Tab：Reddit discussion + 小红书 social_post */
+const discussionHotLinks = computed(() => {
+  const links = [
+    ...(groupedHotLinks.value['discussion'] || []),
+    ...(groupedHotLinks.value['social_post'] || []),
+  ]
+  return links.sort((a, b) => (b.hotness_score || 0) - (a.hotness_score || 0))
+})
+
 const lastHotLinkUpdate = computed(() => {
   if (!hotLinks.value.length) return null
   const dates = hotLinks.value.map((l) => new Date(l.collected_at).getTime()).filter(Boolean)
@@ -375,11 +384,16 @@ function renderMarkdown(md: string): string {
       inList = null
     }
   }
+  function isTableSeparator(line: string): boolean {
+    // GFM separator: each cell is only dashes with optional leading/trailing colon
+    // e.g. |---|:---:|-|  — must NOT match data rows that merely contain "-"
+    const cells = splitTableRow(line)
+    return cells.length > 0 && cells.every((c) => /^:?-{1,}:?$/.test(c))
+  }
+
   function flushTable() {
     if (tableBuffer.length >= 2) {
-      // Find separator line index
-      const sepIdx = tableBuffer.findIndex((l) => l.trim().startsWith('|') && /[-:]/.test(l) && !l.includes('---'))
-      const realSepIdx = sepIdx >= 0 ? sepIdx : (tableBuffer.length > 1 && /[-:]/.test(tableBuffer[1]) ? 1 : -1)
+      const realSepIdx = tableBuffer.findIndex((l) => isTableSeparator(l))
 
       if (realSepIdx > 0) {
         const headerCells = splitTableRow(tableBuffer[0])
@@ -388,7 +402,7 @@ function renderMarkdown(md: string): string {
         for (const cell of headerCells) t += `<th>${inlineFormat(cell)}</th>`
         t += '</tr></thead><tbody>'
         for (const row of bodyRows) {
-          if (!row.trim()) continue
+          if (!row.trim() || isTableSeparator(row)) continue
           const cells = splitTableRow(row)
           t += '<tr>'
           for (const cell of cells) t += `<td>${inlineFormat(cell)}</td>`
@@ -464,18 +478,30 @@ function renderMarkdown(md: string): string {
           flushTable()
         }
 
-        // Sub-section headings (### and deeper) — wrap in card
+        // Sub-section headings (### and deeper)
+        // Only numbered majors like "### 3.1 xxx" / "### 4.2 xxx" open a new card.
+        // Nested titles ("### 药盒功能需求", "#### 1. ...") stay inside the current card,
+        // so the parent title is not left alone in an empty block.
         if (/^#{3,6}\s/.test(trimmed)) {
           flushList()
-          closeCard()
           const match = trimmed.match(/^(#{3,6})\s+(.+)/)
           if (match) {
             const level = match[1].length
             const text = match[2]
             const tag = level === 3 ? 'h4' : level === 4 ? 'h5' : 'h6'
-            html.push('<div class="md-subsection">')
-            inCard = true
-            html.push(`<${tag} class="md-subheading">${inlineFormat(text)}</${tag}>`)
+            const isMajorCard = level === 3 && /^\d+\.\d+\s/.test(text)
+            if (isMajorCard) {
+              closeCard()
+              html.push('<div class="md-subsection">')
+              inCard = true
+              html.push(`<${tag} class="md-subheading">${inlineFormat(text)}</${tag}>`)
+            } else {
+              if (!inCard) {
+                html.push('<div class="md-subsection">')
+                inCard = true
+              }
+              html.push(`<${tag} class="md-subheading md-subheading-nested">${inlineFormat(text)}</${tag}>`)
+            }
           }
           i++
           continue

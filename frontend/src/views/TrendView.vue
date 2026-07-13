@@ -21,7 +21,7 @@ const categoryNameMap = computed(() => {
 function categoryName(code: string): string { return categoryNameMap.value[code] || code }
 
 function platformLabel(p: string): string {
-  const labels: Record<string, string> = { google: 'Google', reddit: 'Reddit', youtube: 'YouTube', tiktok: 'TikTok', news: 'News', other: 'Other' }
+  const labels: Record<string, string> = { google: 'Google', reddit: 'Reddit', youtube: 'YouTube', tiktok: 'TikTok', xiaohongshu: '小红书', news: 'News', other: 'Other' }
   return labels[p] || p
 }
 
