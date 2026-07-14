@@ -1459,6 +1459,28 @@ footer .stale {
 .market-tabs button:hover { color: var(--ink); }
 .market-tabs button.active { color: var(--brand-green, #1e6650); border-bottom-color: var(--brand-green, #1e6650); }
 
+.market-analysis-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-alt);
+}
+.market-analysis-toolbar > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.market-analysis-toolbar strong { font-size: 14px; color: var(--ink); }
+.market-analysis-toolbar span { font-size: 12px; color: var(--text-secondary); }
+@media (max-width: 640px) {
+  .market-analysis-toolbar { align-items: flex-start; flex-direction: column; }
+}
+
 /* ── Search highlight — Notion: subtle yellow ── */
 .search-result mark { background: rgba(255, 215, 0, 0.25); padding: 0 2px; border-radius: 2px; }
 .search-kind { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-right: 6px; flex-shrink: 0; }

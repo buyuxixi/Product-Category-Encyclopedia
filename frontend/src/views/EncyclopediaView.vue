@@ -138,6 +138,7 @@ function formatRelativeTime(date: Date | null): string {
 }
 
 const crawlLoading = ref(false)
+const marketSummaryLoading = ref(false)
 const listingSuggestionLoading = ref<number | null>(null)
 const listingSuggestions = ref<Record<number, ListingSuggestionPreview>>({})
 
@@ -149,6 +150,11 @@ const marketTimestamp = computed(() => {
   const match = activeSection.value.content.match(/数据采集时间[：:]\s*([\d\-/]+)/)
   return match ? match[1] : null
 })
+
+const hasAiMarketSummary = computed(() =>
+  activeSectionKey.value === 'market'
+  && activeSection.value?.content.startsWith('## 🤖 AI 生成摘要'),
+)
 
 const renderedContentWithoutTimestamp = computed(() => {
   if (!activeSection.value) return ''
@@ -173,6 +179,27 @@ async function triggerCrawl() {
     if (error !== 'cancel') ElMessage.error((error as Error).message)
   } finally {
     crawlLoading.value = false
+  }
+}
+
+async function generateMarketSummary() {
+  const currentCategory = category.value
+  if (!currentCategory || activeSection.value?.locked_by_human) return
+  const wasRegeneration = hasAiMarketSummary.value
+  marketSummaryLoading.value = true
+  try {
+    const generated = await apiRequest<EncyclopediaSection>(
+      `/categories/${currentCategory.code}/generate-section`,
+      { method: 'POST' },
+    )
+    const index = currentCategory.sections.findIndex((section) => section.id === generated.id)
+    if (index >= 0) currentCategory.sections[index] = generated
+    ElMessage.success(wasRegeneration ? 'AI 摘要已更新' : 'AI 摘要已生成')
+    emit('changed')
+  } catch (error) {
+    ElMessage.error((error as Error).message)
+  } finally {
+    marketSummaryLoading.value = false
   }
 }
 
@@ -1203,6 +1230,31 @@ onMounted(() => {
 
               <!-- 分析正文 -->
               <div v-if="activeSectionKey === 'market' && marketTab === 'analysis'">
+                <div class="market-analysis-toolbar">
+                  <div>
+                    <strong>AI 市场摘要</strong>
+                    <span>基于当前热点与趋势信号生成，仅更新 AI 摘要并保留原始正文。</span>
+                  </div>
+                  <el-button
+                    v-if="canEdit"
+                    type="primary"
+                    plain
+                    :icon="MagicStick"
+                    :loading="marketSummaryLoading"
+                    :disabled="activeSection.locked_by_human"
+                    :title="activeSection.locked_by_human ? '该章节已被人工锁定，无法生成' : ''"
+                    @click="generateMarketSummary"
+                  >
+                    {{ hasAiMarketSummary ? '重新生成 AI 摘要' : '生成 AI 摘要' }}
+                  </el-button>
+                </div>
+                <el-alert
+                  v-if="activeSection.locked_by_human"
+                  type="warning"
+                  :closable="false"
+                  show-icon
+                  title="该章节已被人工锁定，AI 摘要生成已禁用。"
+                />
                 <div v-if="activeSection.content" class="section-content" v-html="enhanceGlossary(renderMarkdown(renderedContentWithoutTimestamp))"></div>
                 <div v-else class="section-empty">暂无内容。可以补充材料或编辑章节。</div>
               </div>

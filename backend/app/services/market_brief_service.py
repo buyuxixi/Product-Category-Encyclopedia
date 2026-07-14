@@ -188,7 +188,7 @@ def generate_market_brief(
     )
     if section is None:
         raise ContentError("Unknown encyclopedia section")
-    if section.locked_by_human and section.content.strip():
+    if section.locked_by_human:
         raise ContentError(
             "Human-edited section is locked; apply the suggestion manually"
         )

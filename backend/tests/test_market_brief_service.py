@@ -133,6 +133,25 @@ def test_generate_market_brief_checks_human_lock_before_llm(db, monkeypatch):
         )
 
 
+def test_generate_market_brief_respects_empty_human_lock(db, monkeypatch):
+    category, section = _category_and_market_section(db)
+    section.content = ""
+    section.locked_by_human = True
+    db.commit()
+    monkeypatch.setattr(
+        market_brief_service,
+        "call_llm",
+        lambda *args, **kwargs: pytest.fail("locked section must not call LLM"),
+    )
+
+    with pytest.raises(ContentError, match="locked"):
+        market_brief_service.generate_market_brief(
+            db,
+            category=category,
+            actor="researcher",
+        )
+
+
 def test_llm_failure_preserves_existing_generated_content(db, monkeypatch):
     category, section = _category_and_market_section(db)
     section.content = "已有自动分析"
