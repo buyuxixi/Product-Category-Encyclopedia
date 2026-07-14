@@ -51,7 +51,12 @@ from app.security import (
     revoke_session,
 )
 from app.services.agent_service import AgentError, chat as agent_chat, chat_stream as agent_chat_stream, run_scan
+from app.services.audience_insight_service import generate_audience_insights
 from app.services.content_service import ContentError, save_section
+from app.services.listing_suggestion_service import (
+    generate_listing_suggestion_preview,
+)
+from app.services.market_brief_service import generate_market_brief
 
 
 router = APIRouter(prefix="/api/v1")
@@ -170,6 +175,16 @@ def _section_payload(section: EncyclopediaSection, db: Session | None = None) ->
                     "source_type": source.source_type,
                     "collected_at": source.collected_at,
                     "published_at": source.published_at,
+                    "url": source.url,
+                }
+        elif db is not None and evidence.source_type == "hot_link":
+            source = db.get(HotLink, evidence.source_id)
+            if source is not None:
+                item["source"] = {
+                    "title": source.title_zh or source.title,
+                    "source_type": source.platform,
+                    "collected_at": source.collected_at,
+                    "published_at": None,
                     "url": source.url,
                 }
         evidence_payload.append(item)
@@ -670,6 +685,26 @@ def delete_hot_link(link_id: int, db: Db, actor: WriteActor):
     return {"ok": True}
 
 
+@router.post("/hot-links/{link_id}/listing-suggestion-preview")
+def generate_hot_link_listing_suggestion(
+    link_id: int,
+    db: Db,
+    actor: WriteActor,
+):
+    """基于跨平台品类洞察生成非持久化 Listing 优化建议预览。"""
+    ensure_role(actor, "admin", "data", "researcher")
+    product = db.get(HotLink, link_id)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Hot link not found")
+    try:
+        return generate_listing_suggestion_preview(db, product=product)
+    except ContentError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except AgentError as exc:
+        status_code = 503 if "API_KEY未配置" in str(exc) else 502
+        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
+
+
 @router.delete("/categories/{code}/trend-signals")
 def clear_trend_signals(
     code: str,
@@ -854,6 +889,56 @@ def update_section(
         return _section_payload(section, db)
     except ContentError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post("/categories/{code}/generate-section")
+def generate_category_section(code: str, db: Db, actor: WriteActor):
+    """基于当前热点与趋势信号生成 06 章节摘要，并保留原始正文。"""
+    ensure_role(actor, "admin", "researcher")
+    category = _category_or_404(db, code)
+    try:
+        section = generate_market_brief(
+            db,
+            category=category,
+            actor=actor.name,
+        )
+        section = db.scalar(
+            select(EncyclopediaSection)
+            .options(selectinload(EncyclopediaSection.evidence))
+            .where(EncyclopediaSection.id == section.id)
+        )
+        return _section_payload(section, db)
+    except ContentError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except AgentError as exc:
+        status_code = 503 if "API_KEY未配置" in str(exc) else 502
+        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
+
+
+@router.post("/categories/{code}/generate-audience-sections")
+def generate_category_audience_sections(code: str, db: Db, actor: WriteActor):
+    """从用户痛点信号聚类生成 02 用户画像与 03 用户需求章节。"""
+    ensure_role(actor, "admin", "researcher")
+    category = _category_or_404(db, code)
+    try:
+        sections = generate_audience_insights(
+            db,
+            category=category,
+            actor=actor.name,
+        )
+        section_ids = [section.id for section in sections]
+        refreshed = db.scalars(
+            select(EncyclopediaSection)
+            .options(selectinload(EncyclopediaSection.evidence))
+            .where(EncyclopediaSection.id.in_(section_ids))
+            .order_by(EncyclopediaSection.id)
+        ).all()
+        return {"sections": [_section_payload(section, db) for section in refreshed]}
+    except ContentError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except AgentError as exc:
+        status_code = 503 if "API_KEY未配置" in str(exc) else 502
+        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
 
 
 # ---------------------------------------------------------------------------

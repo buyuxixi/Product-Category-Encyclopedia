@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { EditPen, Refresh, View, CopyDocument, Download } from '@element-plus/icons-vue'
+import { EditPen, Refresh, View, CopyDocument, Download, MagicStick } from '@element-plus/icons-vue'
 import { apiRequest, type Identity } from '../api'
 import type {
   CategoryDetail,
   CategorySummary,
   EncyclopediaSection,
   HotLink,
+  ListingSuggestionPreview,
   SourceMaterial,
   TrendSignal,
 } from '../types'
@@ -137,6 +138,9 @@ function formatRelativeTime(date: Date | null): string {
 }
 
 const crawlLoading = ref(false)
+const audienceGenerating = ref(false)
+const listingSuggestionLoading = ref<number | null>(null)
+const listingSuggestions = ref<Record<number, ListingSuggestionPreview>>({})
 
 // 06 章节分块 tab
 const marketTab = ref<'products' | 'videos' | 'discussions' | 'trends' | 'analysis'>('products')
@@ -170,6 +174,49 @@ async function triggerCrawl() {
     if (error !== 'cancel') ElMessage.error((error as Error).message)
   } finally {
     crawlLoading.value = false
+  }
+}
+
+async function generateAudienceInsights() {
+  if (!category.value) return
+  try {
+    await ElMessageBox.confirm(
+      '将基于当前 Reddit、小红书和 YouTube 用户痛点信号填充空白的 02/03 章节。任何已有正文都不会被覆盖。',
+      'AI 提取用户洞察',
+      {
+        confirmButtonText: '开始提取',
+        cancelButtonText: '取消',
+      },
+    )
+    audienceGenerating.value = true
+    await apiRequest(`/categories/${category.value.code}/generate-audience-sections`, {
+      method: 'POST',
+    })
+    await loadCategory()
+    ElMessage.success('用户画像与 Top 痛点已更新')
+  } catch (error) {
+    if (error !== 'cancel') ElMessage.error((error as Error).message)
+  } finally {
+    audienceGenerating.value = false
+  }
+}
+
+async function generateListingSuggestion(link: HotLink) {
+  listingSuggestionLoading.value = link.id
+  try {
+    const preview = await apiRequest<ListingSuggestionPreview>(
+      `/hot-links/${link.id}/listing-suggestion-preview`,
+      { method: 'POST' },
+    )
+    listingSuggestions.value = {
+      ...listingSuggestions.value,
+      [link.id]: preview,
+    }
+    ElMessage.success('AI 优化建议 Demo 已生成')
+  } catch (error) {
+    ElMessage.error((error as Error).message)
+  } finally {
+    listingSuggestionLoading.value = null
   }
 }
 
@@ -543,13 +590,17 @@ function renderMarkdown(md: string): string {
 
         // Ordered list
         if (/^\d+\.\s/.test(trimmed)) {
+          const match = trimmed.match(/^(\d+)\.\s+(.+)/)
+          if (!match) {
+            i++
+            continue
+          }
           if (inList !== 'ol') {
             flushList()
-            html.push('<ol class="md-ol">')
+            html.push(`<ol class="md-ol" start="${Number(match[1])}">`)
             inList = 'ol'
           }
-          const itemText = trimmed.replace(/^\d+\.\s+/, '')
-          html.push(`<li>${inlineFormat(itemText)}</li>`)
+          html.push(`<li>${inlineFormat(match[2])}</li>`)
           i++
           continue
         }
@@ -985,7 +1036,7 @@ onMounted(() => {
 
       <div class="content-card">
         <aside class="document-outline">
-          <span>本页目录</span>
+          <span class="outline-title">本页目录</span>
           <button
             v-for="(section, index) in category.sections"
             :key="section.id"
@@ -1022,6 +1073,15 @@ onMounted(() => {
                   <h2>{{ activeSection.title }}</h2>
                 </div>
                 <div class="section-header-actions">
+                  <el-button
+                    v-if="canEdit && ['users', 'needs'].includes(activeSectionKey)"
+                    text
+                    :icon="MagicStick"
+                    :loading="audienceGenerating"
+                    @click="generateAudienceInsights"
+                  >
+                    AI 提取用户洞察
+                  </el-button>
                   <el-button text :icon="CopyDocument" @click="copySection">复制</el-button>
                   <el-button text :icon="Download" @click="downloadSection">导出</el-button>
                   <el-button v-if="canEditContent" text :icon="EditPen" @click="openEdit(activeSection)">编辑</el-button>
@@ -1051,8 +1111,10 @@ onMounted(() => {
                 </div>
                 <div v-if="groupedHotLinks['product']" class="hot-link-group">
                   <div class="hot-links-list">
-                    <a v-for="link in groupedHotLinks['product'].filter(l => l.description && !l.description.includes('\$?') && !l.description.includes('0 reviews')).slice(0, 20)" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
-                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ hotLinkTitle(link) }}</div>
+                    <div v-for="link in groupedHotLinks['product'].filter(l => l.description && !l.description.includes('\$?') && !l.description.includes('0 reviews')).slice(0, 20)" :key="link.id" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
+                      <a :href="link.url" target="_blank" rel="noreferrer noopener" class="listing-product-link">
+                        <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ hotLinkTitle(link) }}</div>
+                      </a>
                       <div class="hl-keywords">
                         <span v-for="kw in linkKeywords(link)" :key="kw" class="hl-keyword-tag">{{ kw }}</span>
                       </div>
@@ -1063,7 +1125,40 @@ onMounted(() => {
                       </div>
                       <div v-if="hotLinkDescription(link)" class="hot-link-desc" v-html="linkify(hotLinkDescription(link))"></div>
                       <small class="hot-link-date">{{ formatDate(link.collected_at) }}</small>
-                    </a>
+                      <div v-if="canEdit" class="listing-ai-actions">
+                        <el-button
+                          size="small"
+                          plain
+                          :icon="MagicStick"
+                          :loading="listingSuggestionLoading === link.id"
+                          @click="generateListingSuggestion(link)"
+                        >
+                          {{ listingSuggestions[link.id] ? '重新生成 AI 建议' : '生成 AI 建议 Demo' }}
+                        </el-button>
+                        <span>不写入数据库</span>
+                      </div>
+                      <details v-if="listingSuggestions[link.id]" class="listing-ai-panel" open>
+                        <summary>🤖 AI 优化关键词（跨平台）</summary>
+                        <div class="listing-ai-keyword-row">
+                          <strong>关键词补充</strong>
+                          <div class="listing-ai-keyword-tags">
+                            <span v-for="item in listingSuggestions[link.id].keyword_directions" :key="item.keyword" class="listing-ai-keyword">{{ item.keyword }}</span>
+                          </div>
+                        </div>
+                        <div class="listing-ai-keyword-row">
+                          <strong>卖点</strong>
+                          <div class="listing-ai-keyword-tags">
+                            <span v-for="item in listingSuggestions[link.id].selling_points" :key="item.headline" class="listing-ai-keyword">{{ item.headline }}</span>
+                          </div>
+                        </div>
+                        <div class="listing-ai-keyword-row">
+                          <strong>痛点改进</strong>
+                          <div class="listing-ai-keyword-tags">
+                            <span v-for="item in listingSuggestions[link.id].improvement_points" :key="item.pain_point" class="listing-ai-keyword is-pain">{{ item.pain_point }}</span>
+                          </div>
+                        </div>
+                      </details>
+                    </div>
                   </div>
                 </div>
                 <el-empty v-else description="暂无 Amazon 产品数据" :image-size="60" />

@@ -1,6 +1,7 @@
 FROM node:22-alpine AS build
 
 WORKDIR /app
+ENV CI=true
 RUN corepack enable
 COPY package.json pnpm-lock.yaml* ./
 RUN pnpm config set dangerouslyAllowAllBuilds true && pnpm install --frozen-lockfile=false

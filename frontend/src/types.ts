@@ -80,6 +80,30 @@ export interface HotLink {
   collected_at: string
 }
 
+export interface ListingSuggestionItem {
+  evidence_ids: number[]
+  keyword?: string
+  headline?: string
+  pain_point?: string
+  reason?: string
+  suggestion?: string
+}
+
+export interface ListingSuggestionPreview {
+  product_id: number
+  basis: 'cross_platform_category_insights'
+  keyword_directions: ListingSuggestionItem[]
+  selling_points: ListingSuggestionItem[]
+  improvement_points: ListingSuggestionItem[]
+  limitations: string[]
+  evidence: Array<{
+    id: number
+    platform: string
+    title: string
+    url: string
+  }>
+}
+
 export interface TrendSignal {
   id: number
   category_code: string

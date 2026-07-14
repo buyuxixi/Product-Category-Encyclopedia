@@ -157,12 +157,17 @@ export function renderMarkdown(md: string): string {
     }
 
     if (/^\d+\.\s/.test(trimmed)) {
+      const match = trimmed.match(/^(\d+)\.\s+(.+)/)
+      if (!match) {
+        i++
+        continue
+      }
       if (inList !== 'ol') {
         flushList()
-        html.push('<ol>')
+        html.push(`<ol start="${Number(match[1])}">`)
         inList = 'ol'
       }
-      html.push(`<li>${inlineFormat(trimmed.replace(/^\d+\.\s+/, ''))}</li>`)
+      html.push(`<li>${inlineFormat(match[2])}</li>`)
       i++
       continue
     }
