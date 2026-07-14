@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { EditPen, Refresh, View, CopyDocument, Download } from '@element-plus/icons-vue'
+import { EditPen, Refresh, View, CopyDocument, Download, MagicStick } from '@element-plus/icons-vue'
 import { apiRequest, type Identity } from '../api'
 import type {
   CategoryDetail,
   CategorySummary,
   EncyclopediaSection,
   HotLink,
+  ListingSuggestionPreview,
   SourceMaterial,
   TrendSignal,
 } from '../types'
@@ -49,7 +50,11 @@ const groupedHotLinks = computed(() => {
     const type = link.link_type
     if (!groups[type]) groups[type] = []
     // 清理 description 中的 HTML 实体
-    const cleaned = { ...link, description: link.description ? cleanHtmlEntities(link.description) : link.description }
+    const cleaned = {
+      ...link,
+      description: link.description ? cleanHtmlEntities(link.description) : link.description,
+      description_zh: link.description_zh ? cleanHtmlEntities(link.description_zh) : link.description_zh,
+    }
     groups[type].push(cleaned)
   }
   // 产品按热度降序排序
@@ -71,15 +76,52 @@ function cleanHtmlEntities(text: string): string {
   return text.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
 }
 
-const linkTypeOrder = ['product', 'video', 'discussion', 'trend', 'news', 'keyword']
+function hotLinkTitle(link: HotLink): string {
+  return link.title_zh?.trim() || link.title
+}
+
+function hotLinkDescription(link: HotLink): string {
+  return link.description_zh?.trim() || link.description
+}
+
+function trendSignalTitle(signal: TrendSignal): string {
+  return signal.title_zh?.trim() || signal.title
+}
+
+function trendSignalSummary(signal: TrendSignal): string {
+  return signal.summary_zh?.trim() || signal.summary
+}
+
+function linkify(text: string, iconOnly = false): string {
+  if (!text) return ''
+  const escaped = escapeHtml(text)
+  const label = iconOnly ? '🔗' : '$1'
+  // Match URLs but stop at CJK punctuation (。：，；！？、）」』) and whitespace
+  return escaped.replace(
+    /(https?:\/\/[^\s<。：，；！？、）」』]+)/g,
+    `<a href="$1" target="_blank" rel="noreferrer noopener" class="inline-link" title="$1" aria-label="打开链接">${label}</a>`,
+  )
+}
+
+const linkTypeOrder = ['product', 'video', 'social_post', 'discussion', 'trend', 'news', 'keyword']
 const linkTypeLabels: Record<string, string> = {
   product: '🔥 爆品监控',
   video: '📺 视频测评',
+  social_post: '📕 小红书笔记',
   discussion: '💬 社区讨论',
   trend: '📈 搜索趋势',
   news: '📰 新闻动态',
   keyword: '🔑 关键词',
 }
+
+/** 社区讨论 Tab：Reddit discussion + 小红书 social_post */
+const discussionHotLinks = computed(() => {
+  const links = [
+    ...(groupedHotLinks.value['discussion'] || []),
+    ...(groupedHotLinks.value['social_post'] || []),
+  ]
+  return links.sort((a, b) => (b.hotness_score || 0) - (a.hotness_score || 0))
+})
 
 const lastHotLinkUpdate = computed(() => {
   if (!hotLinks.value.length) return null
@@ -96,6 +138,9 @@ function formatRelativeTime(date: Date | null): string {
 }
 
 const crawlLoading = ref(false)
+const marketSummaryLoading = ref(false)
+const listingSuggestionLoading = ref<number | null>(null)
+const listingSuggestions = ref<Record<number, ListingSuggestionPreview>>({})
 
 // 06 章节分块 tab
 const marketTab = ref<'products' | 'videos' | 'discussions' | 'trends' | 'analysis'>('products')
@@ -105,6 +150,11 @@ const marketTimestamp = computed(() => {
   const match = activeSection.value.content.match(/数据采集时间[：:]\s*([\d\-/]+)/)
   return match ? match[1] : null
 })
+
+const hasAiMarketSummary = computed(() =>
+  activeSectionKey.value === 'market'
+  && activeSection.value?.content.startsWith('## 🤖 AI 生成摘要'),
+)
 
 const renderedContentWithoutTimestamp = computed(() => {
   if (!activeSection.value) return ''
@@ -132,6 +182,46 @@ async function triggerCrawl() {
   }
 }
 
+async function generateMarketSummary() {
+  const currentCategory = category.value
+  if (!currentCategory || activeSection.value?.locked_by_human) return
+  const wasRegeneration = hasAiMarketSummary.value
+  marketSummaryLoading.value = true
+  try {
+    const generated = await apiRequest<EncyclopediaSection>(
+      `/categories/${currentCategory.code}/generate-section`,
+      { method: 'POST' },
+    )
+    const index = currentCategory.sections.findIndex((section) => section.id === generated.id)
+    if (index >= 0) currentCategory.sections[index] = generated
+    ElMessage.success(wasRegeneration ? 'AI 摘要已更新' : 'AI 摘要已生成')
+    emit('changed')
+  } catch (error) {
+    ElMessage.error((error as Error).message)
+  } finally {
+    marketSummaryLoading.value = false
+  }
+}
+
+async function generateListingSuggestion(link: HotLink) {
+  listingSuggestionLoading.value = link.id
+  try {
+    const preview = await apiRequest<ListingSuggestionPreview>(
+      `/hot-links/${link.id}/listing-suggestion-preview`,
+      { method: 'POST' },
+    )
+    listingSuggestions.value = {
+      ...listingSuggestions.value,
+      [link.id]: preview,
+    }
+    ElMessage.success('AI 优化建议 Demo 已生成')
+  } catch (error) {
+    ElMessage.error((error as Error).message)
+  } finally {
+    listingSuggestionLoading.value = null
+  }
+}
+
 const sectionTrendSignals = computed(() =>
   // 趋势信号只在 market 章节显示（舆情与市场趋势）
   activeSectionKey.value === 'market'
@@ -153,8 +243,26 @@ function signalTypeLabel(type: string): string {
     keyword_trend: '关键词趋势',
     news_volume: '新闻量',
     review_sentiment: '评论情感',
+    product_insight: '产品洞察',
+    user_pain_point: '用户痛点',
   }
   return labels[type] || type
+}
+
+function metricUnitLabel(unit: string | null): string {
+  if (!unit) return ''
+  const labels: Record<string, string> = {
+    avg_price_usd: '美元均价',
+    products: '款产品',
+    views: '次播放',
+    articles: '篇新闻',
+    comments: '条评论',
+    likes: '点赞',
+    '5yr avg': '5年均值',
+    related_keywords: '个相关词',
+    search_volume: '次搜索',
+  }
+  return labels[unit] || unit
 }
 
 function trendDirectionLabel(dir: string | null): string {
@@ -166,9 +274,131 @@ function trendDirectionLabel(dir: string | null): string {
 function platformLabel(p: string): string {
   const labels: Record<string, string> = {
     google: 'Google', amazon: 'Amazon', reddit: 'Reddit',
-    youtube: 'YouTube', tiktok: 'TikTok', x: 'X', facebook: 'Facebook', news: 'News', other: 'Other',
+    youtube: 'YouTube', tiktok: 'TikTok', xiaohongshu: '小红书',
+    x: 'X', facebook: 'Facebook', news: 'News', other: 'Other',
   }
   return labels[p] || p
+}
+
+// ── 领域关键词提取 ──
+// 英文标题/描述/关键词 → 中文标签，帮助用户快速抓住要点
+const keywordDict: Array<{ pattern: RegExp; zh: string }> = [
+  // 产品类型
+  { pattern: /\btens\b/i, zh: 'TENS电刺激' },
+  { pattern: /\bems\b/i, zh: 'EMS电脉冲' },
+  { pattern: /\bheating pad/i, zh: '加热贴' },
+  { pattern: /\bheat therapy/i, zh: '热敷理疗' },
+  { pattern: /\bfar infrared\b|\bfir\b/i, zh: '远红外' },
+  { pattern: /\binfrared/i, zh: '红外理疗' },
+  { pattern: /\bnight light/i, zh: '夜灯' },
+  { pattern: /\bmotion sensor/i, zh: '人体感应' },
+  { pattern: /\bseat cushion/i, zh: '坐垫' },
+  { pattern: /\b(coccyx|tailbone)\b/i, zh: '尾骨保护' },
+  { pattern: /\bergonomic/i, zh: '人体工学' },
+  { pattern: /\bpill organizer/i, zh: '智能药盒' },
+  { pattern: /\bpill splitter/i, zh: '药片分割器' },
+  { pattern: /\bheat lamp/i, zh: '理疗灯' },
+  { pattern: /\b(photon|pemf)\b/i, zh: '光波脉冲理疗' },
+  { pattern: /\bscarf\b/i, zh: '围巾式' },
+  { pattern: /\bweighted\b/i, zh: '加重设计' },
+  // 身体部位 / 适应症
+  { pattern: /\bsciatica\b/i, zh: '坐骨神经痛' },
+  { pattern: /\b(back pain|lower back)\b/i, zh: '腰背疼痛' },
+  { pattern: /\b(neck pain|cervical)\b/i, zh: '颈椎疼痛' },
+  { pattern: /\bshoulder\b/i, zh: '肩部疼痛' },
+  { pattern: /\b(cramp|menstrual)\b/i, zh: '痉挛缓解' },
+  { pattern: /\b(labour|labor)\b/i, zh: '分娩助产' },
+  { pattern: /\bflat feet\b/i, zh: '扁平足' },
+  { pattern: /\b(muscle pain|doms)\b/i, zh: '肌肉酸痛' },
+  { pattern: /\bposture\b/i, zh: '姿势矫正' },
+  { pattern: /\b(sleep|insomnia|awake)\b/i, zh: '睡眠改善' },
+  { pattern: /\bdetox\b/i, zh: '排毒养颜' },
+  { pattern: /\blaminectomy|discectomy|fusion\b/i, zh: '脊柱术后' },
+  { pattern: /\bburn\b/i, zh: '低温烫伤' },
+  // 产品特性
+  { pattern: /\bwireless\b/i, zh: '无线便携' },
+  { pattern: /\brechargeable\b/i, zh: '可充电' },
+  { pattern: /\bsmart\b/i, zh: '智能联动' },
+  { pattern: /\bwaterproof\b/i, zh: '防水' },
+  { pattern: /\bportable\b/i, zh: '便携' },
+  { pattern: /\belectrode\b/i, zh: '电极贴片' },
+  // 动作/场景
+  { pattern: /\b(review|best|top \d+)\b/i, zh: '产品测评' },
+  { pattern: /\b(purchase|buy|worth)\b/i, zh: '购买决策' },
+  { pattern: /\b(post[- ]?surgery|recovery)\b/i, zh: '术后康复' },
+  { pattern: /\bprolonged sitting\b/i, zh: '久坐人群' },
+  { pattern: /\b(office chair|workspace)\b/i, zh: '办公场景' },
+  { pattern: /\b(restaurant|travel|car)\b/i, zh: '出行场景' },
+  { pattern: /\bplacement\b/i, zh: '使用指导' },
+  // 中文内容
+  { pattern: /肩颈热敷|颈肩热敷|颈椎热敷|肩颈加热|暖颈/, zh: '肩颈热敷' },
+  { pattern: /加热披肩|热敷披肩|肩颈披肩/, zh: '披肩式' },
+  { pattern: /热敷|加热垫|加热贴/, zh: '热敷理疗' },
+  { pattern: /理疗灯|烤灯/, zh: '理疗灯' },
+  { pattern: /红外|红光/, zh: '红外理疗' },
+  { pattern: /夜灯|小夜灯/, zh: '夜灯' },
+  { pattern: /人体感应|感应灯/, zh: '人体感应' },
+  { pattern: /药盒|分药盒/, zh: '智能药盒' },
+  { pattern: /切药|分药器/, zh: '药片分割器' },
+  { pattern: /坐垫|座垫|屁垫/, zh: '坐垫' },
+  { pattern: /可充电|充电|续航/, zh: '可充电' },
+  { pattern: /温度|档位|恒温|过热/, zh: '温度控制' },
+  { pattern: /烫伤|低温烫伤/, zh: '低温烫伤' },
+  { pattern: /尺寸|太紧|太松|贴合/, zh: '尺寸贴合' },
+  { pattern: /办公|久坐|低头族/, zh: '办公久坐' },
+  { pattern: /使用|教程|怎么用/, zh: '使用指导' },
+  { pattern: /推荐|测评|哪个好|对比|好物/, zh: '产品测评' },
+  { pattern: /吐槽|智商税|避坑|不好用|没效果|鸡肋|被坑/, zh: '吐槽避坑' },
+]
+
+function extractKeywords(text: string, fallbacks: string[] = []): string[] {
+  const lowerText = text.toLowerCase()
+  const found = new Set<string>()
+  for (const entry of keywordDict) {
+    if (entry.pattern.test(lowerText)) {
+      found.add(entry.zh)
+      if (found.size >= 3) break
+    }
+  }
+  for (const fallback of fallbacks) {
+    const keyword = fallback.trim().replace(/^["']|["']$/g, '')
+    if (keyword && keyword.length <= 16) found.add(keyword)
+    if (found.size >= 3) break
+  }
+  return Array.from(found)
+}
+
+function linkKeywords(link: HotLink): string[] {
+  const title = hotLinkTitle(link)
+  const description = hotLinkDescription(link)
+  const searchKeyword = description.match(/搜索词:\s*([^|。\n]+)/)?.[1]?.trim()
+  const fallbackLabels: Record<string, string> = {
+    product: '产品信息',
+    video: '视频测评',
+    discussion: '用户讨论',
+    social_post: '用户分享',
+    news: '行业动态',
+    trend: '趋势观察',
+    keyword: '搜索趋势',
+  }
+  return extractKeywords(`${title} ${description}`, [
+    searchKeyword || '',
+    fallbackLabels[link.link_type] || '相关信息',
+  ])
+}
+
+function signalKeywords(signal: TrendSignal): string[] {
+  const fallbackLabels: Record<string, string> = {
+    user_pain_point: '用户痛点',
+    product_insight: '产品洞察',
+    social_mention: '社媒热度',
+    keyword_trend: '搜索趋势',
+    review_sentiment: '评论情感',
+  }
+  return extractKeywords(
+    `${signal.keyword || ''} ${trendSignalTitle(signal)} ${trendSignalSummary(signal)}`,
+    [signal.keyword || '', fallbackLabels[signal.signal_type] || '趋势信号'],
+  )
 }
 const editVisible = ref(false)
 const editSection = ref<EncyclopediaSection | null>(null)
@@ -203,11 +433,16 @@ function renderMarkdown(md: string): string {
       inList = null
     }
   }
+  function isTableSeparator(line: string): boolean {
+    // GFM separator: each cell is only dashes with optional leading/trailing colon
+    // e.g. |---|:---:|-|  — must NOT match data rows that merely contain "-"
+    const cells = splitTableRow(line)
+    return cells.length > 0 && cells.every((c) => /^:?-{1,}:?$/.test(c))
+  }
+
   function flushTable() {
     if (tableBuffer.length >= 2) {
-      // Find separator line index
-      const sepIdx = tableBuffer.findIndex((l) => l.trim().startsWith('|') && /[-:]/.test(l) && !l.includes('---'))
-      const realSepIdx = sepIdx >= 0 ? sepIdx : (tableBuffer.length > 1 && /[-:]/.test(tableBuffer[1]) ? 1 : -1)
+      const realSepIdx = tableBuffer.findIndex((l) => isTableSeparator(l))
 
       if (realSepIdx > 0) {
         const headerCells = splitTableRow(tableBuffer[0])
@@ -216,7 +451,7 @@ function renderMarkdown(md: string): string {
         for (const cell of headerCells) t += `<th>${inlineFormat(cell)}</th>`
         t += '</tr></thead><tbody>'
         for (const row of bodyRows) {
-          if (!row.trim()) continue
+          if (!row.trim() || isTableSeparator(row)) continue
           const cells = splitTableRow(row)
           t += '<tr>'
           for (const cell of cells) t += `<td>${inlineFormat(cell)}</td>`
@@ -292,18 +527,30 @@ function renderMarkdown(md: string): string {
           flushTable()
         }
 
-        // Sub-section headings (### and deeper) — wrap in card
+        // Sub-section headings (### and deeper)
+        // Only numbered majors like "### 3.1 xxx" / "### 4.2 xxx" open a new card.
+        // Nested titles ("### 药盒功能需求", "#### 1. ...") stay inside the current card,
+        // so the parent title is not left alone in an empty block.
         if (/^#{3,6}\s/.test(trimmed)) {
           flushList()
-          closeCard()
           const match = trimmed.match(/^(#{3,6})\s+(.+)/)
           if (match) {
             const level = match[1].length
             const text = match[2]
             const tag = level === 3 ? 'h4' : level === 4 ? 'h5' : 'h6'
-            html.push('<div class="md-subsection">')
-            inCard = true
-            html.push(`<${tag} class="md-subheading">${inlineFormat(text)}</${tag}>`)
+            const isMajorCard = level === 3 && /^\d+\.\d+\s/.test(text)
+            if (isMajorCard) {
+              closeCard()
+              html.push('<div class="md-subsection">')
+              inCard = true
+              html.push(`<${tag} class="md-subheading">${inlineFormat(text)}</${tag}>`)
+            } else {
+              if (!inCard) {
+                html.push('<div class="md-subsection">')
+                inCard = true
+              }
+              html.push(`<${tag} class="md-subheading md-subheading-nested">${inlineFormat(text)}</${tag}>`)
+            }
           }
           i++
           continue
@@ -345,13 +592,17 @@ function renderMarkdown(md: string): string {
 
         // Ordered list
         if (/^\d+\.\s/.test(trimmed)) {
+          const match = trimmed.match(/^(\d+)\.\s+(.+)/)
+          if (!match) {
+            i++
+            continue
+          }
           if (inList !== 'ol') {
             flushList()
-            html.push('<ol class="md-ol">')
+            html.push(`<ol class="md-ol" start="${Number(match[1])}">`)
             inList = 'ol'
           }
-          const itemText = trimmed.replace(/^\d+\.\s+/, '')
-          html.push(`<li>${inlineFormat(itemText)}</li>`)
+          html.push(`<li>${inlineFormat(match[2])}</li>`)
           i++
           continue
         }
@@ -522,7 +773,7 @@ function buildSectionMarkdown(): string {
     for (const group of Object.entries(groupedHotLinks.value)) {
       md += `### ${linkTypeLabels[group[0]] || group[0]}\n\n`
       for (const link of group[1]) {
-        md += `- [${link.title}](${link.url}) — ${platformLabel(link.platform)}${link.hotness_score ? ` (热度 ${link.hotness_score})` : ''}\n`
+        md += `- [${hotLinkTitle(link)}](${link.url}) — ${platformLabel(link.platform)}${link.hotness_score ? ` (热度 ${link.hotness_score})` : ''}\n`
       }
       md += '\n'
     }
@@ -531,7 +782,7 @@ function buildSectionMarkdown(): string {
   if (activeSectionKey.value === 'market' && sectionTrendSignals.value.length) {
     md += `## 趋势信号\n\n`
     for (const sig of sectionTrendSignals.value) {
-      md += `- **${signalTypeLabel(sig.signal_type)}** | ${platformLabel(sig.platform)} | 关键词: ${sig.keyword}${sig.metric_value ? ` | 值: ${sig.metric_value}${sig.metric_unit ? ' ' + sig.metric_unit : ''}` : ''} | ${sig.summary}\n`
+      md += `- **${signalTypeLabel(sig.signal_type)}** | ${platformLabel(sig.platform)} | 关键词: ${sig.keyword}${sig.metric_value ? ` | 值: ${sig.metric_value}${sig.metric_unit ? ' ' + metricUnitLabel(sig.metric_unit) : ''}` : ''} | ${trendSignalSummary(sig)}\n`
     }
     md += '\n'
   }
@@ -645,12 +896,15 @@ const glossary: Record<string, string> = {
 }
 
 function enhanceGlossary(html: string): string {
-  let result = html
-  for (const [term, explanation] of Object.entries(glossary)) {
-    const regex = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
-    result = result.replace(regex, `<span class="glossary-term" title="${explanation}">${term}</span>`)
-  }
-  return result
+  return html.split(/(<[^>]+>)/g).map((part) => {
+    if (part.startsWith('<')) return part
+    let text = part
+    for (const [term, explanation] of Object.entries(glossary)) {
+      const regex = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
+      text = text.replace(regex, `<span class="glossary-term" title="${explanation}">${term}</span>`)
+    }
+    return text
+  }).join('')
 }
 
 // 收藏功能 — localStorage 存储
@@ -784,7 +1038,7 @@ onMounted(() => {
 
       <div class="content-card">
         <aside class="document-outline">
-          <span>本页目录</span>
+          <span class="outline-title">本页目录</span>
           <button
             v-for="(section, index) in category.sections"
             :key="section.id"
@@ -850,16 +1104,54 @@ onMounted(() => {
                 </div>
                 <div v-if="groupedHotLinks['product']" class="hot-link-group">
                   <div class="hot-links-list">
-                    <a v-for="link in groupedHotLinks['product'].filter(l => l.description && !l.description.includes('\$?') && !l.description.includes('0 reviews')).slice(0, 20)" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
-                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title }}</div>
+                    <div v-for="link in groupedHotLinks['product'].filter(l => l.description && !l.description.includes('\$?') && !l.description.includes('0 reviews')).slice(0, 20)" :key="link.id" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
+                      <a :href="link.url" target="_blank" rel="noreferrer noopener" class="listing-product-link">
+                        <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ hotLinkTitle(link) }}</div>
+                      </a>
+                      <div class="hl-keywords">
+                        <span v-for="kw in linkKeywords(link)" :key="kw" class="hl-keyword-tag">{{ kw }}</span>
+                      </div>
                       <div class="hot-link-meta">
                         <el-tag size="small" effect="plain" type="success">Amazon</el-tag>
                         <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
                         <button class="fav-btn" :class="{ active: isFavorited(link.url) }" @click.prevent="toggleFavorite(link.url)">⭐</button>
                       </div>
-                      <div v-if="link.description" class="hot-link-desc">{{ link.description }}</div>
+                      <div v-if="hotLinkDescription(link)" class="hot-link-desc" v-html="linkify(hotLinkDescription(link))"></div>
                       <small class="hot-link-date">{{ formatDate(link.collected_at) }}</small>
-                    </a>
+                      <div v-if="canEdit" class="listing-ai-actions">
+                        <el-button
+                          size="small"
+                          plain
+                          :icon="MagicStick"
+                          :loading="listingSuggestionLoading === link.id"
+                          @click="generateListingSuggestion(link)"
+                        >
+                          {{ listingSuggestions[link.id] ? '重新生成 AI 建议' : '生成 AI 建议 Demo' }}
+                        </el-button>
+                        <span>不写入数据库</span>
+                      </div>
+                      <details v-if="listingSuggestions[link.id]" class="listing-ai-panel" open>
+                        <summary>🤖 AI 优化关键词（跨平台）</summary>
+                        <div class="listing-ai-keyword-row">
+                          <strong>关键词补充</strong>
+                          <div class="listing-ai-keyword-tags">
+                            <span v-for="item in listingSuggestions[link.id].keyword_directions" :key="item.keyword" class="listing-ai-keyword">{{ item.keyword }}</span>
+                          </div>
+                        </div>
+                        <div class="listing-ai-keyword-row">
+                          <strong>卖点</strong>
+                          <div class="listing-ai-keyword-tags">
+                            <span v-for="item in listingSuggestions[link.id].selling_points" :key="item.headline" class="listing-ai-keyword">{{ item.headline }}</span>
+                          </div>
+                        </div>
+                        <div class="listing-ai-keyword-row">
+                          <strong>痛点改进</strong>
+                          <div class="listing-ai-keyword-tags">
+                            <span v-for="item in listingSuggestions[link.id].improvement_points" :key="item.pain_point" class="listing-ai-keyword is-pain">{{ item.pain_point }}</span>
+                          </div>
+                        </div>
+                      </details>
+                    </div>
                   </div>
                 </div>
                 <el-empty v-else description="暂无 Amazon 产品数据" :image-size="60" />
@@ -871,13 +1163,16 @@ onMounted(() => {
                 <div v-if="groupedHotLinks['video']" class="hot-link-group">
                   <div class="hot-links-list">
                     <a v-for="link in groupedHotLinks['video']" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
-                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title }}</div>
+                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ hotLinkTitle(link) }}</div>
+                      <div v-if="linkKeywords(link).length" class="hl-keywords">
+                        <span v-for="kw in linkKeywords(link)" :key="kw" class="hl-keyword-tag">{{ kw }}</span>
+                      </div>
                       <div class="hot-link-meta">
                         <el-tag size="small" effect="plain">YouTube</el-tag>
                         <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
                         <button class="fav-btn" :class="{ active: isFavorited(link.url) }" @click.prevent="toggleFavorite(link.url)">⭐</button>
                       </div>
-                      <div v-if="link.description" class="hot-link-desc">{{ link.description }}</div>
+                      <div v-if="hotLinkDescription(link)" class="hot-link-desc" v-html="linkify(hotLinkDescription(link))"></div>
                       <small class="hot-link-date">{{ formatDate(link.collected_at) }}</small>
                     </a>
                   </div>
@@ -885,24 +1180,27 @@ onMounted(() => {
                 <el-empty v-else description="暂无 YouTube 视频数据" :image-size="60" />
               </div>
 
-              <!-- 社区讨论 (Reddit) -->
+              <!-- 社区讨论 (Reddit + 小红书) -->
               <div v-if="activeSectionKey === 'market' && marketTab === 'discussions'" class="hot-links-section">
                 <div class="hot-links-header"><span class="evidence-label">💬 社区讨论</span></div>
-                <div v-if="groupedHotLinks['discussion']" class="hot-link-group">
+                <div v-if="groupedHotLinks['discussion'] || groupedHotLinks['social_post']" class="hot-link-group">
                   <div class="hot-links-list">
-                    <a v-for="link in groupedHotLinks['discussion']" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
-                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title }}</div>
+                    <a v-for="link in [...(groupedHotLinks['social_post'] || []), ...(groupedHotLinks['discussion'] || [])]" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
+                      <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ hotLinkTitle(link) }}</div>
+                      <div v-if="linkKeywords(link).length" class="hl-keywords">
+                        <span v-for="kw in linkKeywords(link)" :key="kw" class="hl-keyword-tag">{{ kw }}</span>
+                      </div>
                       <div class="hot-link-meta">
-                        <el-tag size="small" effect="plain">Reddit</el-tag>
+                        <el-tag size="small" effect="plain" :type="link.platform === 'reddit' ? '' : 'danger'">{{ platformLabel(link.platform) }}</el-tag>
                         <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
                         <button class="fav-btn" :class="{ active: isFavorited(link.url) }" @click.prevent="toggleFavorite(link.url)">⭐</button>
                       </div>
-                      <div v-if="link.description" class="hot-link-desc">{{ link.description }}</div>
+                      <div v-if="hotLinkDescription(link)" class="hot-link-desc" v-html="linkify(hotLinkDescription(link))"></div>
                       <small class="hot-link-date">{{ formatDate(link.collected_at) }}</small>
                     </a>
                   </div>
                 </div>
-                <el-empty v-else description="暂无 Reddit 讨论数据" :image-size="60" />
+                <el-empty v-else description="暂无社区讨论数据" :image-size="60" />
               </div>
 
               <!-- 趋势信号 -->
@@ -915,13 +1213,16 @@ onMounted(() => {
                       <span class="trend-signal-platform">{{ platformLabel(signal.platform) }}</span>
                       <span v-if="signal.trend_direction" class="trend-signal-direction" :class="`dir-${signal.trend_direction}`">{{ trendDirectionLabel(signal.trend_direction) }}</span>
                     </div>
-                    <div v-if="signal.title" class="trend-signal-title">{{ signal.title }}</div>
+                    <div v-if="signalKeywords(signal).length" class="hl-keywords">
+                      <span v-for="kw in signalKeywords(signal)" :key="kw" class="hl-keyword-tag">{{ kw }}</span>
+                    </div>
+                    <div v-if="trendSignalTitle(signal)" class="trend-signal-title">{{ trendSignalTitle(signal) }}</div>
                     <div v-if="signal.keyword" class="trend-signal-keyword">关键词：{{ signal.keyword }}</div>
                     <div v-if="signal.metric_value !== null && signal.metric_value !== undefined" class="trend-signal-metric">
                       <span class="metric-value">{{ signal.metric_value }}</span>
-                      <span v-if="signal.metric_unit" class="metric-unit">{{ signal.metric_unit }}</span>
+                      <span v-if="signal.metric_unit" class="metric-unit">{{ metricUnitLabel(signal.metric_unit) }}</span>
                     </div>
-                    <div v-if="signal.summary" class="trend-signal-summary">{{ signal.summary }}</div>
+                    <div v-if="trendSignalSummary(signal)" class="trend-signal-summary" v-html="linkify(trendSignalSummary(signal), true)"></div>
                     <small class="trend-signal-date">{{ formatDate(signal.collected_at) }}</small>
                   </div>
                 </div>
@@ -929,6 +1230,31 @@ onMounted(() => {
 
               <!-- 分析正文 -->
               <div v-if="activeSectionKey === 'market' && marketTab === 'analysis'">
+                <div class="market-analysis-toolbar">
+                  <div>
+                    <strong>AI 市场摘要</strong>
+                    <span>基于当前热点与趋势信号生成，仅更新 AI 摘要并保留原始正文。</span>
+                  </div>
+                  <el-button
+                    v-if="canEdit"
+                    type="primary"
+                    plain
+                    :icon="MagicStick"
+                    :loading="marketSummaryLoading"
+                    :disabled="activeSection.locked_by_human"
+                    :title="activeSection.locked_by_human ? '该章节已被人工锁定，无法生成' : ''"
+                    @click="generateMarketSummary"
+                  >
+                    {{ hasAiMarketSummary ? '重新生成 AI 摘要' : '生成 AI 摘要' }}
+                  </el-button>
+                </div>
+                <el-alert
+                  v-if="activeSection.locked_by_human"
+                  type="warning"
+                  :closable="false"
+                  show-icon
+                  title="该章节已被人工锁定，AI 摘要生成已禁用。"
+                />
                 <div v-if="activeSection.content" class="section-content" v-html="enhanceGlossary(renderMarkdown(renderedContentWithoutTimestamp))"></div>
                 <div v-else class="section-empty">暂无内容。可以补充材料或编辑章节。</div>
               </div>
@@ -949,13 +1275,16 @@ onMounted(() => {
                     <div class="hot-link-group-title">{{ linkTypeLabels[type] || type }}</div>
                     <div class="hot-links-list">
                       <a v-for="link in groupedHotLinks[type]" :key="link.id" :href="link.url" target="_blank" rel="noreferrer noopener" class="hot-link-item" :class="{ 'is-hot': link.is_hot, 'is-fav': isFavorited(link.url) }">
-                        <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ link.title }}</div>
+                        <div class="hot-link-title"><span v-if="link.is_hot" class="hot-badge">🔥</span>{{ hotLinkTitle(link) }}</div>
+                        <div class="hl-keywords">
+                          <span v-for="kw in linkKeywords(link)" :key="kw" class="hl-keyword-tag">{{ kw }}</span>
+                        </div>
                         <div class="hot-link-meta">
                           <el-tag size="small" effect="plain">{{ platformLabel(link.platform) }}</el-tag>
                           <span v-if="link.hotness_score" class="hot-score">热度 {{ link.hotness_score }}</span>
                           <button class="fav-btn" :class="{ active: isFavorited(link.url) }" @click.prevent="toggleFavorite(link.url)">⭐</button>
                         </div>
-                        <div v-if="link.description" class="hot-link-desc">{{ link.description }}</div>
+                        <div v-if="hotLinkDescription(link)" class="hot-link-desc" v-html="linkify(hotLinkDescription(link))"></div>
                         <small class="hot-link-date">{{ formatDate(link.collected_at) }}</small>
                       </a>
                     </div>
@@ -976,13 +1305,16 @@ onMounted(() => {
                         <span class="trend-signal-platform">{{ platformLabel(signal.platform) }}</span>
                         <span v-if="signal.trend_direction" class="trend-signal-direction" :class="`dir-${signal.trend_direction}`">{{ trendDirectionLabel(signal.trend_direction) }}</span>
                       </div>
-                      <div v-if="signal.title" class="trend-signal-title">{{ signal.title }}</div>
+                      <div v-if="signalKeywords(signal).length" class="hl-keywords">
+                        <span v-for="kw in signalKeywords(signal)" :key="kw" class="hl-keyword-tag">{{ kw }}</span>
+                      </div>
+                      <div v-if="trendSignalTitle(signal)" class="trend-signal-title">{{ trendSignalTitle(signal) }}</div>
                       <div v-if="signal.keyword" class="trend-signal-keyword">关键词：{{ signal.keyword }}</div>
                       <div v-if="signal.metric_value !== null && signal.metric_value !== undefined" class="trend-signal-metric">
                         <span class="metric-value">{{ signal.metric_value }}</span>
-                        <span v-if="signal.metric_unit" class="metric-unit">{{ signal.metric_unit }}</span>
+                        <span v-if="signal.metric_unit" class="metric-unit">{{ metricUnitLabel(signal.metric_unit) }}</span>
                       </div>
-                      <div v-if="signal.summary" class="trend-signal-summary">{{ signal.summary }}</div>
+                      <div v-if="trendSignalSummary(signal)" class="trend-signal-summary" v-html="linkify(trendSignalSummary(signal), true)"></div>
                       <small class="trend-signal-date">{{ formatDate(signal.collected_at) }}</small>
                     </div>
                   </div>

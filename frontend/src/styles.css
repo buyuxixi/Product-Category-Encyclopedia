@@ -559,6 +559,16 @@ button { color: inherit; cursor: pointer; }
   border-radius: var(--r-md);
 }
 .section-content .md-subsection:first-child { margin-top: 0; }
+.section-content .md-subheading-nested {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line-soft);
+}
+.section-content .md-subsection > .md-subheading-nested:first-of-type {
+  margin-top: 8px;
+  padding-top: 0;
+  border-top: none;
+}
 .section-content .md-subheading {
   margin: 0 0 10px;
   font-size: 14px;
@@ -582,6 +592,21 @@ button { color: inherit; cursor: pointer; }
   color: var(--text-regular);
   font-size: 13px;
   line-height: 1.75;
+}
+.section-content .md-quote a {
+  display: inline-flex;
+  align-items: center;
+  margin: 2px 4px;
+  padding: 3px 9px;
+  border: 1px solid #cfe0d5;
+  border-radius: var(--r-xs);
+  background: var(--surface);
+  font-weight: 600;
+}
+.section-content .md-quote a:hover {
+  border-color: var(--primary);
+  background: #fff;
+  text-decoration: none;
 }
 .section-content .md-ul,
 .section-content .md-ol {
@@ -642,6 +667,19 @@ button { color: inherit; cursor: pointer; }
 }
 .section-content .md-label:first-child { margin-top: 0; }
 .section-content strong { color: var(--ink); font-weight: 600; }
+.section-content > .md-heading:first-child + .md-quote + .md-ul li {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.section-content > .md-heading:first-child + .md-quote + .md-ul strong {
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: #fff0b8;
+  color: #6b4b00;
+  font-weight: 700;
+}
 .section-content a { color: var(--primary); text-decoration: none; }
 .section-content a:hover { text-decoration: underline; }
 .section-content code {
@@ -763,10 +801,10 @@ button { color: inherit; cursor: pointer; }
   max-height: calc(100vh - 200px);
   overflow-y: auto;
 }
-.document-outline span { margin: 0 8px 8px; color: var(--text-secondary); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.document-outline > .outline-title { margin: 0 8px 8px; color: var(--text-secondary); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
 .outline-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   width: 100%;
   padding: 9px 10px;
@@ -799,15 +837,15 @@ button { color: inherit; cursor: pointer; }
 .outline-label {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
   color: var(--text-regular);
   font-size: 13px;
   line-height: 1.3;
 }
 .outline-dot {
   flex-shrink: 0;
+  margin-top: 8px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -1054,8 +1092,8 @@ button { color: inherit; cursor: pointer; }
   .document-canvas { padding: 4px 14px; }
   .content-card { display: block; }
   .document-outline { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px; white-space: nowrap; }
-  .document-outline span { display: none; }
-  .document-outline a { flex-shrink: 0; }
+  .document-outline > .outline-title { display: none; }
+  .document-outline .outline-item { flex-shrink: 0; width: auto; }
   .directory-grid { grid-template-columns: 1fr; }
   .desktop-record-table { display: none; }
   .mobile-record-list { display: grid; gap: 12px; }
@@ -1106,6 +1144,7 @@ button { color: inherit; cursor: pointer; }
   margin-top: 10px;
 }
 .trend-signal-card {
+  min-width: 0;
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: var(--r-md);
@@ -1141,6 +1180,12 @@ button { color: inherit; cursor: pointer; }
   font-weight: 600;
   color: var(--ink);
   margin-bottom: 4px;
+}
+.trend-signal-title-en {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  opacity: 0.7;
 }
 .trend-signal-keyword {
   font-size: 12px;
@@ -1257,6 +1302,16 @@ footer .stale {
   overflow: hidden;
   color: var(--ink);
 }
+.hot-link-title-en {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  opacity: 0.7;
+}
 .hot-badge {
   margin-right: 4px;
 }
@@ -1282,9 +1337,70 @@ footer .stale {
   overflow: hidden;
   line-height: 1.5;
 }
+.hot-link-desc .inline-link,
+.trend-signal-summary .inline-link {
+  color: #409eff;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.hot-link-desc .inline-link:hover,
+.trend-signal-summary .inline-link:hover {
+  text-decoration: underline;
+}
 .hot-link-date {
   font-size: 11px;
   color: var(--text-quaternary);
+}
+.listing-product-link {
+  color: inherit;
+  text-decoration: none;
+}
+.listing-ai-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+.listing-ai-actions span {
+  color: var(--text-quaternary);
+  font-size: 11px;
+}
+.listing-ai-panel {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #c6e2ff;
+  border-radius: var(--r-sm);
+  background: #f4f9ff;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.listing-ai-panel summary {
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 600;
+}
+.listing-ai-keyword-row {
+  margin-top: 10px;
+}
+.listing-ai-keyword-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.listing-ai-keyword {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #d9ecff;
+  color: #245b8a;
+  font-weight: 500;
+}
+.listing-ai-keyword.is-pain {
+  background: #fff0e6;
+  color: #a45117;
 }
 .hot-link-item.is-fav { box-shadow: 0 0 0 2px #faad14; }
 .fav-btn {
@@ -1293,6 +1409,23 @@ footer .stale {
 }
 .fav-btn:hover { opacity: 1; transform: scale(1.2); }
 .fav-btn.active { opacity: 1; }
+
+/* ── Keyword tags (领域关键词) ── */
+.hl-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.hl-keyword-tag {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  white-space: nowrap;
+  line-height: 1.6;
+}
 
 /* ── Related categories ── */
 .related-cats { margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
@@ -1325,6 +1458,28 @@ footer .stale {
 }
 .market-tabs button:hover { color: var(--ink); }
 .market-tabs button.active { color: var(--brand-green, #1e6650); border-bottom-color: var(--brand-green, #1e6650); }
+
+.market-analysis-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-alt);
+}
+.market-analysis-toolbar > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.market-analysis-toolbar strong { font-size: 14px; color: var(--ink); }
+.market-analysis-toolbar span { font-size: 12px; color: var(--text-secondary); }
+@media (max-width: 640px) {
+  .market-analysis-toolbar { align-items: flex-start; flex-direction: column; }
+}
 
 /* ── Search highlight — Notion: subtle yellow ── */
 .search-result mark { background: rgba(255, 215, 0, 0.25); padding: 0 2px; border-radius: 2px; }
@@ -1458,16 +1613,13 @@ footer .stale {
 .platform-bar-fill { height: 100%; border-radius: 4px; background: var(--brand-green, #2f6650); transition: width .4s; }
 .platform-count { width: 40px; font-size: 13px; color: var(--text-secondary); text-align: right; flex-shrink: 0; }
 
-/* 品类卡片墙 — Bento Grid 布局 */
+/* 品类卡片墙 — 均匀三列，5 个自然 3+2；20–30 个时配合 Top12 截断 */
+.cat-section { margin-bottom: 24px; }
 .cat-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-auto-rows: minmax(160px, auto);
+  grid-template-columns: repeat(3, 1fr);
   gap: 14px;
-  margin-bottom: 24px;
 }
-.cat-card:nth-child(1), .cat-card:nth-child(2) { grid-column: span 3; }
-.cat-card:nth-child(3), .cat-card:nth-child(4), .cat-card:nth-child(5) { grid-column: span 2; }
 .cat-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -1476,6 +1628,7 @@ footer .stale {
   cursor: pointer;
   transition: box-shadow .2s, transform .2s, border-color .2s;
   display: flex; flex-direction: column; gap: 12px;
+  min-height: 148px;
 }
 .cat-card:hover {
   border-color: rgba(0,0,0,0.16);
@@ -1485,9 +1638,15 @@ footer .stale {
 .cat-card.health-good { border-left: 3px solid #1aae39; }
 .cat-card.health-fair { border-left: 3px solid #dd5b00; }
 .cat-card.health-poor { border-left: 3px solid #a39e98; }
-.cat-card-header { display: flex; align-items: center; justify-content: space-between; }
-.cat-card-name { font-size: 15px; font-weight: 600; color: var(--ink); }
-.cat-card-stats { display: flex; gap: 4px; }
+.cat-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.cat-card-title { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cat-card-parent { font-size: 11px; color: var(--text-quaternary); line-height: 1.2; }
+.cat-card-name { font-size: 15px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-card.is-child {
+  background: #fafbfa;
+  border-style: dashed;
+}
+.cat-card.is-child .cat-card-name { font-size: 14px; }
 .cat-card-body { display: flex; align-items: center; gap: 12px; }
 .cat-mini-chart { width: 70px; height: 70px; flex-shrink: 0; }
 .cat-card-stats { display: flex; gap: 0; flex: 1; }
@@ -1497,6 +1656,22 @@ footer .stale {
 .cat-stat-label { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
 .cat-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-quaternary); }
 .cat-card-arrow { color: var(--brand-green, #1e6650); font-size: 14px; }
+.cat-view-all {
+  display: block; width: 100%; margin-top: 12px; padding: 10px 14px;
+  border: 1px dashed var(--line); border-radius: 10px;
+  background: transparent; color: var(--brand-green, #1e6650);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.cat-view-all:hover { background: rgba(30,102,80,0.04); border-color: rgba(30,102,80,0.35); }
+
+@media (max-width: 900px) {
+  .cat-grid { grid-template-columns: repeat(2, 1fr); }
+  .latest-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .cat-grid { grid-template-columns: 1fr; }
+}
 
 /* 数据更新日志 */
 .update-log {

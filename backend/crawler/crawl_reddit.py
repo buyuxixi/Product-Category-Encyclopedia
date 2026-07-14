@@ -136,17 +136,41 @@ def _try_oauth_api(sub: str, kw: str) -> list[dict] | None:
 
 
 def _try_rss_search(sub: str, kw: str, retry: int = 0) -> list[dict]:
-    """通过 RSS search feed 获取搜索结果。restrict_sr=on 限定在 subreddit 内搜索。"""
+    """通过 RSS search feed 获取搜索结果。restrict_sr=on 限定在 subreddit 内搜索。
+
+    使用 subprocess 调用 curl 获取 RSS 内容，绕过 httpx TLS 指纹被 Reddit 识别的问题。
+    """
     # restrict_sr=on: 限制搜索范围在当前 subreddit 内（否则返回全站随机热帖）
     # sort=relevance: 按相关性排序（比 new 更能匹配关键词）
     # t=year: 搜索过去一年的帖文（扩大范围，评分阶段再过滤 90 天）
-    rss_url = f"https://www.reddit.com/r/{sub}/search.rss?q={quote_plus(kw)}&sort=relevance&limit=5&t=year&restrict_sr=on"
+    rss_url = f"https://old.reddit.com/r/{sub}/search.rss?q={quote_plus(kw)}&sort=relevance&limit=5&t=year&restrict_sr=on"
 
     try:
-        client = httpx.Client(proxy=LOCAL_PROXY, timeout=15, follow_redirects=True, headers=HEADERS)
-        resp = client.get(rss_url)
-        client.close()
-        if resp.status_code == 429:
+        # 用 curl 代替 httpx — Reddit 对 httpx 的 TLS 指纹返回 403，但 curl 能通过
+        import subprocess as sp
+        result = sp.run(
+            [
+                "curl", "-s", "-L", "-m", "15", "--proxy", LOCAL_PROXY,
+                "-H", f"User-Agent: {HEADERS['User-Agent']}",
+                "-H", f"Accept: {HEADERS['Accept']}",
+                "-H", f"Accept-Language: {HEADERS['Accept-Language']}",
+                "-w", "\n%{http_code}",  # 最后输出 HTTP 状态码
+                rss_url,
+            ],
+            capture_output=True, text=True, timeout=20,
+        )
+        # 最后一行是 HTTP 状态码
+        lines = result.stdout.rsplit("\n", 1)
+        if len(lines) == 2:
+            body, status_str = lines
+        else:
+            body, status_str = result.stdout, "0"
+        try:
+            status_code = int(status_str.strip())
+        except ValueError:
+            status_code = 0
+
+        if status_code == 429:
             if retry < MAX_RETRIES:
                 # 429 限流：等 30 秒再重试（Reddit 限流恢复较慢）
                 wait = 30 if retry == 0 else 60
@@ -155,15 +179,17 @@ def _try_rss_search(sub: str, kw: str, retry: int = 0) -> list[dict]:
                 return _try_rss_search(sub, kw, retry + 1)
             print(f"  [SKIP] Reddit r/{sub}?q={kw} rate-limited after {MAX_RETRIES} retries", file=sys.stderr)
             return []
-        if resp.status_code == 403:
+        if status_code == 403:
             print(f"  [SKIP] Reddit r/{sub}?q={kw} blocked (403)", file=sys.stderr)
             return []
-        if resp.status_code == 404:
+        if status_code == 404:
             return []
-        resp.raise_for_status()
+        if status_code != 200:
+            print(f"  [SKIP] Reddit r/{sub}?q={kw} HTTP {status_code}", file=sys.stderr)
+            return []
 
         import feedparser
-        feed = feedparser.parse(resp.text)
+        feed = feedparser.parse(body)
         entries = []
         for entry in feed.entries[:5]:
             title = entry.get("title", "")

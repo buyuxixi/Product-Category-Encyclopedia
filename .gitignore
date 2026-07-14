@@ -17,3 +17,6 @@ frontend/dist/
 .wrangler/
 dist/
 node_modules/
+data/
+frontend/.pnpm-store
+.pnpm-store/

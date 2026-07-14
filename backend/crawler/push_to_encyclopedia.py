@@ -12,6 +12,9 @@ Usage:
     # 从文件接收 JSON
     python push_to_encyclopedia.py --file results.json
 
+    # 增量 upsert，不清理旧数据
+    python push_to_encyclopedia.py --file results.json --incremental
+
     # 测试连接
     python push_to_encyclopedia.py --test
 """
@@ -23,6 +26,10 @@ import sys
 
 import httpx
 
+# 翻译管道（同目录 import）
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from translate_zh import translate_crawl_result  # noqa: E402
+
 API_BASE = os.getenv("ENCYCLOPEDIA_API_BASE", "http://localhost:8010/api/v1")
 BATCH_SIZE = 500
 FEISHU_WEBHOOK_URL = os.getenv("FEISHU_WEBHOOK_URL", "")
@@ -31,6 +38,7 @@ FEISHU_WEBHOOK_URL = os.getenv("FEISHU_WEBHOOK_URL", "")
 def push_hot_links(items: list[dict], cookies: dict | None = None) -> dict:
     """推送 hot_links 到百科后端，分批每 500 条。"""
     total_inserted = 0
+    total_updated = 0
     total_skipped: list[str] = []
     for i in range(0, len(items), BATCH_SIZE):
         batch = items[i : i + BATCH_SIZE]
@@ -40,15 +48,21 @@ def push_hot_links(items: list[dict], cookies: dict | None = None) -> dict:
             resp.raise_for_status()
             result = resp.json()
             total_inserted += result.get("inserted_count", 0)
+            total_updated += result.get("updated_count", 0)
             total_skipped.extend(result.get("skipped", []))
         except Exception as e:
             print(f"  [ERROR] hot-links batch {i // BATCH_SIZE} failed: {e}", file=sys.stderr)
-    return {"inserted": total_inserted, "skipped": total_skipped}
+    return {
+        "inserted": total_inserted,
+        "updated": total_updated,
+        "skipped": total_skipped,
+    }
 
 
 def push_trend_signals(items: list[dict], cookies: dict | None = None) -> dict:
     """推送 trend_signals 到百科后端。"""
     total_inserted = 0
+    total_updated = 0
     total_skipped: list[str] = []
     for i in range(0, len(items), BATCH_SIZE):
         batch = items[i : i + BATCH_SIZE]
@@ -58,10 +72,15 @@ def push_trend_signals(items: list[dict], cookies: dict | None = None) -> dict:
             resp.raise_for_status()
             result = resp.json()
             total_inserted += result.get("inserted_count", 0)
+            total_updated += result.get("updated_count", 0)
             total_skipped.extend(result.get("skipped", []))
         except Exception as e:
             print(f"  [ERROR] trend-signals batch {i // BATCH_SIZE} failed: {e}", file=sys.stderr)
-    return {"inserted": total_inserted, "skipped": total_skipped}
+    return {
+        "inserted": total_inserted,
+        "updated": total_updated,
+        "skipped": total_skipped,
+    }
 
 
 def login(username: str | None = None, password: str | None = None) -> dict | None:
@@ -90,12 +109,21 @@ def login(username: str | None = None, password: str | None = None) -> dict | No
         return None
 
 
-def clear_category_hot_links(cookies: dict | None, category_code: str) -> int:
-    """删除某品类的全部旧 hot_links，为新数据让路。每次爬取前调用，实现「覆盖」而非「累积」。"""
+def clear_category_hot_links(
+    cookies: dict | None,
+    category_code: str,
+    platform: str | None = None,
+) -> int:
+    """删除某品类指定平台的旧 hot_links；未传平台时删除全部。"""
     try:
+        params: dict[str, str | int] = {"days": 365}
+        if platform:
+            params["platform"] = platform
         resp = httpx.get(
-            f"{API_BASE}/categories/{category_code}/hot-links?days=365",
-            timeout=15, cookies=cookies,
+            f"{API_BASE}/categories/{category_code}/hot-links",
+            params=params,
+            timeout=15,
+            cookies=cookies,
         )
         resp.raise_for_status()
         items = resp.json().get("items", [])
@@ -112,22 +140,51 @@ def clear_category_hot_links(cookies: dict | None, category_code: str) -> int:
                 pass
         return deleted
     except Exception as e:
-        print(f"  [WARN] Clear hot_links for {category_code} failed: {e}", file=sys.stderr)
+        scope = f"{category_code}/{platform}" if platform else category_code
+        print(f"  [WARN] Clear hot_links for {scope} failed: {e}", file=sys.stderr)
         return 0
 
 
-def clear_category_trend_signals(cookies: dict | None, category_code: str) -> int:
-    """删除某品类的全部旧 trend_signals，实现覆盖模式。"""
+def clear_category_trend_signals(
+    cookies: dict | None,
+    category_code: str,
+    platform: str | None = None,
+) -> int:
+    """删除某品类指定平台的旧 trend_signals；未传平台时删除全部。"""
     try:
+        params = {"platform": platform} if platform else None
         resp = httpx.delete(
             f"{API_BASE}/categories/{category_code}/trend-signals",
-            timeout=15, cookies=cookies,
+            params=params,
+            timeout=15,
+            cookies=cookies,
         )
         resp.raise_for_status()
         return resp.json().get("deleted", 0)
     except Exception as e:
-        print(f"  [WARN] Clear trend_signals for {category_code} failed: {e}", file=sys.stderr)
+        scope = f"{category_code}/{platform}" if platform else category_code
+        print(f"  [WARN] Clear trend_signals for {scope} failed: {e}", file=sys.stderr)
         return 0
+
+
+def push_incremental(crawl_result: dict, cookies: dict | None = None) -> dict:
+    """不清理旧数据，通过 Batch API 对统一 crawler 结果执行增量 upsert。"""
+    if cookies is None:
+        cookies = login()
+    hot_links = crawl_result.get("hot_links", [])
+    trend_signals = crawl_result.get("trend_signals", [])
+    hl_result = push_hot_links(hot_links, cookies=cookies)
+    ts_result = push_trend_signals(trend_signals, cookies=cookies)
+    summary = {
+        "hot_links_inserted": hl_result["inserted"],
+        "hot_links_updated": hl_result["updated"],
+        "hot_links_skipped": len(hl_result["skipped"]),
+        "trend_signals_inserted": ts_result["inserted"],
+        "trend_signals_updated": ts_result["updated"],
+        "trend_signals_skipped": len(ts_result["skipped"]),
+    }
+    update_market_sections(cookies, crawl_result)
+    return summary
 
 
 def push_all(crawl_result: dict, cookies: dict | None = None) -> dict:
@@ -143,36 +200,44 @@ def push_all(crawl_result: dict, cookies: dict | None = None) -> dict:
     # 每品类最多保留条数
     max_per_category = int(os.getenv("MAX_HOTLINKS_PER_CATEGORY", "10"))
 
-    # 收集本次爬取涉及的所有品类
-    crawled_cats = set()
+    # 只清理本次成功产出结果的品类+平台，避免删除其它来源数据。
+    crawled_scopes: set[tuple[str, str]] = set()
     for link in crawl_result.get("hot_links", []):
-        crawled_cats.add(link.get("category_code", ""))
+        crawled_scopes.add(
+            (link.get("category_code", ""), link.get("platform", ""))
+        )
     for sig in crawl_result.get("trend_signals", []):
-        crawled_cats.add(sig.get("category_code", ""))
+        crawled_scopes.add(
+            (sig.get("category_code", ""), sig.get("platform", ""))
+        )
 
-    # Step 0: 清理旧数据（覆盖模式，不累积）
-    print(f"\n🧹 Clearing old data for {len(crawled_cats)} categories...")
+    # Step 0: 按平台清理旧数据（覆盖本次来源，不影响其它来源）
+    print(f"\n🧹 Clearing old data for {len(crawled_scopes)} category/platform scopes...")
     total_cleared_hl = 0
     total_cleared_ts = 0
-    for cat_code in sorted(crawled_cats):
-        if not cat_code:
+    for cat_code, platform in sorted(crawled_scopes):
+        if not cat_code or not platform:
             continue
-        cleared_hl = clear_category_hot_links(cookies, cat_code)
-        cleared_ts = clear_category_trend_signals(cookies, cat_code)
+        cleared_hl = clear_category_hot_links(cookies, cat_code, platform)
+        cleared_ts = clear_category_trend_signals(cookies, cat_code, platform)
         if cleared_hl or cleared_ts:
-            print(f"  {cat_code}: cleared {cleared_hl} hot_links, {cleared_ts} trend_signals")
+            print(
+                f"  {cat_code}/{platform}: cleared {cleared_hl} hot_links, "
+                f"{cleared_ts} trend_signals"
+            )
             total_cleared_hl += cleared_hl
             total_cleared_ts += cleared_ts
     print(f"  Total cleared: {total_cleared_hl} hot_links, {total_cleared_ts} trend_signals")
 
-    # Step 1: 按品类分组，每品类取热度 top N
+    # Step 1: 按品类+平台分组，每个来源取热度 top N
     from collections import defaultdict
-    by_cat: dict[str, list[dict]] = defaultdict(list)
+    by_scope: dict[tuple[str, str], list[dict]] = defaultdict(list)
     for link in crawl_result.get("hot_links", []):
-        by_cat[link.get("category_code", "")].append(link)
+        scope = (link.get("category_code", ""), link.get("platform", ""))
+        by_scope[scope].append(link)
 
     filtered_links: list[dict] = []
-    for cat, links in by_cat.items():
+    for links in by_scope.values():
         # 按热度降序排列，取前 max_per_category 条
         sorted_links = sorted(
             links,
@@ -181,20 +246,27 @@ def push_all(crawl_result: dict, cookies: dict | None = None) -> dict:
         )
         filtered_links.extend(sorted_links[:max_per_category])
 
-    # trend_signals 按品类+类型分组截断，避免重复卡片噪音
-    by_cat_ts: dict[str, list[dict]] = defaultdict(list)
+    # trend_signals 按品类+平台+类型截断，避免不同平台互相挤占。
+    by_scope_ts: dict[tuple[str, str, str], list[dict]] = defaultdict(list)
     for sig in crawl_result.get("trend_signals", []):
-        by_cat_ts[sig.get("category_code", "")].append(sig)
+        scope = (
+            sig.get("category_code", ""),
+            sig.get("platform", ""),
+            sig.get("signal_type", ""),
+        )
+        by_scope_ts[scope].append(sig)
     filtered_signals: list[dict] = []
-    for cat, sigs in by_cat_ts.items():
-        # 按类型分组，每类型取不同数量
-        by_type: dict[str, list[dict]] = defaultdict(list)
-        for sig in sigs:
-            by_type[sig.get("signal_type", "")].append(sig)
-        for stype, type_sigs in by_type.items():
-            # keyword_trend 保留多一些(8), 其他类型限 3
-            limit = 8 if stype == "keyword_trend" else 3
-            filtered_signals.extend(type_sigs[:limit])
+    for (_, _, signal_type), signals in by_scope_ts.items():
+        # keyword_trend 保留多一些(8), 其他类型限 3
+        limit = 8 if signal_type == "keyword_trend" else 3
+        filtered_signals.extend(signals[:limit])
+
+    # Step 1.5: LLM 翻译 — 为 hot_links 和 trend_signals 生成中文标签
+    if os.getenv("SKIP_TRANSLATION", "").lower() not in {"1", "true", "yes"}:
+        print(f"\n🌐 Translating to Chinese labels...")
+        translate_crawl_result({"hot_links": filtered_links, "trend_signals": filtered_signals})
+    else:
+        print("\n⏭️  Skipping translation (SKIP_TRANSLATION=1)")
 
     # Step 2: 推送新数据
     print(f"\n📤 Pushing to encyclopedia API ({API_BASE})...")
@@ -203,14 +275,23 @@ def push_all(crawl_result: dict, cookies: dict | None = None) -> dict:
     ts_result = push_trend_signals(filtered_signals, cookies=cookies)
     summary = {
         "hot_links_inserted": hl_result["inserted"],
+        "hot_links_updated": hl_result["updated"],
         "hot_links_skipped": len(hl_result["skipped"]),
         "trend_signals_inserted": ts_result["inserted"],
+        "trend_signals_updated": ts_result["updated"],
         "trend_signals_skipped": len(ts_result["skipped"]),
         "old_links_cleared": total_cleared_hl,
         "old_trend_signals_cleared": total_cleared_ts,
     }
-    print(f"  ✅ Hot links: {summary['hot_links_inserted']} inserted, {summary['hot_links_skipped']} skipped")
-    print(f"  ✅ Trend signals: {summary['trend_signals_inserted']} inserted, {summary['trend_signals_skipped']} skipped")
+    print(
+        f"  ✅ Hot links: {summary['hot_links_inserted']} inserted, "
+        f"{summary['hot_links_updated']} updated, {summary['hot_links_skipped']} skipped"
+    )
+    print(
+        f"  ✅ Trend signals: {summary['trend_signals_inserted']} inserted, "
+        f"{summary['trend_signals_updated']} updated, "
+        f"{summary['trend_signals_skipped']} skipped"
+    )
     print(f"  🧹 Old links cleared: {total_cleared_hl}, old trend_signals cleared: {total_cleared_ts}")
 
     # 发送飞书通知
@@ -344,7 +425,7 @@ def send_feishu_notification(summary: dict, crawl_result: dict) -> None:
                     "tag": "div",
                     "text": {
                         "tag": "lark_md",
-                        "content": f"**爬取时间**: {now_str}\n**写入数据**:\n  📌 Hot Links: {summary['hot_links_inserted']} 条入库（{summary['hot_links_skipped']} 条跳过）\n  📊 Trend Signals: {summary['trend_signals_inserted']} 条入库（{summary['trend_signals_skipped']} 条跳过）\n  🔥 is_hot 热点: {hot_count} 条\n\n**按品类分布**:\n{cat_lines}{top_lines}",
+                        "content": f"**爬取时间**: {now_str}\n**写入数据**:\n  📌 Hot Links: {summary['hot_links_inserted']} 条新增，{summary.get('hot_links_updated', 0)} 条更新（{summary['hot_links_skipped']} 条跳过）\n  📊 Trend Signals: {summary['trend_signals_inserted']} 条新增，{summary.get('trend_signals_updated', 0)} 条更新（{summary['trend_signals_skipped']} 条跳过）\n  🔥 is_hot 热点: {hot_count} 条\n\n**按品类分布**:\n{cat_lines}{top_lines}",
                     },
                 },
                 {
@@ -411,5 +492,9 @@ if __name__ == "__main__":
             sys.exit(0)
         crawl_result = json.loads(stdin_data)
 
-    result = push_all(crawl_result)
+    result = (
+        push_incremental(crawl_result)
+        if "--incremental" in sys.argv
+        else push_all(crawl_result)
+    )
     print(json.dumps(result, indent=2))

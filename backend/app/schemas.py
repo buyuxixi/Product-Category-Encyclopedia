@@ -49,29 +49,33 @@ class TrendSignalCreate(BaseModel):
     ]
     platform: Literal[
         "google", "amazon", "reddit", "youtube", "tiktok",
-        "x", "facebook", "news", "other",
+        "xiaohongshu", "x", "facebook", "news", "other",
     ]
     keyword: str = Field(default="", max_length=500)
     title: str = Field(default="", max_length=500)
+    title_zh: str | None = Field(default=None, max_length=200)
     metric_value: float | None = None
     metric_unit: str | None = Field(default=None, max_length=32)
     trend_direction: Literal["up", "down", "stable", "new", "positive", "negative", "mixed"] | None = None
     summary: str = Field(default="", max_length=10000)
+    summary_zh: str | None = Field(default=None, max_length=10000)
 
 
 class HotLinkCreate(BaseModel):
     category_code: str
     section_key: str = Field(max_length=80)
     link_type: Literal[
-        "product", "discussion", "video", "news", "trend", "keyword",
+        "product", "discussion", "video", "social_post", "news", "trend", "keyword",
     ]
     platform: Literal[
         "google", "amazon", "reddit", "youtube", "tiktok",
-        "x", "facebook", "news", "other",
+        "xiaohongshu", "x", "facebook", "news", "other",
     ]
     title: str = Field(default="", max_length=500)
+    title_zh: str | None = Field(default=None, max_length=200)
     url: HttpUrl
     description: str = Field(default="", max_length=10000)
+    description_zh: str | None = Field(default=None, max_length=10000)
     hotness_score: float | None = None
     is_hot: bool = False
 

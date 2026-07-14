@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
+from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
@@ -48,8 +50,12 @@ from app.security import (
     get_actor,
     revoke_session,
 )
-from app.services.agent_service import AgentError, chat as agent_chat, run_scan
+from app.services.agent_service import AgentError, chat as agent_chat, chat_stream as agent_chat_stream, run_scan
 from app.services.content_service import ContentError, save_section
+from app.services.listing_suggestion_service import (
+    generate_listing_suggestion_preview,
+)
+from app.services.market_brief_service import generate_market_brief
 
 
 router = APIRouter(prefix="/api/v1")
@@ -170,6 +176,16 @@ def _section_payload(section: EncyclopediaSection, db: Session | None = None) ->
                     "published_at": source.published_at,
                     "url": source.url,
                 }
+        elif db is not None and evidence.source_type == "hot_link":
+            source = db.get(HotLink, evidence.source_id)
+            if source is not None:
+                item["source"] = {
+                    "title": source.title_zh or source.title,
+                    "source_type": source.platform,
+                    "collected_at": source.collected_at,
+                    "published_at": None,
+                    "url": source.url,
+                }
         evidence_payload.append(item)
     return {
         "id": section.id,
@@ -286,7 +302,9 @@ def search(
         .where(
             or_(
                 HotLink.title.contains(keyword),
+                HotLink.title_zh.contains(keyword),
                 HotLink.description.contains(keyword),
+                HotLink.description_zh.contains(keyword),
                 HotLink.url.contains(keyword),
             )
         )
@@ -294,12 +312,14 @@ def search(
         .limit(limit)
     ).all()
     for link, category in hotlink_rows:
+        display_title = link.title_zh or link.title
+        display_description = link.description_zh or link.description
         items.append(
             {
                 "kind": "hotlink",
                 "category_code": category.code,
-                "title": f"🔗 {link.title}",
-                "snippet": f"{link.platform} · {link.description[:100]}" if link.description else link.platform,
+                "title": f"🔗 {display_title}",
+                "snippet": f"{link.platform} · {display_description[:100]}" if display_description else link.platform,
                 "section_key": "market",
             }
         )
@@ -310,19 +330,24 @@ def search(
         .where(
             or_(
                 TrendSignal.keyword.contains(keyword),
+                TrendSignal.title.contains(keyword),
+                TrendSignal.title_zh.contains(keyword),
                 TrendSignal.summary.contains(keyword),
+                TrendSignal.summary_zh.contains(keyword),
             )
         )
         .order_by(TrendSignal.collected_at.desc())
         .limit(limit)
     ).all()
     for signal, category in trend_rows:
+        display_title = signal.title_zh or signal.title or signal.keyword
+        display_summary = signal.summary_zh or signal.summary
         items.append(
             {
                 "kind": "trend",
                 "category_code": category.code,
-                "title": f"📊 {signal.keyword or signal.title}",
-                "snippet": f"{signal.platform} · {signal.summary[:100]}" if signal.summary else signal.platform,
+                "title": f"📊 {display_title}",
+                "snippet": f"{signal.platform} · {display_summary[:100]}" if display_summary else signal.platform,
                 "section_key": "market",
             }
         )
@@ -401,10 +426,12 @@ def create_trend_signal(body: TrendSignalCreate, db: Db, actor: WriteActor):
         platform=body.platform,
         keyword=body.keyword,
         title=body.title,
+        title_zh=body.title_zh,
         metric_value=body.metric_value,
         metric_unit=body.metric_unit,
         trend_direction=body.trend_direction,
         summary=body.summary,
+        summary_zh=body.summary_zh,
     )
     db.add(signal)
     db.commit()
@@ -416,29 +443,57 @@ def create_trend_signal(body: TrendSignalCreate, db: Db, actor: WriteActor):
 def create_trend_signals_batch(body: TrendSignalBatch, db: Db, actor: WriteActor):
     ensure_role(actor, "admin", "data", "researcher")
     inserted: list[int] = []
+    updated: list[int] = []
     skipped: list[str] = []
+    category_codes = {item.category_code for item in body.items}
+    categories = {
+        category.code: category
+        for category in db.scalars(
+            select(Category).where(Category.code.in_(category_codes))
+        )
+    }
     for item in body.items:
-        category = db.scalar(select(Category).where(Category.code == item.category_code))
+        category = categories.get(item.category_code)
         if category is None:
             skipped.append(f"Category not found: {item.category_code}")
             continue
-        signal = TrendSignal(
-            category_id=category.id,
-            section_key=item.section_key,
-            signal_type=item.signal_type,
-            platform=item.platform,
-            keyword=item.keyword,
-            title=item.title,
-            metric_value=item.metric_value,
-            metric_unit=item.metric_unit,
-            trend_direction=item.trend_direction,
-            summary=item.summary,
-        )
-        db.add(signal)
+        signal = db.scalars(
+            select(TrendSignal)
+            .where(
+                TrendSignal.category_id == category.id,
+                TrendSignal.platform == item.platform,
+                TrendSignal.title == item.title,
+            )
+            .limit(1)
+        ).first()
+        if signal is None:
+            signal = TrendSignal(category_id=category.id)
+            db.add(signal)
+            is_new = True
+        else:
+            is_new = False
+        signal.section_key = item.section_key
+        signal.signal_type = item.signal_type
+        signal.platform = item.platform
+        signal.keyword = item.keyword
+        signal.title = item.title
+        signal.title_zh = item.title_zh
+        signal.metric_value = item.metric_value
+        signal.metric_unit = item.metric_unit
+        signal.trend_direction = item.trend_direction
+        signal.summary = item.summary
+        signal.summary_zh = item.summary_zh
+        signal.collected_at = datetime.now(UTC)
         db.flush()
-        inserted.append(signal.id)
+        (inserted if is_new else updated).append(signal.id)
     db.commit()
-    return {"inserted_count": len(inserted), "inserted_ids": inserted, "skipped": skipped}
+    return {
+        "inserted_count": len(inserted),
+        "inserted_ids": inserted,
+        "updated_count": len(updated),
+        "updated_ids": updated,
+        "skipped": skipped,
+    }
 
 
 @router.get("/categories/{code}/trend-signals")
@@ -474,10 +529,12 @@ def list_trend_signals(
                 "platform": item.platform,
                 "keyword": item.keyword,
                 "title": item.title,
+                "title_zh": item.title_zh,
                 "metric_value": item.metric_value,
                 "metric_unit": item.metric_unit,
                 "trend_direction": item.trend_direction,
                 "summary": item.summary,
+                "summary_zh": item.summary_zh,
                 "collected_at": item.collected_at,
             }
             for item in rows
@@ -499,8 +556,10 @@ def create_hot_link(body: HotLinkCreate, db: Db, actor: WriteActor):
         link_type=body.link_type,
         platform=body.platform,
         title=body.title,
+        title_zh=body.title_zh,
         url=str(body.url),
         description=body.description,
+        description_zh=body.description_zh,
         hotness_score=body.hotness_score,
         is_hot=body.is_hot,
     )
@@ -514,28 +573,57 @@ def create_hot_link(body: HotLinkCreate, db: Db, actor: WriteActor):
 def create_hot_links_batch(body: HotLinkBatch, db: Db, actor: WriteActor):
     ensure_role(actor, "admin", "data", "researcher")
     inserted: list[int] = []
+    updated: list[int] = []
     skipped: list[str] = []
+    category_codes = {item.category_code for item in body.items}
+    categories = {
+        category.code: category
+        for category in db.scalars(
+            select(Category).where(Category.code.in_(category_codes))
+        )
+    }
     for item in body.items:
-        category = db.scalar(select(Category).where(Category.code == item.category_code))
+        category = categories.get(item.category_code)
         if category is None:
             skipped.append(f"Category not found: {item.category_code}")
             continue
-        link = HotLink(
-            category_id=category.id,
-            section_key=item.section_key,
-            link_type=item.link_type,
-            platform=item.platform,
-            title=item.title,
-            url=str(item.url),
-            description=item.description,
-            hotness_score=item.hotness_score,
-            is_hot=item.is_hot,
-        )
-        db.add(link)
+        url = str(item.url)
+        link = db.scalars(
+            select(HotLink)
+            .where(
+                HotLink.category_id == category.id,
+                HotLink.platform == item.platform,
+                HotLink.url == url,
+            )
+            .limit(1)
+        ).first()
+        if link is None:
+            link = HotLink(category_id=category.id)
+            db.add(link)
+            is_new = True
+        else:
+            is_new = False
+        link.section_key = item.section_key
+        link.link_type = item.link_type
+        link.platform = item.platform
+        link.title = item.title
+        link.title_zh = item.title_zh
+        link.url = url
+        link.description = item.description
+        link.description_zh = item.description_zh
+        link.hotness_score = item.hotness_score
+        link.is_hot = item.is_hot
+        link.collected_at = datetime.now(UTC)
         db.flush()
-        inserted.append(link.id)
+        (inserted if is_new else updated).append(link.id)
     db.commit()
-    return {"inserted_count": len(inserted), "inserted_ids": inserted, "skipped": skipped}
+    return {
+        "inserted_count": len(inserted),
+        "inserted_ids": inserted,
+        "updated_count": len(updated),
+        "updated_ids": updated,
+        "skipped": skipped,
+    }
 
 
 @router.get("/categories/{code}/hot-links")
@@ -572,8 +660,10 @@ def list_hot_links(
                 "link_type": item.link_type,
                 "platform": item.platform,
                 "title": item.title,
+                "title_zh": item.title_zh,
                 "url": item.url,
                 "description": item.description,
+                "description_zh": item.description_zh,
                 "hotness_score": item.hotness_score,
                 "is_hot": item.is_hot,
                 "collected_at": item.collected_at,
@@ -594,13 +684,41 @@ def delete_hot_link(link_id: int, db: Db, actor: WriteActor):
     return {"ok": True}
 
 
+@router.post("/hot-links/{link_id}/listing-suggestion-preview")
+def generate_hot_link_listing_suggestion(
+    link_id: int,
+    db: Db,
+    actor: WriteActor,
+):
+    """基于跨平台品类洞察生成非持久化 Listing 优化建议预览。"""
+    ensure_role(actor, "admin", "data", "researcher")
+    product = db.get(HotLink, link_id)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Hot link not found")
+    try:
+        return generate_listing_suggestion_preview(db, product=product)
+    except ContentError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except AgentError as exc:
+        status_code = 503 if "API_KEY未配置" in str(exc) else 502
+        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
+
+
 @router.delete("/categories/{code}/trend-signals")
-def clear_trend_signals(code: str, db: Db, actor: WriteActor):
-    """删除某品类的全部旧 trend_signals，实现覆盖模式。"""
+def clear_trend_signals(
+    code: str,
+    db: Db,
+    actor: WriteActor,
+    platform: Annotated[str | None, Query(max_length=40)] = None,
+):
+    """删除某品类指定平台的旧趋势信号；未传平台时保持全量清理。"""
     ensure_role(actor, "admin", "data")
     category = _category_or_404(db, code)
+    filters = [TrendSignal.category_id == category.id]
+    if platform:
+        filters.append(TrendSignal.platform == platform)
     rows = db.scalars(
-        select(TrendSignal).where(TrendSignal.category_id == category.id)
+        select(TrendSignal).where(*filters)
     ).all()
     count = len(rows)
     for row in rows:
@@ -772,6 +890,30 @@ def update_section(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
+@router.post("/categories/{code}/generate-section")
+def generate_category_section(code: str, db: Db, actor: WriteActor):
+    """基于当前热点与趋势信号生成 06 章节摘要，并保留原始正文。"""
+    ensure_role(actor, "admin", "researcher")
+    category = _category_or_404(db, code)
+    try:
+        section = generate_market_brief(
+            db,
+            category=category,
+            actor=actor.name,
+        )
+        section = db.scalar(
+            select(EncyclopediaSection)
+            .options(selectinload(EncyclopediaSection.evidence))
+            .where(EncyclopediaSection.id == section.id)
+        )
+        return _section_payload(section, db)
+    except ContentError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except AgentError as exc:
+        status_code = 503 if "API_KEY未配置" in str(exc) else 502
+        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
+
+
 # ---------------------------------------------------------------------------
 # 选品Agent
 # ---------------------------------------------------------------------------
@@ -876,6 +1018,32 @@ def agent_scan_chat(scan_id: int, body: AgentChatRequest, db: Db, actor: WriteAc
         return {"content": result["content"], "usage": result.get("usage", {})}
     except AgentError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@router.post("/agent/scans/{scan_id}/chat/stream")
+def agent_scan_chat_stream(scan_id: int, body: AgentChatRequest, actor: WriteActor):
+    """流式多轮对话（SSE）。不长期持有 DB 连接。"""
+    ensure_role(actor, "admin", "data", "researcher")
+
+    def generate() -> Iterator[str]:
+        try:
+            for event in agent_chat_stream(scan_id, body.message):
+                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as exc:  # noqa: BLE001 — SSE 内兜底，避免连接悬挂
+            payload = {"event": "error", "data": {"message": str(exc)[:240]}}
+            yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+            yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/agent/scans/{scan_id}/discoveries")

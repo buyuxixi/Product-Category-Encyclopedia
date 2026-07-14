@@ -1,9 +1,10 @@
 FROM node:22-alpine AS build
 
 WORKDIR /app
+ENV CI=true
 RUN corepack enable
 COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --frozen-lockfile=false
+RUN pnpm config set dangerouslyAllowAllBuilds true && pnpm install --frozen-lockfile=false
 COPY . .
 RUN pnpm build
 

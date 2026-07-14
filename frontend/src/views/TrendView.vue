@@ -21,7 +21,7 @@ const categoryNameMap = computed(() => {
 function categoryName(code: string): string { return categoryNameMap.value[code] || code }
 
 function platformLabel(p: string): string {
-  const labels: Record<string, string> = { google: 'Google', reddit: 'Reddit', youtube: 'YouTube', tiktok: 'TikTok', news: 'News', other: 'Other' }
+  const labels: Record<string, string> = { google: 'Google', reddit: 'Reddit', youtube: 'YouTube', tiktok: 'TikTok', xiaohongshu: '小红书', news: 'News', other: 'Other' }
   return labels[p] || p
 }
 
@@ -201,7 +201,7 @@ onMounted(loadData)
       <div class="video-rank-list">
         <a v-for="(v, i) in topVideos" :key="v.id" :href="v.url" target="_blank" rel="noreferrer" class="video-rank-row">
           <span class="video-rank-num" :class="{ 'top-3': i < 3 }">{{ i + 1 }}</span>
-          <span class="video-rank-title">{{ v.title }}</span>
+          <span class="video-rank-title">{{ v.title_zh?.trim() || v.title }}</span>
           <span class="video-rank-cat">{{ categoryName(v.category_code || '') }}</span>
           <span class="video-rank-views">👀 {{ v.hotness_score }}</span>
         </a>

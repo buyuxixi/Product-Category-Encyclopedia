@@ -1,0 +1,18 @@
+{
+  "result": [
+    true,
+    "success",
+    [
+      {
+        "note_id": "abc123",
+        "content": "档位太强会麻，建议从低档开始",
+        "like_count": "25"
+      },
+      {
+        "note_id": "abc123",
+        "content": "没有点赞的评论应被过滤",
+        "like_count": "0"
+      }
+    ]
+  ]
+}

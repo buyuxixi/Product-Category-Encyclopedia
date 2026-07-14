@@ -1,0 +1,22 @@
+[
+  {
+    "note_id": "abc123",
+    "title": "TENS 电刺激使用体验",
+    "user": "测试用户A",
+    "liked_count": "1200",
+    "comment_count": "30",
+    "collected_count": "80",
+    "search_keyword": "TENS理疗仪",
+    "note_url": "https://www.xiaohongshu.com/explore/abc123"
+  },
+  {
+    "note_id": "def456",
+    "title": "起夜人体感应灯真实体验",
+    "user": "测试用户B",
+    "liked_count": "90",
+    "comment_count": "12",
+    "collected_count": "40",
+    "search_keyword": "起夜灯",
+    "note_url": "https://www.xiaohongshu.com/explore/def456"
+  }
+]

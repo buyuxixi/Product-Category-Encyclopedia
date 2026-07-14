@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Promotion, Plus, Loading, ChatDotRound, DataLine } from '@element-plus/icons-vue'
-import { apiRequest, type Identity } from '../api'
+import { Promotion, Plus, Loading, ChatDotRound, DataLine, WarningFilled } from '@element-plus/icons-vue'
+import { apiRequest, apiStreamChat, type Identity } from '../api'
+import { renderMarkdown } from '../lib/markdown'
 import type { AgentScan, ProductDiscovery, AgentMessage, CategorySummary } from '../types'
 
 const props = defineProps<{ identity: Identity }>()
@@ -25,6 +26,7 @@ const showScanPanel = ref(false)
 const chatScrollRef = ref<HTMLElement | null>(null)
 // 中间区域tab: chat=纯对话, discoveries=发现列表
 const mainTab = ref<'chat' | 'discoveries'>('chat')
+const showErrorDetails = ref(false)
 
 const opportunityTypeLabel: Record<string, string> = {
   hot_product: '🔥 爆品', rising_trend: '📈 上升趋势',
@@ -53,7 +55,8 @@ async function loadCategories() {
 async function loadScans() {
   loading.value = true
   try {
-    const res = await apiRequest<{ items: AgentScan[] }>('/agent/scans?limit=100')
+    // `_route=v2` 绕过旧 Nginx 尾斜杠配置留下的浏览器 301 永久重定向缓存。
+    const res = await apiRequest<{ items: AgentScan[] }>('/agent/scans?limit=100&_route=v2')
     scans.value = res.items
     if (res.items.length > 0 && !currentScan.value) await openScan(res.items[0].id)
   } catch (e) { ElMessage.error((e as Error).message) }
@@ -68,6 +71,7 @@ async function openScan(id: number) {
     discoveries.value = d.discoveries || []
     messages.value = d.messages || []
     mainTab.value = 'chat'
+    showErrorDetails.value = false
     await nextTick(); scrollToBottom()
   } catch (e) { ElMessage.error((e as Error).message) }
   finally { loading.value = false }
@@ -88,26 +92,99 @@ async function triggerScan() {
   finally { scanning.value = false }
 }
 
+async function retryScan() {
+  if (!currentScan.value || scanning.value) return
+  scanning.value = true
+  showErrorDetails.value = false
+  try {
+    const body: Record<string, unknown> = { scan_type: currentScan.value.scan_type }
+    if (currentScan.value.scan_type === 'category' && currentScan.value.category_code)
+      body.category_code = currentScan.value.category_code
+    if (currentScan.value.scan_type === 'topic' && currentScan.value.topic)
+      body.topic = currentScan.value.topic
+    const r = await apiRequest<AgentScan>('/agent/scan', { method: 'POST', body: JSON.stringify(body) })
+    currentScan.value = r; discoveries.value = r.discoveries || []; messages.value = r.messages || []
+    scans.value.unshift(r)
+    if (r.status === 'completed') { mainTab.value = 'discoveries'; ElMessage.success('扫描完成') }
+    else if (r.status === 'failed') { mainTab.value = 'chat'; ElMessage.warning('扫描仍失败，请检查LLM服务') }
+  } catch (e) { ElMessage.error((e as Error).message) }
+  finally { scanning.value = false }
+}
+
+const failErrorMessage = computed(() => {
+  const msg = currentScan.value?.error_message || '未记录具体错误'
+  return msg.length > 120 ? msg.slice(0, 120) + '…' : msg
+})
+
 async function sendChat() {
   if (!chatInput.value.trim() || !currentScan.value || chatLoading.value) return
   const userMsg = chatInput.value.trim()
-  chatInput.value = ''; chatLoading.value = true; mainTab.value = 'chat'
+  chatInput.value = ''
+  chatLoading.value = true
+  mainTab.value = 'chat'
   const controller = new AbortController()
   chatAbortController = controller
-  messages.value.push({ id: -Date.now(), role: 'user', content: userMsg, created_at: new Date().toISOString() })
-  await nextTick(); scrollToBottom()
+
+  messages.value.push({
+    id: -Date.now(),
+    role: 'user',
+    content: userMsg,
+    created_at: new Date().toISOString(),
+  })
+  const assistantId = Date.now()
+  const assistantIdx = messages.value.length
+  messages.value.push({
+    id: assistantId,
+    role: 'assistant',
+    content: '',
+    created_at: new Date().toISOString(),
+  })
+  await nextTick()
+  scrollToBottom()
+
   try {
-    const r = await apiRequest<{ content: string }>(`/agent/scans/${currentScan.value.id}/chat`,
-      { method: 'POST', body: JSON.stringify({ message: userMsg }), signal: controller.signal })
-    messages.value.push({ id: Date.now(), role: 'assistant', content: r.content, created_at: new Date().toISOString() })
+    await apiStreamChat(
+      `/agent/scans/${currentScan.value.id}/chat/stream`,
+      { message: userMsg },
+      (event) => {
+        const msg = messages.value[assistantIdx]
+        if (!msg) return
+        if (event.event === 'text-delta') {
+          const delta = event.data?.delta || event.data?.textDelta || ''
+          if (delta) {
+            msg.content += delta
+            nextTick(() => scrollToBottom())
+          }
+        } else if (event.event === 'error') {
+          const err = event.data?.message || '对话失败'
+          msg.content = msg.content ? `${msg.content}\n\n错误：${err}` : `错误：${err}`
+        } else if (event.event === 'done' && event.data?.content && !msg.content) {
+          msg.content = event.data.content
+        }
+      },
+      controller.signal,
+    )
+    const final = messages.value[assistantIdx]
+    if (final && !final.content.trim()) {
+      final.content = '（空回复）'
+    }
   } catch (e) {
     if (!controller.signal.aborted) {
-      messages.value.push({ id: Date.now(), role: 'assistant', content: `错误：${(e as Error).message}`, created_at: new Date().toISOString() })
+      const msg = messages.value[assistantIdx]
+      if (msg) {
+        msg.content = msg.content
+          ? `${msg.content}\n\n错误：${(e as Error).message}`
+          : `错误：${(e as Error).message}`
+      }
+    } else {
+      const msg = messages.value[assistantIdx]
+      if (msg && !msg.content.trim()) msg.content = '（已中断）'
     }
   } finally {
     if (chatAbortController === controller) chatAbortController = null
     chatLoading.value = false
-    await nextTick(); scrollToBottom()
+    await nextTick()
+    scrollToBottom()
   }
 }
 
@@ -115,7 +192,21 @@ function stopChat() {
   chatAbortController?.abort()
   chatAbortController = null
   chatLoading.value = false
-  messages.value.push({ id: Date.now(), role: 'assistant', content: '（已中断）', created_at: new Date().toISOString() })
+}
+
+function onChatKeydown(e: KeyboardEvent) {
+  if (e.key !== 'Enter' || e.shiftKey) return
+  if (e.isComposing || (e as KeyboardEvent & { keyCode?: number }).keyCode === 229) return
+  e.preventDefault()
+  void sendChat()
+}
+
+function escapeUserText(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br>')
 }
 
 function scrollToBottom() { const el = chatScrollRef.value; if (el) el.scrollTop = el.scrollHeight }
@@ -131,27 +222,6 @@ function jumpToMessage(msgId: number) {
       container.scrollTop = msgEl.offsetTop - container.offsetTop - 60
     }
   })
-}
-
-function renderMarkdown(text: string): string {
-  if (!text) return ''
-  let h = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  h = h.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="md-code">$2</pre>')
-  h = h.replace(/^### (.+)$/gm, '<h4>$1</h4>')
-  h = h.replace(/^## (.+)$/gm, '<h3>$1</h3>')
-  h = h.replace(/^# (.+)$/gm, '<h2>$1</h2>')
-  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-  h = h.replace(/^- (.+)$/gm, '<li>$1</li>')
-  h = h.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>')
-  h = h.replace(/^(?!<[a-z/])(.+)$/gm, '<p>$1</p>')
-  h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label: string, url: string) => {
-    const trimmed = url.trim()
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      return `<a href="${trimmed}" target="_blank" rel="noreferrer noopener">${label}</a>`
-    }
-    return match
-  })
-  return h
 }
 
 async function updateDiscoveryStatus(d: ProductDiscovery, status: string) {
@@ -253,12 +323,25 @@ const stats = computed(() => {
       </div>
 
       <template v-else>
-        <div v-if="currentScan.status === 'failed'" class="scan-error-banner">
-          <strong>扫描失败</strong>
-          <span>{{ currentScan.error_message || '未记录具体错误' }}</span>
+        <!-- 失败状态：紧凑错误栏 -->
+        <div v-if="currentScan.status === 'failed'" class="fail-banner">
+          <el-icon class="fail-banner-icon"><WarningFilled /></el-icon>
+          <span class="fail-banner-text">{{ failErrorMessage }}</span>
+          <button class="fail-banner-retry" :disabled="scanning" @click="retryScan">
+            <el-icon v-if="scanning" class="is-loading"><Loading /></el-icon>
+            {{ scanning ? '重试中…' : '重新扫描' }}
+          </button>
+          <button class="fail-banner-detail" @click="showErrorDetails = !showErrorDetails">
+            {{ showErrorDetails ? '收起' : '详情' }}
+          </button>
         </div>
-        <!-- Tab栏 -->
-        <div class="tab-bar">
+        <!-- 可折叠的完整错误信息 -->
+        <div v-if="currentScan.status === 'failed' && showErrorDetails" class="fail-detail-bar">
+          <pre>{{ currentScan.error_message || '未记录具体错误' }}</pre>
+        </div>
+
+        <!-- 成功扫描的Tab栏（失败时不显示发现tab） -->
+        <div v-if="currentScan.status !== 'failed'" class="tab-bar">
           <button :class="{ active: mainTab === 'chat' }" @click="mainTab = 'chat'">
             <el-icon><ChatDotRound /></el-icon> 对话
           </button>
@@ -267,37 +350,48 @@ const stats = computed(() => {
           </button>
         </div>
 
-        <!-- Tab: 对话（纯聊天，不含发现） -->
-        <div v-if="mainTab === 'chat'" class="chat-container">
+        <!-- Tab 内容：对话 / 发现互斥，各占满中间区域 -->
+        <div
+          v-show="mainTab === 'chat' || currentScan.status === 'failed'"
+          class="chat-container"
+        >
           <div class="messages" ref="chatScrollRef">
+            <!-- 失败时如果没有对话消息，显示引导卡 -->
+            <div v-if="currentScan.status === 'failed' && !messages.length" class="chat-guide">
+              <div class="guide-icon">💬</div>
+              <p>扫描失败，但你仍可以提问</p>
+              <ul>
+                <li>「{{ scanTitle(currentScan) }}这个品类的市场概况是什么？」</li>
+                <li>「有哪些值得关注的产品方向？」</li>
+                <li>「帮我分析这个品类的竞争格局」</li>
+              </ul>
+            </div>
             <div v-for="msg in messages" :key="msg.id" class="msg" :class="msg.role" :data-msg-id="msg.id">
               <div class="msg-avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</div>
               <div class="msg-content">
                 <div class="msg-time">{{ new Date(msg.created_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) }}</div>
-                <div class="msg-bubble" v-html="renderMarkdown(msg.content)"></div>
-              </div>
-            </div>
-            <div v-if="chatLoading" class="msg assistant">
-              <div class="msg-avatar">🤖</div>
-              <div class="msg-content">
-                <div class="msg-bubble loading">
+                <div
+                  v-if="msg.role === 'assistant' && !msg.content && chatLoading"
+                  class="msg-bubble loading"
+                >
                   <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-                  <button class="stop-btn" @click="stopChat">停止</button>
+                  <button class="stop-btn" type="button" @click="stopChat">停止</button>
                 </div>
+                <div
+                  v-else
+                  class="msg-bubble"
+                  :class="{ streaming: msg.role === 'assistant' && chatLoading && msg === messages[messages.length - 1] }"
+                  v-html="msg.role === 'assistant' ? renderMarkdown(msg.content) : escapeUserText(msg.content)"
+                ></div>
               </div>
             </div>
-          </div>
-          <div class="input-bar">
-            <input v-model="chatInput" placeholder="输入问题，Enter发送…" @keydown.enter="sendChat" :disabled="chatLoading" />
-            <button v-if="chatLoading" class="send stop" @click="stopChat">停止</button>
-            <button v-else class="send" @click="sendChat" :disabled="!chatInput.trim()">
-              <el-icon><Promotion /></el-icon>
-            </button>
           </div>
         </div>
 
-        <!-- Tab: 发现列表 -->
-        <div v-if="mainTab === 'discoveries'" class="discoveries-container">
+        <div
+          v-show="mainTab === 'discoveries' && currentScan.status !== 'failed'"
+          class="discoveries-container"
+        >
           <div v-if="!discoveries.length" class="disc-empty">本次扫描暂无发现</div>
           <div class="disc-stats" v-if="discoveries.length">
             <div class="stat"><span class="stat-num">{{ stats.total }}</span><span class="stat-label">发现</span></div>
@@ -336,6 +430,20 @@ const stats = computed(() => {
             </div>
           </div>
         </div>
+
+        <!-- 输入框固定在主区域底部，始终全宽 -->
+        <div class="input-bar">
+          <input
+            v-model="chatInput"
+            placeholder="输入问题，Enter发送…"
+            @keydown="onChatKeydown"
+            :disabled="chatLoading"
+          />
+          <button v-if="chatLoading" class="send stop" @click="stopChat">停止</button>
+          <button v-else class="send" @click="sendChat" :disabled="!chatInput.trim()">
+            <el-icon><Promotion /></el-icon>
+          </button>
+        </div>
       </template>
     </main>
 
@@ -358,7 +466,7 @@ const stats = computed(() => {
 </template>
 
 <style scoped>
-.agent-view { display: flex; height: calc(100vh - 52px); overflow: hidden; min-height: 0; }
+.agent-view { display: flex; flex: 1; min-width: 0; width: 100%; height: calc(100vh - 52px); overflow: hidden; min-height: 0; }
 
 /* === 左侧：对话列表 === */
 .sidebar { width: 240px; flex-shrink: 0; border-right: 1px solid #e5e5e2; display: flex; flex-direction: column; overflow: hidden; background: #fafaf8; }
@@ -394,14 +502,34 @@ const stats = computed(() => {
 .scan-error-banner { margin: 12px 20px 0; padding: 10px 12px; border: 1px solid #f5c2c7; border-radius: 7px; background: #fff5f5; color: #b42318; font-size: 12px; line-height: 1.5; }
 .scan-error-banner strong { margin-right: 8px; }
 
+/* 失败状态：紧凑错误栏 */
+.fail-banner { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-bottom: 1px solid #f5c2c7; background: #fef6f6; flex-shrink: 0; }
+.fail-banner-icon { color: #e63757; font-size: 16px; flex-shrink: 0; }
+.fail-banner-text { flex: 1; min-width: 0; font-size: 13px; color: #b42318; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fail-banner-retry { display: flex; align-items: center; gap: 4px; padding: 5px 14px; border: none; border-radius: 6px; background: #1aae39; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
+.fail-banner-retry:disabled { opacity: 0.5; cursor: not-allowed; }
+.fail-banner-retry:hover:not(:disabled) { background: #159030; }
+.fail-banner-detail { padding: 5px 12px; border: 1px solid #ddd; border-radius: 6px; background: #fff; font-size: 12px; color: #666; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
+.fail-banner-detail:hover { border-color: #aaa; color: #333; }
+.fail-detail-bar { padding: 0 20px; border-bottom: 1px solid #eee; background: #fafaf8; flex-shrink: 0; }
+.fail-detail-bar pre { margin: 0; padding: 10px 0; font-size: 11px; line-height: 1.5; color: #6a6560; white-space: pre-wrap; word-break: break-word; max-height: 200px; overflow-y: auto; }
+
+/* 失败状态下的聊天引导 */
+.chat-guide { margin: 0 auto; max-width: 460px; padding: 24px 20px; text-align: center; }
+.chat-guide .guide-icon { font-size: 28px; margin-bottom: 8px; }
+.chat-guide p { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: #3a3530; }
+.chat-guide ul { margin: 0; padding-left: 0; list-style: none; text-align: left; }
+.chat-guide li { font-size: 12px; color: #8a8580; margin: 5px 0; line-height: 1.5; padding-left: 12px; position: relative; }
+.chat-guide li::before { content: '›'; position: absolute; left: 0; color: #1aae39; font-weight: 700; }
+
 /* Tab栏 */
 .tab-bar { display: flex; align-items: center; gap: 4px; padding: 8px 16px; border-bottom: 1px solid #eee; background: #fff; flex-shrink: 0; }
 .tab-bar button { display: flex; align-items: center; gap: 4px; padding: 6px 14px; border: none; background: none; font-size: 13px; color: #8a8580; cursor: pointer; border-bottom: 2px solid transparent; }
 .tab-bar button:hover { color: #3a3530; }
 .tab-bar button.active { color: #1aae39; border-bottom-color: #1aae39; font-weight: 600; }
 
-/* 聊天容器 */
-.chat-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+/* 聊天容器（与发现列表互斥，各占满中间区域） */
+.chat-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; min-height: 0; width: 100%; }
 .messages { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
 .msg { display: flex; gap: 10px; max-width: 75%; }
 .msg.user { align-self: flex-end; flex-direction: row-reverse; }
@@ -413,14 +541,44 @@ const stats = computed(() => {
 .msg-bubble { padding: 9px 14px; border-radius: 10px; font-size: 14px; line-height: 1.7; word-break: break-word; }
 .msg.user .msg-bubble { background: #1aae39; color: #fff; }
 .msg.assistant .msg-bubble { background: #f5f3f0; color: #1a1a1a; }
-.msg-bubble :deep(h2), .msg-bubble :deep(h3), .msg-bubble :deep(h4) { margin: 5px 0 3px; font-weight: 600; }
+.msg-bubble.streaming::after {
+  content: "▋";
+  display: inline-block;
+  margin-left: 2px;
+  color: #1aae39;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+.msg-bubble :deep(h2), .msg-bubble :deep(h3), .msg-bubble :deep(h4), .msg-bubble :deep(h5), .msg-bubble :deep(h6) { margin: 8px 0 4px; font-weight: 600; }
 .msg-bubble :deep(h2) { font-size: 15px; } .msg-bubble :deep(h3) { font-size: 14px; } .msg-bubble :deep(h4) { font-size: 13px; }
-.msg-bubble :deep(ul) { padding-left: 18px; margin: 3px 0; }
+.msg-bubble :deep(ul), .msg-bubble :deep(ol) { padding-left: 18px; margin: 4px 0; }
 .msg-bubble :deep(li) { margin: 2px 0; }
-.msg-bubble :deep(p) { margin: 3px 0; }
-.msg-bubble :deep(pre) { background: #e9e7e3; padding: 8px 12px; border-radius: 6px; font-size: 12px; overflow-x: auto; margin: 6px 0; }
+.msg-bubble :deep(p) { margin: 4px 0; }
+.msg-bubble :deep(pre), .msg-bubble :deep(.md-code) { background: #e9e7e3; padding: 8px 12px; border-radius: 6px; font-size: 12px; overflow-x: auto; margin: 6px 0; }
+.msg-bubble :deep(code) { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
+.msg-bubble :deep(pre code) { font-size: inherit; }
 .msg-bubble :deep(a) { color: #1aae39; text-decoration: none; }
 .msg-bubble :deep(strong) { font-weight: 600; }
+.msg-bubble :deep(blockquote) { margin: 6px 0; padding: 4px 10px; border-left: 3px solid #1aae39; color: #5a5550; background: #fff; }
+.msg-bubble :deep(table.md-table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 12px;
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+.msg-bubble :deep(table.md-table th),
+.msg-bubble :deep(table.md-table td) {
+  border: 1px solid #ddd8d0;
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+  white-space: normal;
+}
+.msg-bubble :deep(table.md-table th) { background: #ebe8e3; font-weight: 600; }
+.msg-bubble :deep(hr) { border: none; border-top: 1px solid #ddd8d0; margin: 10px 0; }
 
 .loading { display: flex; align-items: center; gap: 4px; }
 .dot { width: 7px; height: 7px; background: #b0aaa5; border-radius: 50%; animation: bounce 1.4s infinite; }
@@ -428,15 +586,36 @@ const stats = computed(() => {
 @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
 .stop-btn { margin-left: 8px; padding: 2px 8px; border: 1px solid #e63757; border-radius: 4px; background: #fff; color: #e63757; font-size: 11px; cursor: pointer; }
 
-.input-bar { display: flex; gap: 8px; padding: 10px 20px; border-top: 1px solid #e5e5e2; background: #fff; flex-shrink: 0; }
-.input-bar input { flex: 1; padding: 9px 14px; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; outline: none; }
+/* 输入框固定主区域底部，始终全宽 */
+.input-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 20px;
+  border-top: 1px solid #e5e5e2;
+  background: #fff;
+  flex-shrink: 0;
+}
+.input-bar input {
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 100%;
+  padding: 9px 14px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
 .input-bar input:focus { border-color: #1aae39; }
 .send { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; background: #1aae39; color: #fff; border: none; border-radius: 10px; cursor: pointer; flex-shrink: 0; }
 .send:disabled { opacity: 0.4; cursor: not-allowed; }
 .send.stop { background: #e63757; width: auto; padding: 0 14px; font-size: 13px; font-weight: 600; }
 
 /* 发现列表 */
-.discoveries-container { flex: 1; overflow-y: auto; padding: 16px 20px; min-height: 0; }
+.discoveries-container { flex: 1; overflow-y: auto; padding: 16px 20px; min-width: 0; min-height: 0; width: 100%; }
 .disc-empty { padding: 40px; text-align: center; color: #b0aaa5; font-size: 14px; }
 .disc-stats { display: flex; gap: 16px; margin-bottom: 14px; }
 .stat { display: flex; flex-direction: column; align-items: center; }
