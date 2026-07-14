@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session
 
 from app.models import Category, HotLink, TrendSignal
 from app.services.agent_service import AgentError, call_llm
-from app.services.audience_insight_service import _best_source
 from app.services.content_service import ContentError
 
 
@@ -49,6 +48,8 @@ REPAIR_PROMPT = """上一条响应格式无效。请严格按指定结构重新�
 不要输出 Markdown 或额外解释。"""
 
 _WORD_RE = re.compile(r"[a-z][a-z0-9-]{2,}", re.IGNORECASE)
+_URL_RE = re.compile(r"https?://[^\s）)]+")
+_SOURCE_TOKEN_RE = re.compile(r"[a-z0-9]{3,}", re.IGNORECASE)
 _STOP_WORDS = {
     "and",
     "for",
@@ -59,6 +60,44 @@ _STOP_WORDS = {
     "with",
     "your",
 }
+_SOURCE_STOP_WORDS = {
+    "analysis",
+    "comment",
+    "comments",
+    "pain",
+    "review",
+    "user",
+    "youtube",
+}
+
+
+def _best_source(signal: TrendSignal, sources: list[HotLink]) -> HotLink | None:
+    for url in _URL_RE.findall(f"{signal.title}\n{signal.summary}"):
+        normalized = url.rstrip("。.,，")
+        match = next((source for source in sources if source.url == normalized), None)
+        if match is not None:
+            return match
+
+    candidates = [source for source in sources if source.platform == signal.platform]
+    if not candidates:
+        return None
+    signal_tokens = {
+        token
+        for token in _SOURCE_TOKEN_RE.findall(
+            f"{signal.title} {signal.keyword}".lower()
+        )
+        if token not in _SOURCE_STOP_WORDS
+    }
+    return max(
+        candidates,
+        key=lambda source: (
+            len(
+                signal_tokens
+                & set(_SOURCE_TOKEN_RE.findall(source.title.lower()))
+            ),
+            source.hotness_score or 0,
+        ),
+    )
 
 
 def _strip_code_fence(content: str) -> str:

@@ -138,7 +138,6 @@ function formatRelativeTime(date: Date | null): string {
 }
 
 const crawlLoading = ref(false)
-const audienceGenerating = ref(false)
 const listingSuggestionLoading = ref<number | null>(null)
 const listingSuggestions = ref<Record<number, ListingSuggestionPreview>>({})
 
@@ -174,30 +173,6 @@ async function triggerCrawl() {
     if (error !== 'cancel') ElMessage.error((error as Error).message)
   } finally {
     crawlLoading.value = false
-  }
-}
-
-async function generateAudienceInsights() {
-  if (!category.value) return
-  try {
-    await ElMessageBox.confirm(
-      '将基于当前 Reddit、小红书和 YouTube 用户痛点信号填充空白的 02/03 章节。任何已有正文都不会被覆盖。',
-      'AI 提取用户洞察',
-      {
-        confirmButtonText: '开始提取',
-        cancelButtonText: '取消',
-      },
-    )
-    audienceGenerating.value = true
-    await apiRequest(`/categories/${category.value.code}/generate-audience-sections`, {
-      method: 'POST',
-    })
-    await loadCategory()
-    ElMessage.success('用户画像与 Top 痛点已更新')
-  } catch (error) {
-    if (error !== 'cancel') ElMessage.error((error as Error).message)
-  } finally {
-    audienceGenerating.value = false
   }
 }
 
@@ -1073,15 +1048,6 @@ onMounted(() => {
                   <h2>{{ activeSection.title }}</h2>
                 </div>
                 <div class="section-header-actions">
-                  <el-button
-                    v-if="canEdit && ['users', 'needs'].includes(activeSectionKey)"
-                    text
-                    :icon="MagicStick"
-                    :loading="audienceGenerating"
-                    @click="generateAudienceInsights"
-                  >
-                    AI 提取用户洞察
-                  </el-button>
                   <el-button text :icon="CopyDocument" @click="copySection">复制</el-button>
                   <el-button text :icon="Download" @click="downloadSection">导出</el-button>
                   <el-button v-if="canEditContent" text :icon="EditPen" @click="openEdit(activeSection)">编辑</el-button>

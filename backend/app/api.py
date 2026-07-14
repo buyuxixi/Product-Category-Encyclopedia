@@ -51,7 +51,6 @@ from app.security import (
     revoke_session,
 )
 from app.services.agent_service import AgentError, chat as agent_chat, chat_stream as agent_chat_stream, run_scan
-from app.services.audience_insight_service import generate_audience_insights
 from app.services.content_service import ContentError, save_section
 from app.services.listing_suggestion_service import (
     generate_listing_suggestion_preview,
@@ -908,32 +907,6 @@ def generate_category_section(code: str, db: Db, actor: WriteActor):
             .where(EncyclopediaSection.id == section.id)
         )
         return _section_payload(section, db)
-    except ContentError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
-    except AgentError as exc:
-        status_code = 503 if "API_KEY未配置" in str(exc) else 502
-        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
-
-
-@router.post("/categories/{code}/generate-audience-sections")
-def generate_category_audience_sections(code: str, db: Db, actor: WriteActor):
-    """从用户痛点信号聚类生成 02 用户画像与 03 用户需求章节。"""
-    ensure_role(actor, "admin", "researcher")
-    category = _category_or_404(db, code)
-    try:
-        sections = generate_audience_insights(
-            db,
-            category=category,
-            actor=actor.name,
-        )
-        section_ids = [section.id for section in sections]
-        refreshed = db.scalars(
-            select(EncyclopediaSection)
-            .options(selectinload(EncyclopediaSection.evidence))
-            .where(EncyclopediaSection.id.in_(section_ids))
-            .order_by(EncyclopediaSection.id)
-        ).all()
-        return {"sections": [_section_payload(section, db) for section in refreshed]}
     except ContentError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except AgentError as exc:
