@@ -32,6 +32,7 @@ from app.models import (
 from app.schemas import (
     AgentChatRequest,
     AgentScanRequest,
+    AgentScanUpdateRequest,
     CategoryUpdate,
     DiscoveryUpdateRequest,
     HotLinkBatch,
@@ -221,6 +222,7 @@ def _category_payload(
                 "status": child.status,
             }
             for child in sorted(category.children, key=lambda item: item.name)
+            if child.status == "active"
         ],
         "updated_at": category.updated_at,
     }
@@ -375,7 +377,8 @@ def search(
 def categories(db: Db, actor: ReadActor, q: str | None = Query(default=None, max_length=100)):
     statement = select(Category).options(
         selectinload(Category.children), selectinload(Category.parent)
-    )
+    # active=可进入百科；group=仅导航分组（如药物管理），不下钻独立百科页
+    ).where(Category.status.in_(("active", "group")))
     if q:
         statement = statement.where(
             or_(Category.name.contains(q), Category.code.contains(q), Category.description.contains(q))
@@ -737,7 +740,7 @@ def trigger_crawl(code: str, db: Db, actor: WriteActor):
     ensure_role(actor, "admin", "data", "researcher")
     settings = get_settings()
     if not settings.crawler_enabled:
-        raise HTTPException(status_code=503, detail="爬虫入口当前已关闭")
+        raise HTTPException(status_code=503, detail="暂未开放，请联系管理员")
     if not settings.crawler_scripts_dir:
         raise HTTPException(status_code=503, detail="爬虫脚本目录尚未配置")
     category = _category_or_404(db, code)
@@ -944,6 +947,7 @@ def _scan_payload(scan: AgentScan, *, include_details: bool = False, db: Session
         "topic": scan.topic,
         "status": scan.status,
         "triggered_by": scan.triggered_by,
+        "is_pinned": bool(scan.is_pinned),
         "report": scan.report,
         "stats": scan.stats,
         "error_message": scan.error_message,
@@ -995,7 +999,9 @@ def trigger_agent_scan(body: AgentScanRequest, db: Db, actor: WriteActor):
 def list_agent_scans(db: Db, actor: ReadActor, limit: int = Query(default=20, ge=1, le=100)):
     """列出选品Agent扫描历史。"""
     rows = db.scalars(
-        select(AgentScan).order_by(AgentScan.id.desc()).limit(limit)
+        select(AgentScan)
+        .order_by(AgentScan.is_pinned.desc(), AgentScan.id.desc())
+        .limit(limit)
     ).all()
     return {"items": [_scan_payload(s) for s in rows]}
 
@@ -1007,6 +1013,31 @@ def agent_scan_detail(scan_id: int, db: Db, actor: ReadActor):
     if scan is None:
         raise HTTPException(status_code=404, detail="Scan not found")
     return _scan_payload(scan, include_details=True, db=db)
+
+
+@router.patch("/agent/scans/{scan_id}")
+def update_agent_scan(scan_id: int, body: AgentScanUpdateRequest, db: Db, actor: WriteActor):
+    """更新扫描会话（目前支持顶置）。"""
+    ensure_role(actor, "admin", "data", "researcher")
+    scan = db.get(AgentScan, scan_id)
+    if scan is None:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    scan.is_pinned = body.is_pinned
+    db.commit()
+    db.refresh(scan)
+    return _scan_payload(scan)
+
+
+@router.delete("/agent/scans/{scan_id}")
+def delete_agent_scan(scan_id: int, db: Db, actor: WriteActor):
+    """硬删除扫描会话及其 discoveries / messages。"""
+    ensure_role(actor, "admin", "data", "researcher")
+    scan = db.get(AgentScan, scan_id)
+    if scan is None:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    db.delete(scan)
+    db.commit()
+    return {"ok": True, "deleted": scan_id}
 
 
 @router.post("/agent/scans/{scan_id}/chat")

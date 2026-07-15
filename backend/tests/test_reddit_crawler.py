@@ -26,9 +26,9 @@ def test_single_category_reuses_shared_oauth_aware_crawler(monkeypatch) -> None:
 
     monkeypatch.setattr(crawl_reddit_single, "crawl_reddit", fake_crawl)
 
-    assert crawl_reddit_single.crawl_single_category("MEDICATION_MANAGEMENT") == expected
-    assert captured["category_code"] == "MEDICATION_MANAGEMENT"
-    assert captured["sources"] == crawl_reddit.REDDIT_SOURCES["MEDICATION_MANAGEMENT"]
+    assert crawl_reddit_single.crawl_single_category("PILL_ORGANIZER") == expected
+    assert captured["category_code"] == "PILL_ORGANIZER"
+    assert captured["sources"] == crawl_reddit.REDDIT_SOURCES["PILL_ORGANIZER"]
 
 
 def test_shared_crawler_prefers_oauth_before_rss(monkeypatch) -> None:
@@ -57,7 +57,7 @@ def test_shared_crawler_prefers_oauth_before_rss(monkeypatch) -> None:
     )
 
     result = crawl_reddit.crawl_reddit(
-        "MEDICATION_MANAGEMENT",
+        "PILL_ORGANIZER",
         [{"subreddit": "Health", "keyword": "pill organizer"}],
     )
 

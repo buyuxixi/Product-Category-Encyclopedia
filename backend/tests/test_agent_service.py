@@ -135,3 +135,51 @@ def test_topic_search_expands_common_chinese_terms():
     terms = agent_service._topic_search_terms("无线tens")
 
     assert {"wireless", "cordless", "bluetooth", "tens"}.issubset(terms)
+
+
+def test_agent_scan_pin_and_hard_delete_cascade(db):
+    scan = AgentScan(
+        scan_type="topic",
+        topic="wireless tens",
+        status="failed",
+        triggered_by="tester",
+        report={},
+        data_snapshot={},
+        stats={},
+        error_message="boom",
+        is_pinned=False,
+    )
+    db.add(scan)
+    db.flush()
+    db.add(
+        ProductDiscovery(
+            scan_id=scan.id,
+            product_name="Demo",
+            opportunity_type="rising_trend",
+            opportunity_score=70,
+            reasoning="test",
+            market_signals={},
+            keywords=["tens"],
+            source_links=[],
+            status="new",
+        )
+    )
+    db.commit()
+    scan_id = scan.id
+
+    scan.is_pinned = True
+    db.commit()
+    db.refresh(scan)
+    assert scan.is_pinned is True
+
+    pinned_first = db.scalars(
+        select(AgentScan).order_by(AgentScan.is_pinned.desc(), AgentScan.id.desc())
+    ).first()
+    assert pinned_first is not None
+    assert pinned_first.id == scan_id
+
+    db.delete(scan)
+    db.commit()
+    assert db.get(AgentScan, scan_id) is None
+    assert db.scalar(select(func.count()).select_from(ProductDiscovery).where(ProductDiscovery.scan_id == scan_id)) == 0
+

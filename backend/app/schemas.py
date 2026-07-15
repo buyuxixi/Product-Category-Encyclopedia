@@ -110,6 +110,10 @@ class AgentChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=5000)
 
 
+class AgentScanUpdateRequest(BaseModel):
+    is_pinned: bool
+
+
 class DiscoveryUpdateRequest(BaseModel):
     status: Literal["new", "reviewed", "selected", "archived"] | None = None
     user_note: str | None = Field(default=None, max_length=5000)

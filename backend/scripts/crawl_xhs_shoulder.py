@@ -310,4 +310,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    if os.getenv("CRAWLER_ENABLED", "false").lower() not in {"1", "true", "yes"}:
+        print("Crawler disabled (CRAWLER_ENABLED=false). Exiting.")
+        sys.exit(0)
     main()

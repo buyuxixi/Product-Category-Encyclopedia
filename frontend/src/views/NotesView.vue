@@ -20,6 +20,8 @@ interface Note {
 const notes = ref<Note[]>([])
 const showAddDialog = ref(false)
 const newNote = ref({ categoryCode: '', tag: '选品机会', content: '' })
+const NOTES_STORAGE_KEY = 'encyclopedia_notes'
+const NOTES_SEEDED_KEY = 'encyclopedia_notes_seeded_v1'
 
 const tagLabels: Record<string, string> = {
   '选品机会': '🎯 选品机会',
@@ -36,15 +38,100 @@ const tagTypes: Record<string, string> = {
   '其他': '',
 }
 
+/** 首次进入时空列表种入示例笔记，便于演示；用户清空后不再自动回填 */
+function buildDemoNotes(): Note[] {
+  const hoursAgo = (h: number) => new Date(Date.now() - h * 3600000).toISOString()
+  return [
+    {
+      id: 'demo-1',
+      category: '电疗 TENS',
+      categoryCode: 'TENS_THERAPY',
+      tag: '选品机会',
+      content:
+        '无线 TENS + 加热二合一仍是空白带：Amazon 评论高频吐槽「贴片不粘 / 线材缠绕」，可做磁吸电极式电极 + APP 预设模式，客单价冲 $39–$59。',
+      createdAt: hoursAgo(2),
+    },
+    {
+      id: 'demo-2',
+      category: '夜间照明-夜灯',
+      categoryCode: 'NIGHT_LIGHT',
+      tag: '竞品分析',
+      content:
+        'GE SleepLite / AUVON 主打暖黄低蓝光，但缺少「起床模式」渐亮。可对标做日出模拟 + 人体感应双模，差异化卖点更清晰。',
+      createdAt: hoursAgo(8),
+    },
+    {
+      id: 'demo-3',
+      category: '坐垫健康-办公坐垫',
+      categoryCode: 'SEAT_CUSHION',
+      tag: '用户洞察',
+      content:
+        '久坐办公人群最在意的是「下午不塌陷」和「夏天不闷热」。凝胶网格比纯记忆棉差评更少；航空便携充气垫可作为第二 SKU 切入差旅场景。',
+      createdAt: hoursAgo(20),
+    },
+    {
+      id: 'demo-4',
+      category: '肩颈热敷',
+      categoryCode: 'SHOULDER_NECK_HEAT_THERAPY',
+      tag: '技术趋势',
+      content:
+        '石墨烯快热 + USB-C 供电成为新标配；远红外宣称需注意合规表述。建议 Listing 强调升温曲线与安全自动断电，而非医疗疗效。',
+      createdAt: hoursAgo(36),
+    },
+    {
+      id: 'demo-5',
+      category: '药物管理-药盒',
+      categoryCode: 'PILL_ORGANIZER',
+      tag: '选品机会',
+      content:
+        '智能药盒「提醒准时吃」需求稳定，但老人场景要极简交互。可考虑大字屏 + 语音播报 + 子女端 App 远程确认，避开纯蓝牙复杂配对。',
+      createdAt: hoursAgo(52),
+    },
+    {
+      id: 'demo-6',
+      category: '远红外热疗',
+      categoryCode: 'FAR_INFRARED',
+      tag: '竞品分析',
+      content:
+        'UTK / RENPHO 大尺寸加热垫卷价格战。中尺寸肩颈专用 + 可水洗外套更易做溢价；关注退货原因里「味道 / 过热」占比。',
+      createdAt: hoursAgo(70),
+    },
+    {
+      id: 'demo-7',
+      category: '热疗',
+      categoryCode: 'HEAT_THERAPY',
+      tag: '其他',
+      content:
+        '下周同步运营：把 Rufus / 搜索建议里「labour pain relief」「period cramps heat pad」相关意图词并入广告词库，先跑小预算测转化。',
+      createdAt: hoursAgo(96),
+    },
+    {
+      id: 'demo-8',
+      category: '电疗 TENS',
+      categoryCode: 'TENS_THERAPY',
+      tag: '用户洞察',
+      content:
+        '小红书侧「贴片不粘 / 皮肤灼伤 / 没效果」吐槽集中。选品时优先验证电极材质与电流档位说明是否清晰，客服话术要前置预期管理。',
+      createdAt: hoursAgo(120),
+    },
+  ]
+}
+
 function loadNotes() {
   try {
-    const saved = localStorage.getItem('encyclopedia_notes')
+    const saved = localStorage.getItem(NOTES_STORAGE_KEY)
     if (saved) notes.value = JSON.parse(saved)
   } catch { /* ignore */ }
+
+  if (notes.value.length === 0 && !localStorage.getItem(NOTES_SEEDED_KEY)) {
+    notes.value = buildDemoNotes()
+    saveNotes()
+    localStorage.setItem(NOTES_SEEDED_KEY, '1')
+  }
 }
 
 function saveNotes() {
-  localStorage.setItem('encyclopedia_notes', JSON.stringify(notes.value))
+  localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes.value))
 }
 
 function addNote() {

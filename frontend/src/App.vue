@@ -48,11 +48,19 @@ const roleLabel = computed(() => {
   return user.value ? labels[user.value.role] : ''
 })
 
+const activeCategories = computed(() =>
+  categories.value.filter((item) => item.status === 'active' || item.status === 'group'),
+)
+
+function isNavGroup(item: CategorySummary): boolean {
+  return item.status === 'group'
+}
+
 const filteredCategories = computed(() => {
-  if (!query.value.trim()) return categories.value
+  if (!query.value.trim()) return activeCategories.value
   const keyword = query.value.trim().toLowerCase()
   const matchedCodes = new Set(
-    categories.value
+    activeCategories.value
       .filter((item) =>
         [item.name, item.code, item.description, ...item.aliases].some((value) =>
           value?.toLowerCase().includes(keyword),
@@ -60,7 +68,7 @@ const filteredCategories = computed(() => {
       )
       .map((item) => item.code),
   )
-  return categories.value.filter(
+  return activeCategories.value.filter(
     (item) => matchedCodes.has(item.code) || item.children.some((child) => matchedCodes.has(child.code)),
   )
 })
@@ -92,8 +100,19 @@ async function refresh() {
     ])
     categories.value = categoryResult.items
     dashboard.value = dashboardResult
-    if (!categories.value.some((item) => item.code === selectedCode.value)) {
-      selectedCode.value = categories.value.find((item) => item.parent_code)?.code || categories.value[0]?.code || ''
+    const current = categories.value.find((item) => item.code === selectedCode.value)
+    if (!current || current.status === 'group') {
+      selectedCode.value =
+        categories.value.find((item) => item.status === 'active' && item.parent_code)?.code
+        || categories.value.find((item) => item.status === 'active')?.code
+        || ''
+    }
+    // 展开当前选中子品类的父分组
+    const selected = categories.value.find((item) => item.code === selectedCode.value)
+    if (selected?.parent_code) {
+      const next = new Set(collapsedTrees.value)
+      next.delete(selected.parent_code)
+      collapsedTrees.value = next
     }
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
@@ -123,9 +142,23 @@ watch(query, (value) => {
 })
 
 function selectCategory(code: string) {
+  const cat = categories.value.find((item) => item.code === code)
+  if (cat && isNavGroup(cat)) {
+    // 分组节点只展开/收起，不进入百科页
+    const next = new Set(collapsedTrees.value)
+    next.delete(code)
+    collapsedTrees.value = next
+    return
+  }
   selectedCode.value = code
   targetSection.value = null
   activeView.value = 'encyclopedia'
+  // 自动展开所选子品类的父节点
+  if (cat?.parent_code) {
+    const next = new Set(collapsedTrees.value)
+    next.delete(cat.parent_code)
+    collapsedTrees.value = next
+  }
 }
 
 function escapeHtml(text: string): string {
@@ -252,10 +285,19 @@ onMounted(loadSession)
                     <el-icon v-else><ArrowRight /></el-icon>
                   </button>
                   <span v-else class="nav-tree-arrow-placeholder"></span>
-                  <button class="nav-tree-btn" :class="{ active: selectedCode === root.code }" @click="selectCategory(root.code)">
+                  <button
+                    class="nav-tree-btn"
+                    :class="{ active: !isNavGroup(root) && selectedCode === root.code, 'is-group': isNavGroup(root) }"
+                    :title="isNavGroup(root) ? '分组目录，请选择子品类' : undefined"
+                    @click="isNavGroup(root) ? toggleTree(root.code) : selectCategory(root.code)"
+                  >
                     <el-icon class="nav-tree-icon"><FolderOpened /></el-icon>
                     <span class="nav-tree-text">{{ root.name }}</span>
-                    <span class="nav-tree-dot" :style="{ background: root.status === 'active' ? '#1aae39' : '#a39e98' }"></span>
+                    <span
+                      v-if="!isNavGroup(root)"
+                      class="nav-tree-dot"
+                      :style="{ background: root.status === 'active' ? '#1aae39' : '#a39e98' }"
+                    ></span>
                   </button>
                 </div>
                 <div v-if="root.children.length && !collapsedTrees.has(root.code)" class="nav-tree-children">
@@ -270,7 +312,7 @@ onMounted(loadSession)
           </div>
 
           <div class="nav-section nav-footer">
-            <span>{{ categories.filter(c => !c.parent_code).length }} 个品类 · {{ dashboard.source_count }} 条来源</span>
+            <span>{{ activeCategories.filter(c => !c.parent_code).length }} 个品类 · {{ dashboard.source_count }} 条来源</span>
           </div>
         </nav>
 

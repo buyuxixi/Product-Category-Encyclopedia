@@ -31,7 +31,8 @@ AMAZON_KEYWORDS: dict[str, list[str]] = {
     "TENS_THERAPY": ["TENS unit", "TENS unit pads"],
     "HEAT_THERAPY": ["heat wrap neck shoulder", "far infrared heating pad"],
     "NIGHT_LIGHT": ["night light motion sensor", "baby night light"],
-    "MEDICATION_MANAGEMENT": ["pill organizer weekly", "pill splitter"],
+    "PILL_ORGANIZER": ["pill organizer weekly", "weekly pill box"],
+    "PILL_SPLITTER": ["pill splitter", "pill cutter"],
     "SEAT_CUSHION": ["seat cushion office chair", "tailbone cushion"],
 }
 
@@ -158,6 +159,9 @@ async def crawl_all() -> dict:
 
 
 if __name__ == "__main__":
+    from _guard import require_crawler_enabled
+
+    require_crawler_enabled()
     result = asyncio.run(crawl_all())
     total_hl = len(result["hot_links"])
     total_ts = len(result["trend_signals"])

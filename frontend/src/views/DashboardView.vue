@@ -43,6 +43,7 @@ interface CategoryRow {
   updated: string | null;
   parentCode: string | null;
   parentName: string | null;
+  isGroup: boolean;
 }
 const categoryRows = ref<CategoryRow[]>([])
 
@@ -58,29 +59,51 @@ function formatRelativeTime(dateStr: string | null): string {
 
 function selectCategory(code: string) { emit('select', code) }
 function browseAllCategories() { emit('browse') }
+function isGroupRow(row: CategoryRow): boolean { return row.isGroup }
+function onTopCardClick(row: CategoryRow) {
+  // 分组父卡（如药物管理）只展开子品类，不进入百科
+  if (isGroupRow(row)) {
+    toggleExpand(row.code)
+    return
+  }
+  selectCategory(row.code)
+}
 
 function activityScore(row: CategoryRow) {
   return row.hotLinks * 2 + row.trends + row.sources
 }
 
-/** 一级按活跃度排序，其子品类紧跟在父品类后 */
-const sortedCategoryRows = computed(() => {
-  const tops = categoryRows.value.filter(r => !r.parentCode).sort((a, b) => activityScore(b) - activityScore(a))
-  const result: CategoryRow[] = []
-  for (const top of tops) {
-    result.push(top)
-    const children = categoryRows.value
-      .filter(r => r.parentCode === top.code)
-      .sort((a, b) => activityScore(b) - activityScore(a))
-    result.push(...children)
-  }
-  return result
-})
-const visibleCategoryRows = computed(() => sortedCategoryRows.value.slice(0, CAT_PREVIEW_LIMIT))
-const hasMoreCategories = computed(() => categoryRows.value.length > CAT_PREVIEW_LIMIT)
-const hiddenCategoryCount = computed(() => Math.max(0, categoryRows.value.length - CAT_PREVIEW_LIMIT))
-const topCategoryCount = computed(() => categoryRows.value.filter(r => !r.parentCode).length)
+/** 一级按活跃度排序；子品类挂在父卡下展开，不占独立网格位 */
+const topCategoryRows = computed(() =>
+  categoryRows.value
+    .filter(r => !r.parentCode)
+    .sort((a, b) => activityScore(b) - activityScore(a)),
+)
+const visibleTopCategories = computed(() => topCategoryRows.value.slice(0, CAT_PREVIEW_LIMIT))
+const hasMoreCategories = computed(() => topCategoryRows.value.length > CAT_PREVIEW_LIMIT)
+const hiddenCategoryCount = computed(() => Math.max(0, topCategoryRows.value.length - CAT_PREVIEW_LIMIT))
+const topCategoryCount = computed(() => topCategoryRows.value.length)
 const childCategoryCount = computed(() => categoryRows.value.filter(r => r.parentCode).length)
+
+const expandedParents = ref<Set<string>>(new Set())
+
+function childrenOf(parentCode: string): CategoryRow[] {
+  return categoryRows.value
+    .filter(r => r.parentCode === parentCode)
+    .sort((a, b) => activityScore(b) - activityScore(a))
+}
+
+function isExpanded(code: string): boolean {
+  return expandedParents.value.has(code)
+}
+
+function toggleExpand(code: string) {
+  const next = new Set(expandedParents.value)
+  if (next.has(code)) next.delete(code)
+  else next.add(code)
+  expandedParents.value = next
+  nextTick(() => setTimeout(renderMiniCharts, 50))
+}
 
 // 最新视频 Top 3
 const latestVideos = computed(() =>
@@ -178,6 +201,7 @@ async function loadDashboard() {
         filled: r.stats.filled, total: r.stats.sections,
         updated: r.stats.updated,
         parentCode: null, parentName: null,
+        isGroup: cat?.status === 'group',
       })
       // 给 hot_links 加上 category_code（聚合列表用父 code，便于下方动态区归类）
       for (const hl of r.hotLinks) { (hl as any).category_code = r.code }
@@ -203,6 +227,7 @@ async function loadDashboard() {
           updated: childResult.stats.updated,
           parentCode: r.code,
           parentName: cat?.name || r.code,
+          isGroup: false,
         })
       }
     }
@@ -216,18 +241,27 @@ async function loadDashboard() {
 function renderMiniCharts() {
   const echarts = (window as any).echarts
   if (!echarts) return
-  for (const row of visibleCategoryRows.value) {
+  const rows: CategoryRow[] = [...visibleTopCategories.value]
+  for (const top of visibleTopCategories.value) {
+    if (isExpanded(top.code)) rows.push(...childrenOf(top.code))
+  }
+  for (const row of rows) {
     const el = document.getElementById(`chart-${row.code}`)
-    if (!el || !(window as any).echarts) continue
-    const chart = echarts.init(el)
+    if (!el) continue
+    const chart = echarts.getInstanceByDom(el) || echarts.init(el)
     const total = row.hotLinks + row.trends + row.sources
+    const isChild = !!row.parentCode
     if (total === 0) {
-      chart.setOption({ graphic: { type: 'text', style: { text: '无数据', fontSize: 12, fill: '#ccc' }, left: 'center', top: 'center' } })
+      chart.setOption({
+        graphic: { type: 'text', style: { text: '无数据', fontSize: isChild ? 10 : 12, fill: '#ccc' }, left: 'center', top: 'center' },
+        series: [],
+      }, true)
       continue
     }
     chart.setOption({
+      graphic: undefined,
       series: [{
-        type: 'pie', radius: ['55%', '80%'], center: ['50%', '50%'],
+        type: 'pie', radius: isChild ? ['50%', '74%'] : ['55%', '80%'], center: ['50%', '50%'],
         silent: true, label: { show: false }, labelLine: { show: false },
         data: [
           { value: row.hotLinks, name: '热点', itemStyle: { color: '#2f6f55' } },
@@ -235,7 +269,7 @@ function renderMiniCharts() {
           { value: row.sources, name: '来源', itemStyle: { color: '#d9e8de' } },
         ],
       }],
-    })
+    }, true)
   }
 }
 
@@ -248,46 +282,93 @@ onMounted(loadDashboard)
 
 <template>
   <main v-loading="loading" class="dashboard-page">
-    <!-- 品类卡片墙：一级 + 子品类；子卡紧跟父卡 -->
+    <!-- 品类卡片墙：默认仅一级；子品类从父卡展开 -->
     <section class="cat-section">
       <div class="panel-header">
         <h2>品类概览</h2>
         <span class="panel-hint">
           {{ topCategoryCount }} 个一级
-          <template v-if="childCategoryCount"> · {{ childCategoryCount }} 个子品类</template>
+          <template v-if="childCategoryCount"> · {{ childCategoryCount }} 个子品类（点父卡展开）</template>
         </span>
       </div>
       <div class="cat-grid">
         <div
-          v-for="row in visibleCategoryRows"
+          v-for="row in visibleTopCategories"
           :key="row.code"
-          class="cat-card"
-          :class="[`health-${row.health}`, { 'is-child': !!row.parentCode }]"
-          @click="selectCategory(row.code)"
+          class="cat-group"
+          :class="{ 'is-expanded': isExpanded(row.code) }"
         >
-          <div class="cat-card-header">
-            <div class="cat-card-title">
-              <span v-if="row.parentName" class="cat-card-parent">{{ row.parentName }}</span>
-              <span class="cat-card-name">{{ row.name }}</span>
+          <div
+            class="cat-card"
+            :class="[`health-${row.health}`, { 'is-nav-group': isGroupRow(row) }]"
+            @click="onTopCardClick(row)"
+          >
+            <div class="cat-card-header">
+              <div class="cat-card-title">
+                <span class="cat-card-name">{{ row.name }}</span>
+              </div>
+              <el-tag :type="healthType(row.health)" size="small" effect="plain">{{ healthLabel(row.health) }}</el-tag>
             </div>
-            <el-tag :type="healthType(row.health)" size="small" effect="plain">{{ healthLabel(row.health) }}</el-tag>
-          </div>
-          <div class="cat-card-body">
-            <div :id="`chart-${row.code}`" class="cat-mini-chart"></div>
-            <div class="cat-card-stats">
-              <div class="cat-stat"><span class="cat-stat-num">{{ row.hotLinks }}</span><span class="cat-stat-label">热点</span></div>
-              <div class="cat-stat"><span class="cat-stat-num">{{ row.trends }}</span><span class="cat-stat-label">趋势</span></div>
-              <div class="cat-stat"><span class="cat-stat-num">{{ row.sources }}</span><span class="cat-stat-label">来源</span></div>
+            <div class="cat-card-body">
+              <div :id="`chart-${row.code}`" class="cat-mini-chart"></div>
+              <div class="cat-card-stats">
+                <div class="cat-stat"><span class="cat-stat-num">{{ row.hotLinks }}</span><span class="cat-stat-label">热点</span></div>
+                <div class="cat-stat"><span class="cat-stat-num">{{ row.trends }}</span><span class="cat-stat-label">趋势</span></div>
+                <div class="cat-stat"><span class="cat-stat-num">{{ row.sources }}</span><span class="cat-stat-label">来源</span></div>
+              </div>
+            </div>
+            <div class="cat-card-footer">
+              <div class="cat-card-footer-left">
+                <span>{{ formatRelativeTime(row.updated) }}</span>
+                <button
+                  v-if="childrenOf(row.code).length"
+                  type="button"
+                  class="cat-expand-btn"
+                  :aria-expanded="isExpanded(row.code)"
+                  @click.stop="toggleExpand(row.code)"
+                >
+                  {{ childrenOf(row.code).length }} 个子品类
+                  <span class="cat-expand-chevron" :class="{ open: isExpanded(row.code) }">▾</span>
+                </button>
+              </div>
+              <span v-if="!isGroupRow(row)" class="cat-card-arrow">→</span>
+              <span v-else class="cat-card-arrow is-muted">▾</span>
             </div>
           </div>
-          <div class="cat-card-footer">
-            <span>{{ formatRelativeTime(row.updated) }}</span>
-            <span class="cat-card-arrow">→</span>
+
+          <div v-if="isExpanded(row.code)" class="cat-children">
+            <div
+              v-for="child in childrenOf(row.code)"
+              :key="child.code"
+              class="cat-card is-child"
+              :class="[`health-${child.health}`]"
+              @click="selectCategory(child.code)"
+            >
+              <div class="cat-card-header">
+                <div class="cat-card-title">
+                  <span class="cat-child-badge">子品类</span>
+                  <span class="cat-card-name">{{ child.name }}</span>
+                </div>
+                <el-tag :type="healthType(child.health)" size="small" effect="plain">{{ healthLabel(child.health) }}</el-tag>
+              </div>
+              <div class="cat-card-body">
+                <div :id="`chart-${child.code}`" class="cat-mini-chart cat-mini-chart-sm"></div>
+                <div class="cat-card-stats">
+                  <div class="cat-stat"><span class="cat-stat-num">{{ child.hotLinks }}</span><span class="cat-stat-label">热点</span></div>
+                  <div class="cat-stat"><span class="cat-stat-num">{{ child.trends }}</span><span class="cat-stat-label">趋势</span></div>
+                  <div class="cat-stat"><span class="cat-stat-num">{{ child.sources }}</span><span class="cat-stat-label">来源</span></div>
+                </div>
+              </div>
+              <div class="cat-card-footer">
+                <span>{{ formatRelativeTime(child.updated) }}</span>
+                <span class="cat-card-arrow">→</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
       <button v-if="hasMoreCategories" type="button" class="cat-view-all" @click="browseAllCategories">
-        查看全部 {{ categoryRows.length }} 个品类（还有 {{ hiddenCategoryCount }} 个）→
+        查看全部 {{ topCategoryCount }} 个一级品类（还有 {{ hiddenCategoryCount }} 个）→
       </button>
     </section>
 

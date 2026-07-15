@@ -3,8 +3,8 @@
 > **品类编码**: NIGHT_LIGHT  
 > **所属大类**: 生活方案  
 > **数据来源**: Wikipedia, Sleep Foundation, Harvard Health, CDC NIOSH  
-> **最后更新**: 2026-07-13
-> **数据状态**: 模块1-4已人工补充（排版已校正）
+> **最后更新**: 2026-07-14
+> **数据状态**: 模块1-5已人工补充（飞书覆盖导入）（排版已校正）；2026-07-14 全量格式清洗
 
 ---
 
@@ -25,7 +25,7 @@
 ### 1.2 产品类型
 
 | 类型 | 描述 | 光源 | 触发方式 | 典型功率 |
-|-----------|-----------|-|-|-|
+|---|---|---|---|---|
 | **插电式LED夜灯** | 直接插入墙壁插座，永久安装 | LED | 光感自动/常亮 | 0.3-1W |
 | **感应夜灯** | 红外人体感应，人来亮灯 | LED | PIR红外感应+光感 | 0.5-2W |
 | **可充电便携夜灯** | 锂电池供电，可移动放置 | LED | 手动/感应 | 充电式 |
@@ -74,7 +74,7 @@
 
 ---
 
-## 二、用户画像与场景
+## 二、用户画像与使用场景
 
 ### 2.1 用户画像
 
@@ -109,7 +109,7 @@
 ### 2.2 品类使用场景
 
 | 场景 | 描述 | 典型产品 | 使用时长 |
-|-----------|-----------|----------|----------|
+|---|---|---|---|
 | **走廊夜间导航** | 在走廊安装感应夜灯，夜间起床去卫生间/厨房时沿途有光，防止摸黑撞到家具或绊倒 | 插墙感应夜灯 | 整夜待机 |
 | **走廊/玄关回家照明** | 深夜回家进门时玄关走廊一片漆黑，夜灯自动亮起提供即时照明，无需摸黑找开关 | 插墙光感夜灯 | 整夜待机 |
 | **婴儿房夜间哺乳** | 在婴儿房放置柔和暖光夜灯，方便夜间喂奶换尿布。需3000K暖白、无蓝光、可调光 | 光感夜灯/便携夜灯 | 每次20-30分钟 |
@@ -190,7 +190,7 @@
 1. **"night light too bright / wakes me up"**
 
    - 🔴 亮度过高影响睡眠是核心痛点
-   - 具体数值：典型夜灯输出1-10 lux，当亮度超过80lm（如Lyridz 120lm最高档）在卧室场景会明显刺眼；床头灯30-50 lux已可能干扰睡眠，夜灯应控制在1-10 lux范围（ScienceInsights）
+   - 具体数值：典型夜灯输出1-10 lux，当亮度超过80lm（如Lyridz 120lm最高档）在卧室场景会明显刺眼；床头灯30-50 lux已可能干扰睡眠，夜灯应控制在1-10 lux范围（[ScienceInsights](https://scienceinsights.org/is-sleeping-with-a-dim-light-on-bad-for-you/)）
    - 需求: 可调亮度、低亮度设计（L LOHAS提供5-80lm可调，Lyridz提供1-120lm可调）
 2. **"motion sensor night light not sensitive / always on"**
 
@@ -234,7 +234,7 @@
 
 ---
 
-## 四、技术与设计原则
+## 四、技术、材料与设计原则
 
 ### 4.1 品类核心技术与作用机制
 
@@ -296,7 +296,7 @@
 - [Amazon - Philips 0.5W夜灯泡](https://www.amazon.ca/Philips-465575-Night-Frosted-Non-Dimmable-2/dp/B072M4XYT9) — 0.5W/3lm/2700K/25,000小时/E12灯头
 - [Amazon - 6-Pack LED Night Lights](https://www.amazon.com/Nightlight-Dimmable-Daylight-Bedroom-Bathroom/dp/B0GFD46YST) — 0.5W/50,000小时
 - [Amazon品类页 - Night-Lights](https://www.amazon.com/night-lights/b?node=3736651) — 筛选器：灯罩材料/表面类型/遮帘颜色/基座材料
-- [Walmart - Feit Electric LED夜灯](https://www.walmart.com/ip/Feit-Electric-NL1-LED-Eternalite-LED-Auto-Sensor-Night-Light/113817787) — 0.3W/100,000小时/年电费\$0.25
+- [Walmart - Feit Electric LED夜灯](https://www.walmart.com/ip/Feit-Electric-NL1-LED-Eternalite-LED-Auto-Sensor-Night-Light/113817787) — 0.3W/100,000小时/年电费$0.25
 - [Thermistor-Sensor - CdS光敏电阻规格](https://www.thermistor-sensor.com/sale-44940130-5mm-light-dependent-resistor-cds-photoresistor-ldr-gl5537-1-20-30k-for-sensor-applications-toy-lamp-.html) — 10lux时20-30kΩ
 - [CPSC - Molenaar夜灯召回](https://www.cpsc.gov/zhT-CN/Recalls/2010/molenaar-llc-recalls-night-lights-due-to-fire-and-shock-hazard) — 过热熔化召回案例
 - [UL Listed vs ETL Certified](https://ledlightslandscape.com/ul-listed-vs-etl-certified-lighting/) — UL/ETL/FCC Part 15 Class B认证体系
@@ -310,38 +310,85 @@
 ### 5.1 技术发展趋势
 
 1. **智能夜灯**
+
    - Wi-Fi/蓝牙连接
    - App控制亮度和色温
    - 语音控制（Alexa/Google Home）
    - 与其他智能设备联动（如检测到开门自动亮灯）
-
+   - **国内差距与领先**: 中国市场已形成小米米家、涂鸦智能、华为鸿蒙智联三大智能家居平台，夜灯作为生态组件可直接接入全屋智能联动（如门窗传感器触发→夜灯自动亮起），涂鸦智能提供快速OEM/ODM方案，国内智能夜灯渗透率领先亚马逊市场。亚马逊市场夜灯仍以独立设备为主，多数Best Seller标注"不兼容智能家居"，智能联动型尚属新品类
+   - **新型趋势**: Matter协议推进跨平台互通，智能夜灯从单一设备向全屋联动系统组件转型
 2. **红光夜灯**
+
    - 基于睡眠科学研究，使用红光（>600nm）完全不影响褪黑素
    - 面向对睡眠质量敏感的用户
-
+   - **亚马逊新兴数据**: 亚马逊新品榜已出现多款红光/琥珀光夜灯——采用医疗级670nm红光+1700K琥珀光LED，零蓝光；部分红光感应夜灯探测距离10英尺/角度120°/延时30秒；部分产品经实验室测试确认仅发射有益睡眠波长
+   - **国内现状**: 国内市场红光助眠概念已渗透（如"红光护眼"搜索词出现在什么值得买等平台），但专门的红光夜灯产品仍较少，多数仍为暖白3000K
 3. **人体感应精准化**
+
    - 更大感应范围和更精准的PIR传感器
    - 可调感应距离和亮灯延时
-
+   - **具体参数对比**: 亚马逊主流PIR探测距离6-10英尺（1.8-3米）、角度100°-120°、延时30秒；国内产品已开始采用更精准的可调感应方案
+   - **新型趋势**: 雷达（Radar）传感器开始替代PIR，探测距离可达35英尺、角度100°，不受温度影响，寿命更长
 4. **Type-C充电便携夜灯**
+
    - 大容量锂电池
    - USB-C快充
    - 多场景移动使用
+   - **亚马逊数据**: 充电式夜灯搜索结果超20,000条，典型电池容量1000-2000mAh，USB充电为主流
+   - **国内领先**: 中国市场硅胶拍拍灯已普遍采用Type-C充电+无线充电双模式，且融入IP盲盒联动，产品形态更具情感化和收藏属性
 
 ### 5.2 消费者偏好趋势
 
-- **暖色温**: 从冷白光向暖白光/红光转变（基于睡眠科学普及）
-- **感应式**: 从常亮式向光感+人体感应式转变
-- **多支装**: 消费者倾向购买2-6支装，全屋部署
+- **暖色温**: 从冷白光向暖白光/红光转变（基于睡眠科学普及）。蓝光460-480nm在10-15 lux即抑制褪黑素，亚马逊畅销品已从5000K日光色向3000K暖白倾斜，新品向1700K琥珀光/670nm红光演进
+- **感应式**: 从常亮式向光感+人体感应式转变。约43%美国消费者偏好黄昏到黎明自动开关，亚马逊Best Seller前3名均配备光感传感器
+- **多支装**: 消费者倾向购买2-6支装，全屋部署。亚马逊Best Seller以2件装/4件装/6件装为主力SKU
 - **简约设计**: 从卡通造型向简约现代设计转变（成人市场）
+- **国内差异**: 中国市场同时存在两条并行路线——①成人市场简约化（智能夜灯低价极简设计）；②儿童市场IP化（硅胶拍拍灯+IP联名+盲盒玩法），情感化和社交属性更强
 
 ### 5.3 新兴子品类
 
-- **婴儿专用红光夜灯**: 基于睡眠科学的红光设计
-- **智能联动夜灯系统**: 全屋多灯联动方案
-- **柜内磁吸感应灯**: 细分到衣柜/橱柜的照明需求
+- **婴儿专用红光夜灯**: 基于睡眠科学的红光设计。亚马逊新品采用670nm医疗级红光+1700K琥珀光，USB充电+触摸调光+哺乳专用
+- **智能联动夜灯系统**: 全屋多灯联动方案。国内米家生态已实现门窗传感器/人体传感器→夜灯联动，涂鸦智能提供OEM/ODM全屋方案；亚马逊市场正通过Matter协议向此方向演进
+- **柜内磁吸感应灯**: 细分到衣柜/橱柜的照明需求。磁吸贴装+红光感应+多件装
 - **楼梯灯带**: 楼梯安全专用LED灯带
 - **宠物夜灯**: 宠物夜间活动照明
+- **红光助眠夜灯**: 新兴品类——以670nm红光为核心卖点，定位"褪黑素友好"（melatonin-friendly），面向睡眠优化人群。亚马逊新品已标注"lab tested"（实验室验证）和"zero blue light"（零蓝光）为卖点
+- **IP联名硅胶拍拍灯**: 国内特色品类——硅胶材质+拍拍触控+IP联名，兼具夜灯和潮玩收藏双重属性，在淘宝/天猫热销，亚马逊尚无对应产品
+
+---
+
+## 国内外差距总结
+
+| 维度 | 中国市场 | 亚马逊市场 | 差距/新型趋势 |
+|---|---|---|---|
+| **智能生态** | 米家/涂鸦/鸿蒙三大平台，夜灯作为生态组件直接联动 | 独立设备为主，多数Best Seller不兼容智能家居 | 国内领先1-2年，亚马逊正通过Matter协议追赶 |
+| **红光助眠** | 概念已渗透但专门产品少 | 新品榜已出现670nm医疗级红光/1700K琥珀光产品 | 亚马逊在红光产品商业化上领先，国内有科研基础但产品化不足 |
+| **充电便携** | Type-C+无线充电双模式普及 | USB充电为主，电池1000-2000mAh | 国内充电方案更先进 |
+| **产品形态** | 双路线：成人简约+儿童IP联名/盲盒 | 单一路线：极简白色面板为主 | 国内儿童市场情感化/社交化更强，亚马逊成人市场更成熟 |
+| **传感器** | PIR为主，雷达传感器刚起步 | PIR为主（6-10ft/100-120°），雷达开始出现 | 雷达传感器是共同的新方向 |
+| **价格** | 智能夜灯约19元（约$2.6） | Best Seller $7-20/2-6件装 | 国内价格更低，但亚马逊客单价更高 |
+
+---
+
+## 证据来源
+
+- [Smart Lighting (Wikipedia)](https://en.wikipedia.org/wiki/Smart_lighting)
+- [Smart Home (Wikipedia)](https://en.wikipedia.org/wiki/Home_automation)
+- [Accio - 2025 Night Light Trends](https://www.accio.com/business/night_light_trends) — 智能传感器、节能LED、生物亲和设计趋势
+- [Accio - Smart Night Light Trends 2025](https://www.accio.com/business/smart-night-light) — App控制、感应、节能趋势
+- [DataInsightsMarket - Smart Sensor Night Light Market](https://www.datainsightsmarket.com/reports/smart-sensor-night-light-1329652) — 市场增长、生态整合、LED主导
+- [QYResearch - Global Smart Sensor Night Light Report 2025](https://www.qyresearch.com/reports/3455279/smart-sensor-night-light) — 智能家居驱动增长
+- [DataIntelo - Motion Sensor Night Lights for Hallways Market](https://dataintelo.com/report/motion-sensor-night-lights-for-hallways-market) — IoT生态整合，独立设备向生态组件转型
+- [Amazon New Releases - Night-Lights](https://www.amazon.com/gp/new-releases/hi/3736651/) — 红光/琥珀光新品趋势
+- [Amazon - Rechargeable Night Lights搜索](https://www.amazon.com/rechargeable-night-lights/s?k=rechargeable+night+lights) — 充电式夜灯超20,000条结果
+- [Amazon Best Sellers: Night-Lights](https://www.amazon.com/Best-Sellers-Night-Lights/zgbs/hi/3736651) — 畅销品形态分布
+- [淘宝 - 硅胶拍拍灯小夜灯趋势](https://bk.taobao.com/k/chaowanmanghe_16578/742935e62a7aa1e0f11d96c4f91405b6.html) — IP联名+拍拍灯趋势
+- [什么值得买 - 智能人体感应灯](https://post.smzdm.com/p/ax65ow2d/) — 充电式/人体感应/国内品牌
+- [什么值得买 - 智能家居平台三国杀](https://post.smzdm.com/p/a5r7n4pk/) — 米家vs HomeKit vs Google Home生态对比
+- [中关村在线 - 米家智能夜灯](https://dcdv.zol.com.cn/785/7859136.html) — 18.9元/米家APP联动
+- [Harvard Health - Blue light has a dark side](https://www.health.harvard.edu/staying-healthy/blue-light-has-a-dark-side) — 蓝光460-480nm抑制褪黑素
+- [Market Growth Reports - LED Night Light Market](https://www.marketgrowthreports.com/market-reports/led-night-light-market-124000) — 43%偏好光感自动开关
+- [Tuya Smart - 涂鸦智能生态](https://yonannlock.com/smart-home/) — 涂鸦OEM/ODM平台、Wi-Fi/Zigbee/蓝牙
 
 ---
 

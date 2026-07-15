@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Promotion, Plus, Loading, ChatDotRound, DataLine, WarningFilled } from '@element-plus/icons-vue'
+import { Promotion, Plus, Loading, ChatDotRound, DataLine, WarningFilled, Top, Delete } from '@element-plus/icons-vue'
 import { apiRequest, apiStreamChat, type Identity } from '../api'
 import { renderMarkdown } from '../lib/markdown'
 import type { AgentScan, ProductDiscovery, AgentMessage, CategorySummary } from '../types'
@@ -85,7 +85,8 @@ async function triggerScan() {
     if (scanType.value === 'topic' && topicInput.value.trim()) body.topic = topicInput.value.trim()
     const r = await apiRequest<AgentScan>('/agent/scan', { method: 'POST', body: JSON.stringify(body) })
     currentScan.value = r; discoveries.value = r.discoveries || []; messages.value = r.messages || []
-    scans.value.unshift(r); showScanPanel.value = false
+    scans.value = sortScans([r, ...scans.value.filter(x => x.id !== r.id)])
+    showScanPanel.value = false
     mainTab.value = 'discoveries'
     ElMessage.success('扫描完成')
   } catch (e) { ElMessage.error((e as Error).message) }
@@ -104,7 +105,7 @@ async function retryScan() {
       body.topic = currentScan.value.topic
     const r = await apiRequest<AgentScan>('/agent/scan', { method: 'POST', body: JSON.stringify(body) })
     currentScan.value = r; discoveries.value = r.discoveries || []; messages.value = r.messages || []
-    scans.value.unshift(r)
+    scans.value = sortScans([r, ...scans.value.filter(x => x.id !== r.id)])
     if (r.status === 'completed') { mainTab.value = 'discoveries'; ElMessage.success('扫描完成') }
     else if (r.status === 'failed') { mainTab.value = 'chat'; ElMessage.warning('扫描仍失败，请检查LLM服务') }
   } catch (e) { ElMessage.error((e as Error).message) }
@@ -241,6 +242,57 @@ async function addDiscoveryNote(d: ProductDiscovery) {
   } catch {}
 }
 
+function sortScans(items: AgentScan[]): AgentScan[] {
+  return [...items].sort((a, b) => {
+    const pinDiff = Number(!!b.is_pinned) - Number(!!a.is_pinned)
+    if (pinDiff !== 0) return pinDiff
+    return b.id - a.id
+  })
+}
+
+async function togglePinScan(s: AgentScan, e: Event) {
+  e.stopPropagation()
+  try {
+    const r = await apiRequest<AgentScan>(`/agent/scans/${s.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ is_pinned: !s.is_pinned }),
+    })
+    const i = scans.value.findIndex(x => x.id === s.id)
+    if (i >= 0) Object.assign(scans.value[i], { is_pinned: r.is_pinned })
+    if (currentScan.value?.id === s.id) currentScan.value = { ...currentScan.value, is_pinned: r.is_pinned }
+    scans.value = sortScans(scans.value)
+    ElMessage.success(r.is_pinned ? '已顶置' : '已取消顶置')
+  } catch (err) {
+    ElMessage.error((err as Error).message)
+  }
+}
+
+async function deleteScan(s: AgentScan, e: Event) {
+  e.stopPropagation()
+  try {
+    await ElMessageBox.confirm(
+      `确定删除「${scanTitle(s)}」？相关发现与对话将一并删除，且不可恢复。`,
+      '删除扫描',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
+    )
+  } catch {
+    return
+  }
+  try {
+    await apiRequest<{ ok: boolean }>(`/agent/scans/${s.id}`, { method: 'DELETE' })
+    scans.value = scans.value.filter(x => x.id !== s.id)
+    if (currentScan.value?.id === s.id) {
+      currentScan.value = null
+      discoveries.value = []
+      messages.value = []
+      if (scans.value.length) await openScan(scans.value[0].id)
+    }
+    ElMessage.success('已删除')
+  } catch (err) {
+    ElMessage.error((err as Error).message)
+  }
+}
+
 function scanTitle(s: AgentScan): string {
   if (s.scan_type === 'full') return '全品类扫描'
   if (s.scan_type === 'category') return s.category_code || '品类扫描'
@@ -271,6 +323,16 @@ const stats = computed(() => {
   for (const d of discoveries.value) if (d.opportunity_score !== null) { avg += d.opportunity_score; n++ }
   return { total, avgScore: n > 0 ? Math.round(avg / n) : 0 }
 })
+
+const topicNotice = computed(() => {
+  const report = currentScan.value?.report
+  if (!report) return ''
+  if (report.user_notice) return report.user_notice
+  if (report.insight_mode === 'trends_discussion') {
+    return '暂无选品推荐数据，现阶段仅提供趋势与公开讨论参考，后续功能将完善。'
+  }
+  return ''
+})
 </script>
 
 <template>
@@ -290,7 +352,8 @@ const stats = computed(() => {
         <select v-if="scanType === 'category'" v-model="selectedCategory" class="scan-input">
           <option value="">选择品类…</option>
           <template v-for="cat in categories.filter(c => !c.parent_code)" :key="cat.code">
-            <option :value="cat.code">{{ cat.name }}</option>
+            <option v-if="cat.status !== 'group'" :value="cat.code">{{ cat.name }}</option>
+            <option v-else disabled>{{ cat.name }}</option>
             <option v-for="ch in cat.children" :key="ch.code" :value="ch.code">  {{ ch.name }}</option>
           </template>
         </select>
@@ -303,14 +366,41 @@ const stats = computed(() => {
 
       <div class="conv-list">
         <div v-if="!scans.length" class="conv-empty">暂无对话</div>
-        <button v-for="s in scans" :key="s.id" class="conv-item" :class="{ active: currentScan?.id === s.id }" @click="openScan(s.id)">
-          <div class="conv-title">{{ scanTitle(s) }}</div>
-          <div class="conv-preview">{{ scanPreview(s) }}</div>
-          <div class="conv-meta">
-            <span :class="s.status">{{ s.status === 'completed' ? '✓' : s.status === 'failed' ? '✗' : '⏳' }}</span>
-            <span class="conv-time">{{ new Date(s.created_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) }}</span>
+        <div
+          v-for="s in scans"
+          :key="s.id"
+          class="conv-item"
+          :class="{ active: currentScan?.id === s.id, pinned: s.is_pinned }"
+          role="button"
+          tabindex="0"
+          @click="openScan(s.id)"
+          @keydown.enter="openScan(s.id)"
+        >
+          <div class="conv-row">
+            <div class="conv-main">
+              <div class="conv-title">{{ scanTitle(s) }}</div>
+              <div class="conv-preview">{{ scanPreview(s) }}</div>
+              <div class="conv-meta">
+                <span :class="s.status">{{ s.status === 'completed' ? '✓' : s.status === 'failed' ? '✗' : '⏳' }}</span>
+                <span class="conv-time">{{ new Date(s.created_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) }}</span>
+              </div>
+            </div>
+            <div class="conv-actions" @click.stop>
+              <button
+                class="conv-action"
+                type="button"
+                :title="s.is_pinned ? '取消顶置' : '顶置'"
+                :class="{ on: s.is_pinned }"
+                @click="togglePinScan(s, $event)"
+              >
+                <el-icon><Top /></el-icon>
+              </button>
+              <button class="conv-action danger" type="button" title="删除" @click="deleteScan(s, $event)">
+                <el-icon><Delete /></el-icon>
+              </button>
+            </div>
           </div>
-        </button>
+        </div>
       </div>
     </aside>
 
@@ -392,9 +482,13 @@ const stats = computed(() => {
           v-show="mainTab === 'discoveries' && currentScan.status !== 'failed'"
           class="discoveries-container"
         >
+          <div v-if="topicNotice" class="topic-notice">
+            <strong>说明</strong>
+            <span>{{ topicNotice }}</span>
+          </div>
           <div v-if="!discoveries.length" class="disc-empty">本次扫描暂无发现</div>
           <div class="disc-stats" v-if="discoveries.length">
-            <div class="stat"><span class="stat-num">{{ stats.total }}</span><span class="stat-label">发现</span></div>
+            <div class="stat"><span class="stat-num">{{ stats.total }}</span><span class="stat-label">{{ topicNotice ? '洞察' : '发现' }}</span></div>
             <div class="stat"><span class="stat-num" :style="{ color: scoreColor(stats.avgScore) }">{{ stats.avgScore }}</span><span class="stat-label">均分</span></div>
           </div>
           <div class="disc-list">
@@ -431,8 +525,8 @@ const stats = computed(() => {
           </div>
         </div>
 
-        <!-- 输入框固定在主区域底部，始终全宽 -->
-        <div class="input-bar">
+        <!-- 输入框仅对话 tab 显示；发现列表不展示 -->
+        <div v-if="mainTab === 'chat' || currentScan.status === 'failed'" class="input-bar">
           <input
             v-model="chatInput"
             placeholder="输入问题，Enter发送…"
@@ -484,14 +578,44 @@ const stats = computed(() => {
 
 .conv-list { flex: 1; overflow-y: auto; }
 .conv-empty { padding: 20px 12px; text-align: center; color: #b0aaa5; font-size: 13px; }
-.conv-item { width: 100%; text-align: left; padding: 8px 12px; border: none; border-left: 3px solid transparent; background: transparent; cursor: pointer; transition: background 0.1s; }
+.conv-item { width: 100%; text-align: left; padding: 8px 10px 8px 12px; border: none; border-left: 3px solid transparent; background: transparent; cursor: pointer; transition: background 0.1s; }
 .conv-item:hover { background: #f0efed; }
 .conv-item.active { border-left-color: #1aae39; background: #1aae3908; }
+.conv-item.pinned { background: #1aae3906; }
+.conv-row { display: flex; align-items: flex-start; gap: 4px; }
+.conv-main { flex: 1; min-width: 0; }
 .conv-title { font-size: 13px; font-weight: 600; color: #2a2520; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .conv-preview { font-size: 11px; color: #8a8580; margin: 1px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .conv-meta { display: flex; align-items: center; gap: 6px; font-size: 10px; }
 .conv-meta .completed { color: #1aae39; } .conv-meta .failed { color: #e63757; }
 .conv-time { color: #b0aaa5; }
+.conv-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.conv-item:hover .conv-actions,
+.conv-item.active .conv-actions,
+.conv-item.pinned .conv-actions { opacity: 1; }
+.conv-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #8a8580;
+  cursor: pointer;
+}
+.conv-action:hover { background: #e8e6e2; color: #1aae39; }
+.conv-action.on { color: #1aae39; }
+.conv-action.danger:hover { background: #fde8eb; color: #e63757; }
 
 /* === 中间：主区域 === */
 .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; min-height: 0; }
@@ -616,6 +740,22 @@ const stats = computed(() => {
 
 /* 发现列表 */
 .discoveries-container { flex: 1; overflow-y: auto; padding: 16px 20px; min-width: 0; min-height: 0; width: 100%; }
+.topic-notice {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #f0e0a8;
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #7a5b00;
+  font-size: 12px;
+  line-height: 1.55;
+  display: flex;
+  gap: 8px;
+}
+.topic-notice strong {
+  flex-shrink: 0;
+  font-weight: 700;
+}
 .disc-empty { padding: 40px; text-align: center; color: #b0aaa5; font-size: 14px; }
 .disc-stats { display: flex; gap: 16px; margin-bottom: 14px; }
 .stat { display: flex; flex-direction: column; align-items: center; }

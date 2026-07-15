@@ -13,6 +13,16 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SCRIPTS_DIR="$REPO_ROOT/backend/crawler"
 
+# Read CRAWLER_ENABLED from .env without sourcing the whole file
+# (AUTH_USERS_JSON / keys may break bash `source`)
+if [ -z "${CRAWLER_ENABLED:-}" ] && [ -f "$REPO_ROOT/.env" ]; then
+    CRAWLER_ENABLED="$(grep -E '^CRAWLER_ENABLED=' "$REPO_ROOT/.env" | tail -1 | cut -d= -f2- | tr -d "\"'")"
+fi
+if [ "${CRAWLER_ENABLED:-false}" != "true" ] && [ "${CRAWLER_ENABLED:-false}" != "1" ]; then
+    echo "Crawler disabled (CRAWLER_ENABLED=${CRAWLER_ENABLED:-false}), skipping."
+    exit 0
+fi
+
 export PYTHONPATH=""
 export ENCYCLOPEDIA_API_BASE="${ENCYCLOPEDIA_API_BASE:-http://localhost:8010/api/v1}"
 export CRAWLER_USERNAME="${CRAWLER_USERNAME:-admin}"
@@ -29,7 +39,7 @@ elif [ -z "${CRAWLER_PASSWORD:-}" ]; then
 fi
 
 # 7 个品类轮转：每天爬一个
-CATEGORIES=("SEAT_CUSHION" "HEAT_THERAPY" "TENS_THERAPY" "NIGHT_LIGHT" "MEDICATION_MANAGEMENT" "SHOULDER_NECK_HEAT_THERAPY" "FAR_INFRARED")
+CATEGORIES=("SEAT_CUSHION" "HEAT_THERAPY" "TENS_THERAPY" "NIGHT_LIGHT" "PILL_ORGANIZER" "PILL_SPLITTER" "SHOULDER_NECK_HEAT_THERAPY" "FAR_INFRARED")
 
 # 用日期模 7 来确定今天爬哪个品类
 DAY_OF_YEAR=$(date +%j)

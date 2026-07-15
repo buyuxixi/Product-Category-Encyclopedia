@@ -30,7 +30,8 @@ YOUTUBE_KEYWORDS: dict[str, list[str]] = {
     "SHOULDER_NECK_HEAT_THERAPY": ["neck heating pad review", "shoulder heating pad"],
     "FAR_INFRARED": ["far infrared heating pad review", "infrared sauna blanket"],
     "NIGHT_LIGHT": ["best night light review", "motion sensor night light"],
-    "MEDICATION_MANAGEMENT": ["pill organizer review", "smart pill dispenser"],
+    "PILL_ORGANIZER": ["pill organizer review", "smart pill dispenser"],
+    "PILL_SPLITTER": ["pill splitter review", "pill cutter review"],
     "SEAT_CUSHION": ["best seat cushion review", "tailbone cushion"],
 }
 
@@ -295,6 +296,9 @@ def crawl_all() -> dict:
 
 
 if __name__ == "__main__":
+    from _guard import require_crawler_enabled
+
+    require_crawler_enabled()
     result = crawl_all()
     total_hl = len(result["hot_links"])
     total_ts = len(result["trend_signals"])

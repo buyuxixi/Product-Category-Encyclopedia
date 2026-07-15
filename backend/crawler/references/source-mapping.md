@@ -5,10 +5,12 @@
 - FAR_INFRARED → 远红外热疗
 - SHOULDER_NECK_HEAT_THERAPY → 肩颈热敷
 - NIGHT_LIGHT → 夜灯
-- MEDICATION_MANAGEMENT → 药物管理
-- PILL_SPLITTER → 切药器
+- PILL_ORGANIZER → 药物管理-药盒
+- PILL_SPLITTER → 药物管理-切药器
 - SEAT_CUSHION → 办公坐垫
 - TENS_THERAPY → 电疗TENS
+
+> 注：`MEDICATION_MANAGEMENT`（药物管理）已拆分为药盒/切药器两个独立品类，数据库保留 `inactive` 记录，列表 API / 前端均不再展示。
 
 ## 关键词映射（品类 → 搜索关键词列表）
 

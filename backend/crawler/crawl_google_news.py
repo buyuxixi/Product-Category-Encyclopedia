@@ -31,7 +31,8 @@ NEWS_KEYWORDS: dict[str, list[str]] = {
     "FAR_INFRARED": ["far infrared heating pad", "far infrared therapy"],
     "TENS_THERAPY": ["TENS unit device", "TENS unit review"],
     "NIGHT_LIGHT": ["night light LED", "motion sensor night light"],
-    "MEDICATION_MANAGEMENT": ["pill organizer medication", "pill dispenser review"],
+    "PILL_ORGANIZER": ["pill organizer medication", "pill dispenser review"],
+    "PILL_SPLITTER": ["pill splitter review", "pill cutter medication"],
     "SEAT_CUSHION": ["seat cushion ergonomic", "tailbone cushion review"],
 }
 
@@ -242,6 +243,9 @@ def crawl_all() -> dict:
 
 
 if __name__ == "__main__":
+    from _guard import require_crawler_enabled
+
+    require_crawler_enabled()
     result = crawl_all()
     total_hl = len(result["hot_links"])
     total_ts = len(result["trend_signals"])

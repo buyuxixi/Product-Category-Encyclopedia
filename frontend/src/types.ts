@@ -151,10 +151,14 @@ export interface AgentScan {
   topic: string | null
   status: string
   triggered_by: string
+  is_pinned: boolean
   report: {
     summary?: string
     market_overview?: Record<string, unknown>
     recommendations?: string[]
+    insight_mode?: string
+    user_notice?: string
+    topic_query_terms?: string[]
   }
   stats: Record<string, unknown>
   error_message: string | null

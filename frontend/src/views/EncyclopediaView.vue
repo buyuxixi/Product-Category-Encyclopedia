@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { EditPen, Refresh, View, CopyDocument, Download, MagicStick } from '@element-plus/icons-vue'
-import { apiRequest, type Identity } from '../api'
+import { ApiError, apiRequest, type Identity } from '../api'
 import type {
   CategoryDetail,
   CategorySummary,
@@ -167,16 +167,16 @@ const renderedContentWithoutTimestamp = computed(() => {
 async function triggerCrawl() {
   if (!category.value) return
   try {
-    await ElMessageBox.confirm('将手动触发一次热点爬取，预计需要 1-2 分钟。', '手动爬取', {
-      confirmButtonText: '开始爬取',
-      cancelButtonText: '取消',
-    })
     crawlLoading.value = true
     await apiRequest(`/categories/${category.value.code}/crawl`, { method: 'POST' })
     ElMessage.success('爬取已触发，正在刷新数据...')
     await loadCategory()
   } catch (error) {
-    if (error !== 'cancel') ElMessage.error((error as Error).message)
+    if (error instanceof ApiError && error.status === 503) {
+      ElMessage.warning(error.message || '暂未开放，请联系管理员')
+      return
+    }
+    ElMessage.error((error as Error).message)
   } finally {
     crawlLoading.value = false
   }
@@ -447,17 +447,22 @@ function renderMarkdown(md: string): string {
       if (realSepIdx > 0) {
         const headerCells = splitTableRow(tableBuffer[0])
         const bodyRows = tableBuffer.slice(realSepIdx + 1)
-        let t = '<table class="md-table"><thead><tr>'
+        const plainLen = (cell: string) => cell.replace(/\*\*|__/g, '').trim().length
+        let t = '<div class="md-table-wrap"><table class="md-table"><thead><tr>'
         for (const cell of headerCells) t += `<th>${inlineFormat(cell)}</th>`
         t += '</tr></thead><tbody>'
         for (const row of bodyRows) {
           if (!row.trim() || isTableSeparator(row)) continue
           const cells = splitTableRow(row)
           t += '<tr>'
-          for (const cell of cells) t += `<td>${inlineFormat(cell)}</td>`
+          for (const cell of cells) {
+            // 短单元格（如「7–28格」「塑料」）强制横排，避免数字与「格」被挤断行
+            const shortCls = plainLen(cell) > 0 && plainLen(cell) <= 12 ? ' class="md-td-short"' : ''
+            t += `<td${shortCls}>${inlineFormat(cell)}</td>`
+          }
           t += '</tr>'
         }
-        t += '</tbody></table>'
+        t += '</tbody></table></div>'
         html.push(t)
       } else {
         // No separator — render as text
@@ -1032,7 +1037,7 @@ onMounted(() => {
         <div class="getting-started-icon">→</div>
         <div>
           <strong>先准备数据，再开始建立百科</strong>
-          <p>可以登记一条研究来源，或在「06 舆情与市场趋势」中点击「手动爬取」获取热点数据。</p>
+          <p>可以登记一条研究来源。热点「手动爬取」暂未开放，请联系管理员。</p>
         </div>
       </section>
 
@@ -1126,9 +1131,8 @@ onMounted(() => {
                           :loading="listingSuggestionLoading === link.id"
                           @click="generateListingSuggestion(link)"
                         >
-                          {{ listingSuggestions[link.id] ? '重新生成 AI 建议' : '生成 AI 建议 Demo' }}
+                          {{ listingSuggestions[link.id] ? '重新生成 AI 建议' : '生成 AI 建议' }}
                         </el-button>
-                        <span>不写入数据库</span>
                       </div>
                       <details v-if="listingSuggestions[link.id]" class="listing-ai-panel" open>
                         <summary>🤖 AI 优化关键词（跨平台）</summary>
@@ -1292,7 +1296,7 @@ onMounted(() => {
                 </div>
                 <div v-else-if="activeSectionKey === 'market'" class="hot-links-empty">
                   <span class="evidence-label">🔥 今日热点</span>
-                  <p>该品类暂无爬取到的热点数据。可点击「手动爬取」触发一次数据采集。</p>
+                  <p>该品类暂无爬取到的热点数据。手动爬取暂未开放，请联系管理员。</p>
                   <el-button v-if="canEdit" size="small" :loading="crawlLoading" :icon="Refresh" @click="triggerCrawl">手动爬取</el-button>
                 </div>
                 <!-- 📊 趋势信号 -->

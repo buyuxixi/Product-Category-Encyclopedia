@@ -19,7 +19,13 @@ from app.schemas import (
 )
 from app.security import Actor
 from crawler import push_to_encyclopedia
-from scripts.import_cleaned_xhs import CategorySource, build_crawl_result
+from scripts.import_cleaned_xhs import (
+    CategorySource,
+    build_crawl_result,
+    engagement_score,
+    hotness_from_metrics,
+    parse_metrics_from_description,
+)
 
 
 FIXTURES = Path(__file__).parent / "fixtures" / "xhs"
@@ -27,6 +33,26 @@ FIXTURES = Path(__file__).parent / "fixtures" / "xhs"
 
 def actor() -> Actor:
     return Actor(id=1, name="测试", role="admin", provider="local")
+
+
+def test_xhs_hotness_normalized_0_100():
+    # 中等帖：赞1200/评30/藏80 → 12+1+3=16，非 is_hot
+    score, is_hot = hotness_from_metrics(1200, 30, 80)
+    assert score == 16.0
+    assert is_hot is False
+
+    # 截图坐垫爆帖：封顶 40+30+20=90
+    score, is_hot = hotness_from_metrics(25777, 209, 14411)
+    assert score == 90.0
+    assert is_hot is True
+    # 原始 engagement 仍可用于选帖，不等于入库热度
+    assert engagement_score(25777, 209, 14411) == 40606
+
+    parsed = parse_metrics_from_description(
+        "[郑原里美] | ❤ 25777 | 💬 209 | ⭐ 14411 | 搜索词: 坐垫推荐"
+    )
+    assert parsed == (25777, 209, 14411)
+    assert parse_metrics_from_description("无指标描述") is None
 
 
 def test_build_crawl_result_supports_api_and_grouped_comments():
@@ -64,6 +90,13 @@ def test_build_crawl_result_supports_api_and_grouped_comments():
     }
     assert all(item["platform"] == "xiaohongshu" for item in result["hot_links"])
     assert all(item["link_type"] == "social_post" for item in result["hot_links"])
+    by_code = {item["category_code"]: item for item in result["hot_links"]}
+    # TENS: min(12,40)+min(1,30)+min(3,20)=16
+    assert by_code["TENS_THERAPY"]["hotness_score"] == 16.0
+    assert by_code["TENS_THERAPY"]["is_hot"] is False
+    # night light: min(0.9,40)+min(0.5,30)+min(1.2,20)=2.6
+    assert by_code["NIGHT_LIGHT"]["hotness_score"] == 2.6
+    assert by_code["NIGHT_LIGHT"]["is_hot"] is False
     assert {item["title"] for item in result["trend_signals"]} == {
         "档位太强会麻，建议从低档开始",
         "晚上起夜很好用，感应也很灵敏",

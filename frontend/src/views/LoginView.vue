@@ -11,8 +11,8 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ loggedIn: [] }>()
 
-const username = ref('')
-const password = ref('')
+const username = ref('admin')
+const password = ref('admin123456')
 const loading = ref(false)
 
 async function login() {
@@ -39,10 +39,10 @@ async function login() {
       <div class="login-hero-content">
         <div class="login-hero-logo"><span class="brand-mark">P</span><span>产品品类百科</span></div>
         <h2 class="login-hero-title">跨境电商<br/>品类情报中心</h2>
-        <p class="login-hero-desc">聚合 Amazon、YouTube、Reddit、Google Trends 数据，为选品决策提供实时洞察。</p>
+        <p class="login-hero-desc">聚合 Amazon、小红书、YouTube、Reddit 等渠道数据，为选品决策提供实时洞察。</p>
         <div class="login-hero-stats">
           <div class="hero-stat"><strong>5</strong><span>品类</span></div>
-          <div class="hero-stat"><strong>659+</strong><span>热点链接</span></div>
+          <div class="hero-stat"><strong>700+</strong><span>热点链接</span></div>
           <div class="hero-stat"><strong>84</strong><span>数据来源</span></div>
         </div>
       </div>

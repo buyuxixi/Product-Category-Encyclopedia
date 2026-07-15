@@ -128,7 +128,8 @@ def main():
         "FAR_INFRARED",
         "TENS_THERAPY",
         "NIGHT_LIGHT",
-        "MEDICATION_MANAGEMENT",
+        "PILL_ORGANIZER",
+        "PILL_SPLITTER",
         "SEAT_CUSHION",
     ]
     for cat in categories:
@@ -159,4 +160,7 @@ def main():
 
 
 if __name__ == "__main__":
+    from _guard import require_crawler_enabled
+
+    require_crawler_enabled()
     main()

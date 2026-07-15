@@ -248,6 +248,9 @@ def crawl_all(hot_links: list[dict]) -> list[dict]:
 
 
 if __name__ == "__main__":
+    from _guard import require_crawler_enabled
+
+    require_crawler_enabled()
     # 测试模式：直接用视频 URL 测试
     test_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
     vid = extract_video_id(test_url)

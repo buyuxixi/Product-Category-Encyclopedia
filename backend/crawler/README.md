@@ -41,6 +41,15 @@ backend/crawler/
 小红书 cleaned JSON → xhs_cleaned_adapter → push_incremental (不清旧→Batch upsert)
 ```
 
+## 总开关
+
+所有爬虫入口（手动 API / Hermes Cron / CLI）统一受 `CRAWLER_ENABLED` 控制，默认 `false`。
+
+- `.env` 中设置 `CRAWLER_ENABLED=false` 即关闭
+- 手动 API：`POST /categories/{code}/crawl` 返回 503
+- Cron / CLI：脚本直接 exit 0，不发起任何外网请求
+- 重新开启：设为 `true` 并重启 backend；Hermes Cron 需 `hermes cron resume <job-id>`
+
 ## 执行方式
 
 ### 1. Cron 自动执行 (推荐)
@@ -86,6 +95,14 @@ CRAWLER_PASSWORD=xxx \
 .venv/bin/python crawler/xhs_cleaned_adapter.py \
   --data-dir ../data/cleaned \
   --push
+```
+
+小红书入库 `hotness_score` = `min(赞/100,40)+min(藏/80,30)+min(评/10,20)`（0–100，`is_hot`≥50）。
+选帖排序仍用原始 `赞+藏+评×2`。已入库数据可用：
+
+```bash
+DATABASE_URL=mysql+pymysql://encyclopedia:encyclopedia_dev@127.0.0.1:3308/category_encyclopedia?charset=utf8mb4 \
+  python3 scripts/backfill_xhs_hotness.py --apply
 ```
 
 ### Reddit OAuth 配置（推荐）

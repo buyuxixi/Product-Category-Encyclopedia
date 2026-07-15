@@ -51,9 +51,13 @@ AMAZON_BSR_NODES: dict[str, dict] = {
         "node": "228013",  # Tools & Home Improvement > Lighting
         "keywords": ["night light", "motion sensor night light"],
     },
-    "MEDICATION_MANAGEMENT": {
+    "PILL_ORGANIZER": {
         "node": "3760991",
         "keywords": ["pill organizer", "medicine organizer box", "weekly pill box"],
+    },
+    "PILL_SPLITTER": {
+        "node": "8626404011",
+        "keywords": ["pill splitter", "pill cutter", "pill crusher"],
     },
     "SEAT_CUSHION": {
         "node": "228013",
@@ -306,6 +310,9 @@ def crawl_all() -> tuple[list[dict], list[dict]]:
 
 
 if __name__ == "__main__":
+    from _guard import require_crawler_enabled
+
+    require_crawler_enabled()
     if len(sys.argv) > 1 and sys.argv[1] == "--json":
         hl, ts = crawl_all()
         print(json.dumps({"hot_links": hl, "trend_signals": ts}, ensure_ascii=False, indent=2))

@@ -50,13 +50,22 @@ SOURCES = [
         re.compile(r"监控|皮肤|3D打印", re.I),
     ),
     CategorySource(
-        "MEDICATION_MANAGEMENT",
+        "PILL_ORGANIZER",
         "19h_xhs_pill_notes_index_cleaned.json",
         "19i_xhs_pill_comments_cleaned.json",
         "api",
-        re.compile(r"药盒|切药|分药|吃药|服药|药片|药丸", re.I),
+        re.compile(r"药盒|分药|吃药|服药|药片|药丸|pill\s*organizer|pill\s*box", re.I),
+        re.compile(r"切药|分药器|pill\s*splitter|pill\s*cutter|耳钉|首饰|收纳|草莓|手办|串珠|文具|创业计划书|Word|PPT|痛盒|中古|便当盒", re.I),
+        re.compile(r"抠|保质期|放不了|药|大|小|提醒|老人|携带|分格", re.I),
+    ),
+    CategorySource(
+        "PILL_SPLITTER",
+        "19h_xhs_pill_notes_index_cleaned.json",
+        "19i_xhs_pill_comments_cleaned.json",
+        "api",
+        re.compile(r"切药|分药器|pill\s*splitter|pill\s*cutter|碾碎|pill\s*crusher", re.I),
         re.compile(r"耳钉|首饰|收纳|草莓|手办|串珠|文具|创业计划书|Word|PPT|痛盒|中古|便当盒", re.I),
-        re.compile(r"抠|保质期|放不了|药|大|小|切|提醒|老人|携带", re.I),
+        re.compile(r"切|刀|碎|半片|剂量|锋利|安全", re.I),
     ),
     CategorySource(
         "SEAT_CUSHION",
@@ -78,6 +87,17 @@ SOURCES = [
 ]
 
 
+# 入库热度归一化到 0–100（与 Amazon/Reddit 等同量级可比）
+# score = min(赞/100,40) + min(藏/80,30) + min(评/10,20)，满分 90
+# 选帖排序仍用原始 engagement（赞+藏+评×2）
+IS_HOT_SCORE_THRESHOLD = 50.0
+
+# description 格式: [作者] | ❤ {likes} | 💬 {comments} | ⭐ {collections} | 搜索词: ...
+_DESC_METRICS_RE = re.compile(
+    r"❤\s*([\d,]+)\s*\|\s*💬\s*([\d,]+)\s*\|\s*⭐\s*([\d,]+)"
+)
+
+
 def number(value: Any) -> int:
     try:
         return int(str(value or "0").replace(",", ""))
@@ -85,12 +105,34 @@ def number(value: Any) -> int:
         return 0
 
 
+def engagement_score(likes: int, comments: int, collections: int) -> int:
+    """原始互动量：用于同平台选帖排序，不直接作为热度展示。"""
+    return likes + collections + comments * 2
+
+
 def engagement(note: dict[str, Any]) -> int:
-    return (
-        number(note.get("liked_count"))
-        + number(note.get("collected_count"))
-        + number(note.get("comment_count")) * 2
+    return engagement_score(
+        number(note.get("liked_count")),
+        number(note.get("comment_count")),
+        number(note.get("collected_count")),
     )
+
+
+def parse_metrics_from_description(description: str | None) -> tuple[int, int, int] | None:
+    """从已入库 description 解析 (likes, comments, collections)。"""
+    if not description:
+        return None
+    match = _DESC_METRICS_RE.search(description)
+    if not match:
+        return None
+    return number(match.group(1)), number(match.group(2)), number(match.group(3))
+
+
+def hotness_from_metrics(likes: int, comments: int, collections: int) -> tuple[float, bool]:
+    """小红书热度 0–100：赞/100≤40 + 藏/80≤30 + 评/10≤20。"""
+    score = min(likes / 100.0, 40.0) + min(collections / 80.0, 30.0) + min(comments / 10.0, 20.0)
+    score = round(min(score, 100.0), 2)
+    return score, score >= IS_HOT_SCORE_THRESHOLD
 
 
 def select_notes(notes: list[dict[str, Any]], source: CategorySource, limit: int) -> list[dict[str, Any]]:
@@ -106,9 +148,9 @@ def select_notes(notes: list[dict[str, Any]], source: CategorySource, limit: int
         if source.exclude and source.exclude.search(title):
             continue
         if (
-            source.code == "MEDICATION_MANAGEMENT"
+            source.code == "PILL_ORGANIZER"
             and str(note.get("search_keyword") or "").strip() == "药盒"
-            and not re.search(r"吃药|服药|切药|分药|药片|老人|便携|智能|提醒|辅助器", title)
+            and not re.search(r"吃药|服药|分药|药片|老人|便携|智能|提醒|辅助器|药盒", title)
         ):
             continue
         previous = unique.get(note_id)
@@ -164,6 +206,7 @@ def hot_link_from_note(note: dict[str, Any], category_code: str) -> dict[str, An
     likes = number(note.get("liked_count"))
     comments = number(note.get("comment_count"))
     collections = number(note.get("collected_count"))
+    hotness, is_hot = hotness_from_metrics(likes, comments, collections)
     author = str(note.get("user") or "未知作者").strip()
     keyword = str(note.get("search_keyword") or "").strip()
     title = str(note["title"]).strip()
@@ -178,8 +221,8 @@ def hot_link_from_note(note: dict[str, Any], category_code: str) -> dict[str, An
         "url": str(note["note_url"]).strip(),
         "description": description,
         "description_zh": description,
-        "hotness_score": likes,
-        "is_hot": likes >= 1000,
+        "hotness_score": hotness,
+        "is_hot": is_hot,
     }
 
 

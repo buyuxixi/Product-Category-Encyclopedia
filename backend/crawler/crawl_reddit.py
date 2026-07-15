@@ -56,9 +56,13 @@ REDDIT_SOURCES: dict[str, list[dict]] = {
         {"subreddit": "sleep", "keyword": "night light"},
         {"subreddit": "NewParents", "keyword": "night light"},
     ],
-    "MEDICATION_MANAGEMENT": [
+    "PILL_ORGANIZER": [
         {"subreddit": "ChronicPain", "keyword": "pill organizer"},
         {"subreddit": "Health", "keyword": "pill box"},
+    ],
+    "PILL_SPLITTER": [
+        {"subreddit": "ChronicPain", "keyword": "pill splitter"},
+        {"subreddit": "Health", "keyword": "pill cutter"},
     ],
     "SEAT_CUSHION": [
         {"subreddit": "Ergonomics", "keyword": "seat cushion"},
@@ -346,6 +350,9 @@ def crawl_all() -> dict:
 
 
 if __name__ == "__main__":
+    from _guard import require_crawler_enabled
+
+    require_crawler_enabled()
     result = crawl_all()
     total_hl = len(result["hot_links"])
     total_ts = len(result["trend_signals"])

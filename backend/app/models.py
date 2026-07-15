@@ -232,6 +232,7 @@ class AgentScan(TimestampMixin, Base):
     topic: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), default="running", index=True)  # running|completed|failed
     triggered_by: Mapped[str] = mapped_column(String(120))
+    is_pinned: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     # LLM生成的结构化分析报告
     report: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     # 扫描期间收集的原始数据摘要

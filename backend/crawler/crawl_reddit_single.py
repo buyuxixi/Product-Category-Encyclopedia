@@ -138,6 +138,9 @@ def push_single(category_code: str, crawl_result: dict) -> dict:
 
 
 if __name__ == "__main__":
+    from _guard import require_crawler_enabled
+
+    require_crawler_enabled()
     if len(sys.argv) < 2:
         print("Usage: python crawl_reddit_single.py <CATEGORY_CODE>")
         print(f"Available: {' '.join(REDDIT_SOURCES.keys())}")

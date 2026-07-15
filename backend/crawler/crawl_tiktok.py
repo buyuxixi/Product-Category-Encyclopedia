@@ -30,7 +30,8 @@ TIKTOK_KEYWORDS: dict[str, list[str]] = {
     "SHOULDER_NECK_HEAT_THERAPY": ["neck heating pad", "shoulder pain relief"],
     "FAR_INFRARED": ["infrared sauna blanket", "far infrared"],
     "NIGHT_LIGHT": ["night light aesthetic", "motion sensor night light"],
-    "MEDICATION_MANAGEMENT": ["pill organizer", "medicine organizer"],
+    "PILL_ORGANIZER": ["pill organizer", "medicine organizer"],
+    "PILL_SPLITTER": ["pill splitter", "pill cutter"],
     "SEAT_CUSHION": ["seat cushion", "ergonomic cushion"],
 }
 
@@ -182,6 +183,9 @@ def crawl_all() -> dict:
 
 
 if __name__ == "__main__":
+    from _guard import require_crawler_enabled
+
+    require_crawler_enabled()
     result = crawl_all()
     total_hl = len(result["hot_links"])
     total_ts = len(result["trend_signals"])

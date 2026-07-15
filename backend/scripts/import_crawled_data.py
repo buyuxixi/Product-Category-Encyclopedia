@@ -31,7 +31,8 @@ CATEGORY_FILE_MAP = {
     "TENS_THERAPY": "tens_therapy.md",
     "HEAT_THERAPY": "heat_therapy.md",
     "NIGHT_LIGHT": "night_light.md",
-    "MEDICATION_MANAGEMENT": "medication_management.md",
+    "PILL_ORGANIZER": "pill_organizer.md",
+    "PILL_SPLITTER": "pill_splitter.md",
     "SEAT_CUSHION": "seat_cushion.md",
 }
 
@@ -112,8 +113,12 @@ def classify_raw_file(filename: str) -> str | None:
         return "HEAT_THERAPY"
     if any(x in f for x in ["night", "nightlight", "circadian", "melatonin", "sleep", "illuminance", "lumen", "motion_sensor", "smart_lighting", "smart_home", "lighting"]):
         return "NIGHT_LIGHT"
-    if any(x in f for x in ["pill", "medication", "polypharmacy"]):
-        return "MEDICATION_MANAGEMENT"
+    if any(x in f for x in ["pill_organizer", "medication_organizer", "polypharmacy"]):
+        return "PILL_ORGANIZER"
+    if any(x in f for x in ["pill_splitter", "pill_cutter", "pill_crusher"]):
+        return "PILL_SPLITTER"
+    if any(x in f for x in ["pill", "medication"]):
+        return "PILL_ORGANIZER"
     if any(x in f for x in ["seat", "cushion", "memory_foam", "orthopedic", "ergonomic", "niosh"]):
         return "SEAT_CUSHION"
     return None

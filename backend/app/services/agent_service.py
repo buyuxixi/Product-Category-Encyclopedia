@@ -52,8 +52,20 @@ def collect_data(
     """从数据库多维度收集市场数据，供LLM分析。
 
     所有数据包含真实URL，LLM只能引用这些URL，不能编造。
+    话题模式（仅 topic、无 category）不注入其他品类的 Amazon/社媒商品，
+    避免「运动水杯」挂上药盒链接；无库内选品数据时改为拉取公开趋势/新闻。
     """
-    data: dict[str, Any] = {}
+    from app.services.topic_public_sources import fetch_topic_public_sources, topic_search_queries
+
+    data: dict[str, Any] = {
+        "insight_mode": "full",
+        "user_notice": "",
+        "topic_has_product_data": False,
+        "live_news": [],
+        "live_keyword_trends": [],
+        "topic_query_terms": [],
+    }
+    topic_only = bool(topic and not category_code)
 
     # 1. 品类列表
     categories = db.scalars(
@@ -72,103 +84,110 @@ def collect_data(
         for c in categories
     ]
 
-    # 2. Amazon产品 (从HotLink表 — 这里有真实的Amazon URL)
-    amazon_links_query = (
-        select(HotLink)
-        .where(HotLink.platform == "amazon", HotLink.link_type == "product")
-        .order_by(HotLink.is_hot.desc(), HotLink.hotness_score.desc())
-        .limit(60)
-    )
-    if category_code:
-        amazon_links_query = amazon_links_query.where(
-            HotLink.category_id == select(Category.id).where(Category.code == category_code).scalar_subquery()
+    # 话题探索：不灌入全库 Amazon/YouTube/Reddit（那是串台根因）
+    if topic_only:
+        data["amazon_products"] = []
+        data["youtube_videos"] = []
+        data["reddit_posts"] = []
+        data["trend_signals"] = []
+    else:
+        # 2. Amazon产品 (从HotLink表 — 这里有真实的Amazon URL)
+        amazon_links_query = (
+            select(HotLink)
+            .where(HotLink.platform == "amazon", HotLink.link_type == "product")
+            .order_by(HotLink.is_hot.desc(), HotLink.hotness_score.desc())
+            .limit(60)
         )
-    amazon_links = db.scalars(amazon_links_query).all()
-    data["amazon_products"] = [
-        {
-            "title": _parse_brand_or_title(l),
-            "url": l.url,  # 真实Amazon URL
-            "description": l.description,  # 包含价格/评分/BSR
-            "hotness_score": l.hotness_score,
-            "is_hot": l.is_hot,
-            "category_code": _hotlink_category_code(db, l.category_id),
-        }
-        for l in amazon_links
-    ]
+        if category_code:
+            amazon_links_query = amazon_links_query.where(
+                HotLink.category_id == select(Category.id).where(Category.code == category_code).scalar_subquery()
+            )
+        amazon_links = db.scalars(amazon_links_query).all()
+        data["amazon_products"] = [
+            {
+                "title": _parse_brand_or_title(l),
+                "url": l.url,
+                "description": l.description,
+                "hotness_score": l.hotness_score,
+                "is_hot": l.is_hot,
+                "category_code": _hotlink_category_code(db, l.category_id),
+            }
+            for l in amazon_links
+        ]
 
-    # 3. YouTube热门视频 (真实URL)
-    yt_query = (
-        select(HotLink)
-        .where(HotLink.platform == "youtube")
-        .order_by(HotLink.is_hot.desc(), HotLink.hotness_score.desc())
-        .limit(30)
-    )
-    if category_code:
-        yt_query = yt_query.where(
-            HotLink.category_id == select(Category.id).where(Category.code == category_code).scalar_subquery()
+        # 3. YouTube热门视频
+        yt_query = (
+            select(HotLink)
+            .where(HotLink.platform == "youtube")
+            .order_by(HotLink.is_hot.desc(), HotLink.hotness_score.desc())
+            .limit(30)
         )
-    yt_links = db.scalars(yt_query).all()
-    data["youtube_videos"] = [
-        {
-            "title": l.title,
-            "url": l.url,
-            "description": (l.description or "")[:200],
-            "hotness_score": l.hotness_score,
-            "category_code": _hotlink_category_code(db, l.category_id),
-        }
-        for l in yt_links
-    ]
+        if category_code:
+            yt_query = yt_query.where(
+                HotLink.category_id == select(Category.id).where(Category.code == category_code).scalar_subquery()
+            )
+        yt_links = db.scalars(yt_query).all()
+        data["youtube_videos"] = [
+            {
+                "title": l.title,
+                "url": l.url,
+                "description": (l.description or "")[:200],
+                "hotness_score": l.hotness_score,
+                "category_code": _hotlink_category_code(db, l.category_id),
+            }
+            for l in yt_links
+        ]
 
-    # 4. Reddit讨论 (真实URL)
-    reddit_query = (
-        select(HotLink)
-        .where(HotLink.platform == "reddit")
-        .order_by(HotLink.collected_at.desc())
-        .limit(20)
-    )
-    if category_code:
-        reddit_query = reddit_query.where(
-            HotLink.category_id == select(Category.id).where(Category.code == category_code).scalar_subquery()
+        # 4. Reddit讨论
+        reddit_query = (
+            select(HotLink)
+            .where(HotLink.platform == "reddit")
+            .order_by(HotLink.collected_at.desc())
+            .limit(20)
         )
-    reddit_links = db.scalars(reddit_query).all()
-    data["reddit_posts"] = [
-        {
-            "title": l.title,
-            "url": l.url,
-            "description": (l.description or "")[:200],
-            "category_code": _hotlink_category_code(db, l.category_id),
-        }
-        for l in reddit_links
-    ]
+        if category_code:
+            reddit_query = reddit_query.where(
+                HotLink.category_id == select(Category.id).where(Category.code == category_code).scalar_subquery()
+            )
+        reddit_links = db.scalars(reddit_query).all()
+        data["reddit_posts"] = [
+            {
+                "title": l.title,
+                "url": l.url,
+                "description": (l.description or "")[:200],
+                "category_code": _hotlink_category_code(db, l.category_id),
+            }
+            for l in reddit_links
+        ]
 
-    # 5. 趋势信号 (最近30天)
-    cutoff = datetime.now(UTC) - timedelta(days=30)
-    trend_query = select(TrendSignal).where(TrendSignal.collected_at >= cutoff).order_by(
-        TrendSignal.collected_at.desc()
-    ).limit(100)
-    if category_code:
-        trend_query = trend_query.where(
-            TrendSignal.category_id == select(Category.id).where(Category.code == category_code).scalar_subquery()
-        )
-    trends = db.scalars(trend_query).all()
-    data["trend_signals"] = [
-        {
-            "keyword": t.keyword,
-            "signal_type": t.signal_type,
-            "platform": t.platform,
-            "metric_value": t.metric_value,
-            "metric_unit": t.metric_unit,
-            "trend_direction": t.trend_direction,
-            "summary": (t.summary or "")[:300],
-            "category_code": _trend_category_code(db, t.category_id),
-        }
-        for t in trends
-    ]
+        # 5. 趋势信号 (最近30天)
+        cutoff = datetime.now(UTC) - timedelta(days=30)
+        trend_query = select(TrendSignal).where(TrendSignal.collected_at >= cutoff).order_by(
+            TrendSignal.collected_at.desc()
+        ).limit(100)
+        if category_code:
+            trend_query = trend_query.where(
+                TrendSignal.category_id == select(Category.id).where(Category.code == category_code).scalar_subquery()
+            )
+        trends = db.scalars(trend_query).all()
+        data["trend_signals"] = [
+            {
+                "keyword": t.keyword,
+                "signal_type": t.signal_type,
+                "platform": t.platform,
+                "metric_value": t.metric_value,
+                "metric_unit": t.metric_unit,
+                "trend_direction": t.trend_direction,
+                "summary": (t.summary or "")[:300],
+                "category_code": _trend_category_code(db, t.category_id),
+            }
+            for t in trends
+        ]
 
-    # 6. 话题搜索 — 按topic关键词跨品类搜索所有数据
-    if topic and not category_code:
+    # 6. 话题搜索 — 库内关键词 + 公开源趋势/新闻
+    if topic_only:
+        assert topic is not None
         topic_terms = _topic_search_terms(topic)
-        # 搜索HotLink
         topic_hotlinks = db.scalars(
             select(HotLink).where(
                 or_(
@@ -182,7 +201,7 @@ def collect_data(
                     )
                 )
             ).limit(30)
-        ).all()
+        ).all() if topic_terms else []
         data["topic_links"] = [
             {
                 "title": l.title,
@@ -193,7 +212,6 @@ def collect_data(
             }
             for l in topic_hotlinks
         ]
-        # 搜索TrendSignal
         topic_trends = db.scalars(
             select(TrendSignal).where(
                 or_(
@@ -207,7 +225,7 @@ def collect_data(
                     )
                 ),
             ).limit(20)
-        ).all()
+        ).all() if topic_terms else []
         data["topic_trends"] = [
             {
                 "keyword": t.keyword,
@@ -217,8 +235,36 @@ def collect_data(
             }
             for t in topic_trends
         ]
-        # 标记是否在数据库中找到了话题相关数据
-        data["topic_has_data"] = bool(topic_hotlinks or topic_trends)
+
+        live = fetch_topic_public_sources(topic)
+        data["topic_query_terms"] = live.get("query_terms") or topic_search_queries(topic)
+        data["live_news"] = live.get("news") or []
+        data["live_keyword_trends"] = live.get("keyword_trends") or []
+        # 公开新闻也进入可引用链接池（校验用）
+        for item in data["live_news"]:
+            data["topic_links"].append({
+                "title": item.get("title", ""),
+                "url": item.get("url", ""),
+                "platform": "news",
+                "description": (item.get("description") or "")[:200],
+                "category_code": "",
+            })
+
+        product_links = [
+            l for l in data["topic_links"]
+            if (l.get("platform") or "").lower() == "amazon"
+        ]
+        data["topic_has_product_data"] = bool(product_links)
+        data["topic_has_data"] = bool(
+            topic_hotlinks or topic_trends or data["live_news"] or data["live_keyword_trends"]
+        )
+        if not data["topic_has_product_data"]:
+            data["insight_mode"] = "trends_discussion"
+            data["user_notice"] = (
+                f"暂无「{topic}」的选品推荐数据（库内无对应商品/ASIN）。"
+                "现阶段仅提供趋势与公开讨论/新闻参考，选品链路将在后续完善。"
+                "以下链接来自公开新闻或搜索建议，不是 Amazon 选品清单。"
+            )
 
     return data
 
@@ -226,12 +272,15 @@ def collect_data(
 _TOPIC_ALIASES: dict[str, tuple[str, ...]] = {
     "无线": ("wireless", "cordless", "bluetooth"),
     "便携": ("portable", "rechargeable"),
-    "风扇": ("fan",),
+    "风扇": ("fan", "portable fan"),
     "夜灯": ("night light", "nightlight"),
     "药盒": ("pill organizer", "pill box", "pill dispenser"),
     "热敷": ("heating pad", "heat therapy"),
     "肩颈": ("neck", "shoulder"),
     "电疗": ("tens", "ems"),
+    "水杯": ("water bottle", "sports bottle", "tumbler"),
+    "运动水杯": ("sports water bottle", "gym water bottle", "insulated water bottle"),
+    "保温杯": ("insulated tumbler", "thermos bottle"),
 }
 
 
@@ -400,18 +449,45 @@ def build_analysis_prompt(data: dict[str, Any], *, topic: str | None = None) -> 
             f"- [{t['platform']}] {t['keyword']} | 方向: {t['trend_direction']} | {t['summary'][:100]}"
             for t in data["topic_trends"]
         ]
-        parts.append("## 话题相关趋势信号\n" + "\n".join(tt_lines) + "\n")
+        parts.append("## 话题相关趋势信号（库内）\n" + "\n".join(tt_lines) + "\n")
 
-    # 如果话题没有数据，明确告诉LLM
-    if topic and not data.get("topic_has_data", True):
+    if data.get("live_keyword_trends"):
+        lk_lines = [
+            f"- [google] {t['keyword']} | {t.get('summary', '')[:160]}"
+            for t in data["live_keyword_trends"]
+        ]
+        parts.append("## 实时搜索建议（Google Suggest）\n" + "\n".join(lk_lines) + "\n")
+
+    if data.get("live_news"):
+        news_lines = [
+            f"- [{n.get('platform', 'news')}] {n.get('title', '')[:120]} | URL: {n.get('url', '')}"
+            for n in data["live_news"][:15]
+        ]
+        parts.append("## 实时公开新闻/讨论线索（Bing News）\n" + "\n".join(news_lines) + "\n")
+
+    if data.get("topic_query_terms"):
         parts.append(
-            f"\n## ⚠️ 数据库中暂无「{topic}」相关数据\n"
-            f"请基于你的通用跨境电商知识分析「{topic}」市场：\n"
-            f"- 市场规模与增长趋势\n"
-            f"- Amazon上的竞争格局（头部品牌/价格带/评分分布）\n"
-            f"- 选品机会点（差异化方向/痛点/空白）\n"
-            f"- 建议采集哪些数据来验证（Amazon BSR/YouTube/Reddit/Google Trends关键词）\n"
-            f"discoveries中可以给出基于通用知识的初步建议，reasoning注明「基于通用市场知识，待数据验证」，source_links留空。\n"
+            "## 本次检索词\n"
+            + ", ".join(str(t) for t in data["topic_query_terms"][:8])
+            + "\n"
+        )
+
+    # 话题模式：无选品商品数据 → 只做趋势/讨论，禁止编造商品链接
+    if topic and data.get("insight_mode") == "trends_discussion":
+        parts.append(
+            f"\n## ⚠️ 模式说明（必须遵守）\n"
+            f"数据库中暂无「{topic}」的选品商品/ASIN 数据。\n"
+            f"你只能基于上方「实时公开新闻」与「搜索建议」输出趋势与讨论洞察。\n"
+            f"- discoveries 的 opportunity_type 只能是 rising_trend / gap_opportunity / emerging_category\n"
+            f"- 禁止输出具体 Amazon ASIN、BSR 商品名冒充选品结论\n"
+            f"- source_links 优先引用上方已给出的新闻 URL；没有合适新闻链接可留空 []（系统会补搜索入口）\n"
+            f"- summary 开头用一句话说明：暂无选品推荐数据，现阶段为趋势与讨论参考\n"
+            f"- recommendations 里提示后续可完善 Amazon/社媒选品采集\n"
+        )
+    elif topic and not data.get("topic_has_data", True):
+        parts.append(
+            f"\n## ⚠️ 数据库与公开源均暂无「{topic}」相关数据\n"
+            f"请坦诚说明证据不足，给出需要采集的数据类型，不要编造商品链接。source_links 必须为 []。\n"
         )
     else:
         parts.append(
@@ -452,7 +528,8 @@ def call_llm(
     proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
 
     try:
-        with httpx.Client(timeout=90.0, proxy=proxy) as client:
+        # 扫描分析 prompt 较长，LLM 偶发超过 90s；超时过短会被误报为「服务不可用」
+        with httpx.Client(timeout=httpx.Timeout(10.0, read=180.0), proxy=proxy) as client:
             resp = client.post(
                 f"{settings.llm_base_url}/chat/completions",
                 headers=headers,
@@ -728,36 +805,40 @@ def validate_report(report: Any) -> dict[str, Any]:
 
 
 def _validate_and_fix_links(discoveries: list[dict], data: dict[str, Any]) -> list[dict]:
-    """验证discoveries中的URL是否来自数据库真实数据。
+    """验证discoveries中的URL是否来自本次分析可用的真实数据。
 
-    如果LLM编造了URL，移除该URL，确保不出现假链接；如果模型漏填链接，
-    则按发现名称和关键词从本次分析使用的真实数据库链接中补回相关来源。
+    话题「趋势/讨论」模式禁止回退到其他品类 Amazon 商品链接；
+    若卡片无链接，则用公开新闻匹配或补可点击的搜索入口。
     """
-    # 收集所有真实URL
+    trends_only = data.get("insight_mode") == "trends_discussion"
     real_urls: set[str] = set()
-    for p in data.get("amazon_products", []):
-        if p.get("url"):
-            real_urls.add(p["url"])
-    for v in data.get("youtube_videos", []):
-        if v.get("url"):
-            real_urls.add(v["url"])
-    for r in data.get("reddit_posts", []):
-        if r.get("url"):
-            real_urls.add(r["url"])
-    for l in data.get("topic_links", []):
-        if l.get("url"):
-            real_urls.add(l["url"])
+    allowed_keys = ("topic_links", "live_news") if trends_only else (
+        "amazon_products", "youtube_videos", "reddit_posts", "topic_links", "live_news"
+    )
+    for key in allowed_keys:
+        for item in data.get(key, []) or []:
+            url = item.get("url")
+            if url:
+                real_urls.add(url)
 
     for d in discoveries:
         valid_links = []
-        for link in d.get("source_links", []):
+        for link in d.get("source_links", []) or []:
             url = link.get("url", "")
             if url in real_urls:
+                if trends_only and "amazon.com" in url.lower() and "/dp/" in url.lower():
+                    logger.warning("趋势模式过滤无关 Amazon 商品链: %s", url[:80])
+                    continue
                 valid_links.append(link)
             else:
-                logger.warning(f"过滤幻觉URL: {url[:80]}")
-        fallback_links = _fallback_source_links(d, data)
+                logger.warning("过滤幻觉URL: %s", url[:80])
+
         linked_urls = {link["url"] for link in valid_links}
+        fallback_links = (
+            _fallback_trends_discussion_links(d, data)
+            if trends_only
+            else _fallback_source_links(d, data)
+        )
         for link in fallback_links:
             if link["url"] not in linked_urls:
                 valid_links.append(link)
@@ -771,12 +852,105 @@ _SOURCE_CANDIDATE_KEYS = ("amazon_products", "youtube_videos", "reddit_posts", "
 _GENERIC_SOURCE_TERMS = {
     "a", "an", "and", "app", "based", "best", "controlled", "device", "enabled",
     "for", "from", "in", "new", "of", "product", "rechargeable", "the", "unit",
-    "with",
+    "with", "series", "trend",
 }
 
 
 def _source_tokens(value: Any) -> set[str]:
-    return set(re.findall(r"[a-z0-9]+", str(value or "").lower()))
+    text = str(value or "")
+    tokens = set(re.findall(r"[a-z0-9]+", text.lower()))
+    tokens.update(re.findall(r"[\u4e00-\u9fff]{2,}", text))
+    return tokens
+
+
+def _discovery_search_queries(discovery: dict[str, Any]) -> list[str]:
+    """为无链接的洞察卡片生成可检索查询词。"""
+    queries: list[str] = []
+    seen: set[str] = set()
+
+    def add(q: str) -> None:
+        q = (q or "").strip()
+        if not q:
+            return
+        key = q.lower()
+        if key in seen or len(q) < 2:
+            return
+        seen.add(key)
+        queries.append(q[:120])
+
+    for kw in discovery.get("keywords") or []:
+        add(str(kw))
+    name = str(discovery.get("product_name") or "")
+    # 去掉过长品牌营销后缀，保留核心名
+    add(re.split(r"[（(]", name, maxsplit=1)[0].strip())
+    return queries[:4]
+
+
+def _fallback_trends_discussion_links(
+    discovery: dict[str, Any],
+    data: dict[str, Any],
+    *,
+    limit: int = 3,
+) -> list[dict[str, str]]:
+    """趋势模式补链：优先匹配公开新闻，否则补 Google/Bing 搜索入口。"""
+    from urllib.parse import quote_plus
+
+    discovery_terms = (
+        _source_tokens(discovery.get("product_name"))
+        | _source_tokens(" ".join(discovery.get("keywords", []) or []))
+    ) - _GENERIC_SOURCE_TERMS
+
+    candidates: dict[str, tuple[int, dict[str, str]]] = {}
+    for key in ("live_news", "topic_links"):
+        for item in data.get(key, []) or []:
+            url = str(item.get("url") or "").strip()
+            if not url:
+                continue
+            if "amazon.com" in url.lower() and "/dp/" in url.lower():
+                continue
+            title = str(item.get("title") or "").strip()
+            description = str(item.get("description") or "").strip()
+            item_terms = (_source_tokens(title) | _source_tokens(description)) - _GENERIC_SOURCE_TERMS
+            overlap = discovery_terms & item_terms
+            # 趋势模式放宽：有 1 个实质词重叠即可（含中文品牌词如 muji/xiaomi）
+            if discovery_terms and len(overlap) < 1:
+                continue
+            if not discovery_terms:
+                continue
+            score = len(overlap) * 3
+            # 标题命中加权
+            title_overlap = discovery_terms & (_source_tokens(title) - _GENERIC_SOURCE_TERMS)
+            score += len(title_overlap) * 2
+            candidates[url] = (
+                max(score, candidates.get(url, (0, {}))[0]),
+                {
+                    "title": (title or url)[:500],
+                    "url": url[:2000],
+                    "platform": str(item.get("platform") or "news")[:40],
+                },
+            )
+
+    ranked = [item for _, item in sorted(candidates.values(), key=lambda x: x[0], reverse=True)]
+    if ranked:
+        return ranked[:limit]
+
+    # 无匹配新闻时：补可点击的搜索链接（不是假商品页）
+    search_links: list[dict[str, str]] = []
+    for query in _discovery_search_queries(discovery)[:2]:
+        q = quote_plus(query)
+        search_links.append({
+            "title": f"Google 搜索：{query}",
+            "url": f"https://www.google.com/search?q={q}",
+            "platform": "google",
+        })
+        search_links.append({
+            "title": f"Bing 新闻：{query}",
+            "url": f"https://www.bing.com/news/search?q={q}",
+            "platform": "news",
+        })
+        if len(search_links) >= limit:
+            break
+    return search_links[:limit]
 
 
 def _fallback_source_links(discovery: dict[str, Any], data: dict[str, Any], limit: int = 3) -> list[dict[str, str]]:
@@ -864,12 +1038,19 @@ def run_scan(
             "youtube_videos_count": len(data.get("youtube_videos", [])),
             "reddit_posts_count": len(data.get("reddit_posts", [])),
             "trends_count": len(data.get("trend_signals", [])),
+            "insight_mode": data.get("insight_mode"),
+            "user_notice": data.get("user_notice"),
+            # 趋势模式保留公开源，便于事后补链/审计（不存全量商品）
+            "live_news": (data.get("live_news") or [])[:20],
+            "topic_links": (data.get("topic_links") or [])[:30],
+            "live_keyword_trends": (data.get("live_keyword_trends") or [])[:30],
         }
         scan.stats = {
             "products_analyzed": len(data.get("amazon_products", [])),
             "videos_analyzed": len(data.get("youtube_videos", [])),
             "posts_analyzed": len(data.get("reddit_posts", [])),
             "trends_analyzed": len(data.get("trend_signals", [])),
+            "live_news_count": len(data.get("live_news", []) or []),
         }
         db.flush()
 
@@ -904,6 +1085,9 @@ def run_scan(
             "summary": report.get("summary", ""),
             "market_overview": report.get("market_overview", {}),
             "recommendations": report.get("recommendations", []),
+            "insight_mode": data.get("insight_mode") or "full",
+            "user_notice": data.get("user_notice") or "",
+            "topic_query_terms": data.get("topic_query_terms") or [],
         }
 
         # 6. 创建ProductDiscovery记录
@@ -933,12 +1117,26 @@ def run_scan(
             metadata_json={"scan_type": scan_type, "category_code": category_code, "topic": topic},
         ))
         # 生成一条AI总结消息（用于对话上下文）
-        ai_summary = f"## 扫描完成\n\n{report.get('summary', '')}\n\n"
-        ai_summary += f"分析了 {len(data.get('amazon_products', []))} 个Amazon产品、"
-        ai_summary += f"{len(data.get('youtube_videos', []))} 个YouTube视频、"
-        ai_summary += f"{len(data.get('reddit_posts', []))} 个Reddit讨论、"
-        ai_summary += f"{len(data.get('trend_signals', []))} 条趋势信号。\n\n"
-        ai_summary += f"发现了 {len(discoveries_data)} 个选品机会。你可以在「发现」标签页查看详情，或者在这里问我任何问题。"
+        notice = data.get("user_notice") or ""
+        if data.get("insight_mode") == "trends_discussion":
+            ai_summary = f"## 扫描完成（趋势/讨论参考）\n\n"
+            if notice:
+                ai_summary += f"> {notice}\n\n"
+            ai_summary += f"{report.get('summary', '')}\n\n"
+            ai_summary += (
+                f"本次未使用库内其他品类商品数据。"
+                f"公开新闻 {len(data.get('live_news', []))} 条，"
+                f"搜索建议组 {len(data.get('live_keyword_trends', []))} 组，"
+                f"洞察卡片 {len(discoveries_data)} 条。"
+                f"选品商品推荐将在后续功能完善。"
+            )
+        else:
+            ai_summary = f"## 扫描完成\n\n{report.get('summary', '')}\n\n"
+            ai_summary += f"分析了 {len(data.get('amazon_products', []))} 个Amazon产品、"
+            ai_summary += f"{len(data.get('youtube_videos', []))} 个YouTube视频、"
+            ai_summary += f"{len(data.get('reddit_posts', []))} 个Reddit讨论、"
+            ai_summary += f"{len(data.get('trend_signals', []))} 条趋势信号。\n\n"
+            ai_summary += f"发现了 {len(discoveries_data)} 个选品机会。你可以在「发现」标签页查看详情，或者在这里问我任何问题。"
 
         db.add(AgentMessage(
             scan_id=scan.id,
@@ -948,6 +1146,7 @@ def run_scan(
                 "model": get_settings().llm_model,
                 "usage": result.get("usage", {}),
                 "is_scan_result": True,
+                "insight_mode": data.get("insight_mode") or "full",
             },
         ))
 
@@ -955,6 +1154,7 @@ def run_scan(
         scan.completed_at = datetime.now(UTC)
         db.commit()
         db.refresh(scan)
+        return scan
 
     except Exception as exc:
         scan_id = scan.id

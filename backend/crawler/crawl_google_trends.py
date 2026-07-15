@@ -29,7 +29,8 @@ TRENDS_KEYWORDS: dict[str, list[str]] = {
     "SHOULDER_NECK_HEAT_THERAPY": ["neck heating pad", "shoulder heating pad"],
     "FAR_INFRARED": ["far infrared heating pad", "far infrared therapy"],
     "NIGHT_LIGHT": ["night light", "motion sensor night light"],
-    "MEDICATION_MANAGEMENT": ["pill organizer", "pill splitter"],
+    "PILL_ORGANIZER": ["pill organizer", "weekly pill box"],
+    "PILL_SPLITTER": ["pill splitter", "pill cutter"],
     "SEAT_CUSHION": ["seat cushion", "tailbone cushion"],
 }
 
@@ -138,6 +139,9 @@ def crawl_all() -> dict:
 
 
 if __name__ == "__main__":
+    from _guard import require_crawler_enabled
+
+    require_crawler_enabled()
     result = crawl_all()
     total_ts = len(result["trend_signals"])
     print(f"\nTotal: {total_ts} trend_signals")
